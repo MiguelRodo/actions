@@ -133,17 +133,15 @@ runs:
         if [ "${IS_PROJECT_OWNER_ORG}" = "true" ]; then
           echo "Treating project owner as an organization."
           project_id=$(gh projects list --org "${PROJECT_OWNER}" --format json | jq '.projects[] | select(.title=="'"${PROJECT_NAME}"'") | .id')
-          if [ -z "$project_id" ]; then
-            echo "Error: Project '${PROJECT_NAME}' not found for owner '${PROJECT_OWNER}' (an organisation)."
-            exit 1
-          fi
         else
           echo "Treating project owner as a user."
           project_id=$(gh projects list --user "${PROJECT_OWNER}" --format json | jq '.projects[] | select(.title=="'"${PROJECT_NAME}"'") | .id')
-          if [ -z "$project_id" ]; then
-            echo "Error: Project '${PROJECT_NAME}' not found for owner '${PROJECT_OWNER}' (not an organisation)."
-            exit 1
-          fi
+        fi
+        if [ -z "$project_id" ]; then
+          echo "Error: Project ID not found' (an organisation)."
+          exit 1
+        else
+          echo "project_id: ${project_id}"
         fi
         echo "project_id=${project_id}" >> $GITHUB_ENV
 
