@@ -45,7 +45,6 @@ runs:
 
     - name: Install gh-projects extension
       shell: bash
-      env: 
       run: gh extension install github/gh-projects
     
     - name: Validate input and format used values
