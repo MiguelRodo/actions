@@ -40,7 +40,7 @@ runs:
     - name: Authenticate with PAT
       shell: bash
       env:
-        PROJECT_TOKEN: "${{ env.ADD_ISSUES_TO_PROJECT_TOKEN  }}"
+        PROJECT_TOKEN: "${{ inputs.ADD_ISSUES_TO_PROJECT_TOKEN  }}"
       run: |
         unset GITHUB_TOKEN
         unset GH_TOKEN
