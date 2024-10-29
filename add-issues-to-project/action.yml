@@ -1,22 +1,23 @@
 name: "Add Issues to Project"
 description: "Adds issues from a specified repository to a specified GitHub Project."
 author: "MiguelRodo"
+
 inputs:
   project_name:
-    description: "Project name. Defaults to `source_repo_name`."
+    description: "Project name. Defaults to repository name."
     required: false
   project_owner:
-    description: "Project owner. Defaults to `source_repo_owner`."
+    description: "Project owner. Defaults to repository owner."
     required: false
   is_project_owner_org:
     description: "Whether the project owner is an organization. Defaults to `false`."
     required: false
     default: "false"
   source_repo_name:
-    description: "Name of repository with issues. Defaults to current repository."
+    description: "Repository name. Defaults to current repository."
     required: false
   source_repo_owner:
-    description: "Owner of repository with issues. Defaults to current GitHub user."
+    description: "Repository owner. Defaults to current GitHub user."
     required: false
   ADD_ISSUES_TO_PROJECT_TOKEN:
     description: "GitHub token with correct access for accessing issues and writing to projects"
