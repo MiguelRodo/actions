@@ -41,7 +41,7 @@ runs:
       run: |
         unset GITHUB_TOKEN
         unset GH_TOKEN
-        echo "$PROJECT_TOKEN" >> gh auth login -h github.com --with-token
+        echo "$PROJECT_TOKEN" | gh auth login -h github.com --with-token
 
     - name: Install gh-projects extension
       shell: bash
