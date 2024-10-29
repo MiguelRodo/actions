@@ -23,18 +23,17 @@ inputs:
     required: true
 runs:
   using: "composite"
+  shell: bash
   steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
     - name: Set up GitHub CLI and jq
-      shell: bash
       run: |
         sudo apt update -y
         sudo apt install -y gh jq
 
     - name: Authenticate with PAT
-      shell: bash
       env:
         ADD_ISSUES_TO_PROJECT_TOKEN: "${{ inputs.ADD_ISSUES_TO_PROJECT_TOKEN }}"
       run: |
@@ -43,7 +42,6 @@ runs:
         echo "$ADD_ISSUES_TO_PROJECT_TOKEN" | gh auth login --with-token
 
     - name: Install gh-projects extension
-      shell: bash
       run: gh extension install github/gh-projects
     
     - name: Validate input and format used values
@@ -106,7 +104,6 @@ runs:
 
     - name: Get project ID
       id: get-project-id
-      shell: bash
       env:
         PROJECT_NAME: "${{ env.project_name }}"
         PROJECT_OWNER: "${{ env.project_owner }}"
@@ -129,7 +126,6 @@ runs:
 
     - name: Get issues from source repository
       id: get-issues
-      shell: bash
       env:
         SOURCE_REPO: "${{ env.source_repo }}"
       run: |
@@ -141,7 +137,6 @@ runs:
         echo "issues=$issues" >> $GITHUB_ENV
 
     - name: Add issues to project if not already present
-      shell: bash
       env:
         ISSUES: "${{ env.issues }}"
         ADD_ISSUES_TO_PROJECT_TOKEN: "${{ inputs.ADD_ISSUES_TO_PROJECT_TOKEN }}"
