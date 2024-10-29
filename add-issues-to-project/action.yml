@@ -34,6 +34,9 @@ runs:
         sudo apt update -y
         sudo apt install -y gh jq
 
+        echo "GitHub CLI version: $(gh --version)"
+        echo "jq version: $(jq --version)"
+
     - name: Authenticate with PAT
       shell: bash
       env:
@@ -50,7 +53,7 @@ runs:
     - name: Install gh-projects extension
       shell: bash
       run: gh extension install github/gh-projects
-    
+
     - name: Validate input and format used values
       shell: bash
       env:
