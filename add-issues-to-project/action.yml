@@ -3,20 +3,20 @@ description: "Adds issues from a specified repository to a specified GitHub Proj
 author: "MiguelRodo"
 inputs:
   project_name:
-    description: "Name of the project to which issues should be added. Defaults to `source_repo_name`."
+    description: "Project name. Defaults to `source_repo_name`."
     required: false
   project_owner:
-    description: "Owner of the project to which issues should be added. Defaults to `source_repo_owner`."
+    description: "Project owner. Defaults to `source_repo_owner`."
     required: false
   is_project_owner_org:
     description: "Whether the project owner is an organization. Defaults to `false`."
     required: false
     default: "false"
   source_repo_name:
-    description: "Name of the repository from which to fetch issues. Defaults to current repository."
+    description: "Name of repository with issues. Defaults to current repository."
     required: false
   source_repo_owner:
-    description: "Owner of the repository from which to fetch issues. Defaults to current GitHub user."
+    description: "Owner of repository with issues. Defaults to current GitHub user."
     required: false
   ADD_ISSUES_TO_PROJECT_TOKEN:
     description: "GitHub token with correct access for accessing issues and writing to projects"
@@ -54,6 +54,7 @@ runs:
         IS_PROJECT_OWNER_ORG: "${{ inputs.is_project_owner_org }}"
         SOURCE_REPO_NAME: "${{ inputs.source_repo_name }}"
         SOURCE_REPO_OWNER: "${{ inputs.source_repo_owner }}"
+        CURRENT_USER: "${{ github.actor }}"
       run: |
         if [ -z "${SOURCE_REPO_NAME}" ]; then
           SOURCE_REPO_NAME=$(basename "$(pwd)")
@@ -64,7 +65,7 @@ runs:
           PROJECT_NAME_FINAL="$PROJECT_NAME"
         fi
         if [ -z "${SOURCE_REPO_OWNER}" ]; then
-          SOURCE_REPO_OWNER=$(gh api user --jq '.login')
+          SOURCE_REPO_OWNER="$CURRENT_USER"
         fi
         if [ -z "${PROJECT_OWNER}" ]; then
           PROJECT_OWNER_FINAL="$SOURCE_REPO_OWNER"
