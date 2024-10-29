@@ -131,13 +131,15 @@ runs:
       run: |
         echo "Getting project ID for project '${PROJECT_NAME}' owned by '${PROJECT_OWNER}'..."
         if [ "${IS_PROJECT_OWNER_ORG}" = "true" ]; then
+          echo "Treating project owner as an organization."
           project_id=$(gh projects list --org "${PROJECT_OWNER}" --format json | jq '.projects[] | select(.title=="'"${PROJECT_NAME}"'") | .id')
           if [ -z "$project_id" ]; then
             echo "Error: Project '${PROJECT_NAME}' not found for owner '${PROJECT_OWNER}' (an organisation)."
             exit 1
           fi
         else
-          project_id=$(gh projects list --format json --user "${PROJECT_OWNER}" | jq '.projects[] | select(.title=="'"${PROJECT_NAME}"'") | .id')
+          echo "Treating project owner as a user."
+          project_id=$(gh projects list --user "${PROJECT_OWNER}" --format json | jq '.projects[] | select(.title=="'"${PROJECT_NAME}"'") | .id')
           if [ -z "$project_id" ]; then
             echo "Error: Project '${PROJECT_NAME}' not found for owner '${PROJECT_OWNER}' (not an organisation)."
             exit 1
