@@ -34,13 +34,13 @@ runs:
         sudo apt update -y
         sudo apt install -y gh jq
 
+        gh auth status  # Verify that gh is authenticated
+
     - name: Authenticate with PAT
       shell: bash
       env:
-        ADD_ISSUES_TO_PROJECT_TOKEN: "${{ inputs.ADD_ISSUES_TO_PROJECT_TOKEN }}"
+        GITHUB_TOKEN: "${{ inputs.ADD_ISSUES_TO_PROJECT_TOKEN }}"
       run: |
-        unset GH_TOKEN
-        unset GITHUB_TOKEN
         echo "$ADD_ISSUES_TO_PROJECT_TOKEN" | gh auth login --with-token
 
     - name: Install gh-projects extension
