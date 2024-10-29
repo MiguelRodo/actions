@@ -85,7 +85,7 @@ runs:
           echo "Error: Invalid source repository format. Expected format: owner/repo."
           exit 1
         else
-          echo "Source repository: $SOURCE_REPO"
+          echo "Source repository format is valid."
         fi
 
         # check that owners exist
@@ -118,6 +118,8 @@ runs:
         echo "project_owner=${PROJECT_OWNER_FINAL}" >> $GITHUB_ENV
         echo "source_repo=${SOURCE_REPO}" >> $GITHUB_ENV
 
+        echo "Completed input validation."
+
     - name: Get project ID
       id: get-project-id
       shell: bash
@@ -127,6 +129,7 @@ runs:
         IS_PROJECT_OWNER_ORG: "${{ inputs.is_project_owner_org }}"
         GITHUB_TOKEN: "${{ inputs.ADD_ISSUES_TO_PROJECT_TOKEN }}"
       run: |
+        echo "Getting project ID for project '${PROJECT_NAME}' owned by '${PROJECT_OWNER}'..."
         if [ "${IS_PROJECT_OWNER_ORG}" = "true" ]; then
           project_id=$(gh projects list --org "${PROJECT_OWNER}" --format json | jq '.projects[] | select(.title=="'"${PROJECT_NAME}"'") | .id')
           if [ -z "$project_id" ]; then
