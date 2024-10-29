@@ -49,6 +49,10 @@ runs:
           exit 1
         fi
         echo "$PROJECT_TOKEN" | gh auth login -h github.com --with-token
+        echo "gh auth status:"
+        gh auth status
+        echo "gh token list:"
+        gh auth token
 
     - name: Install gh-projects extension
       shell: bash
