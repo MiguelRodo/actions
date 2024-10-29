@@ -132,18 +132,33 @@ runs:
         echo "Getting project ID for project '${PROJECT_NAME}' owned by '${PROJECT_OWNER}'..."
         if [ "${IS_PROJECT_OWNER_ORG}" = "true" ]; then
           echo "Treating project owner as an organization."
-          project_id=$(gh projects list --org "${PROJECT_OWNER}" --format json | jq '.projects[] | select(.title=="'"${PROJECT_NAME}"'") | .id')
+          project_list=$(gh projects list --org "${PROJECT_OWNER}" --format json) || {
+            echo "Error: Could not obtain project list."
+            exit 1
+          }
         else
           echo "Treating project owner as a user."
-          project_id=$(gh projects list --user "${PROJECT_OWNER}" --format json | jq '.projects[] | select(.title=="'"${PROJECT_NAME}"'") | .id')
+          project_list=$(gh projects list --user "${PROJECT_OWNER}" --format json) || {
+            echo "Error: Could not obtain project list."
+            exit 1
+          }
         fi
+
+        # Display the project list for debugging purposes
+        echo "project_list: $project_list"
+
+        # Attempt to extract the project ID
+        project_id=$(echo "$project_list" | jq '.[] | select(.title=="'"${PROJECT_NAME}"'") | .id')
+
         if [ -z "$project_id" ]; then
-          echo "Error: Project ID not found' (an organisation)."
+          echo "Error: Project ID not found for project '${PROJECT_NAME}' owned by '${PROJECT_OWNER}'."
           exit 1
         else
-          echo "project_id: ${project_id}"
+          echo "Project ID found: ${project_id}"
         fi
-        echo "project_id=${project_id}" >> $GITHUB_ENV
+
+        # Export project ID to the GitHub environment
+        echo "project_id=${
 
     - name: Get issues from source repository
       id: get-issues
