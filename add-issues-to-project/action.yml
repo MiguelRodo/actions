@@ -76,10 +76,16 @@ runs:
         fi
         SOURCE_REPO="${SOURCE_REPO_OWNER}/${SOURCE_REPO_NAME}"
 
+        echo "Project name: $PROJECT_NAME_FINAL"
+        echo "Project owner: $PROJECT_OWNER_FINAL"
+        echo "Source repository: $SOURCE_REPO"
+
         # validate source repo format
         if [[ ! "$SOURCE_REPO" =~ ^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$ ]]; then
           echo "Error: Invalid source repository format. Expected format: owner/repo."
           exit 1
+        else
+          echo "Source repository: $SOURCE_REPO"
         fi
 
         # check that owners exist
@@ -88,12 +94,16 @@ runs:
           if [ $? -ne 0 ]; then
             echo "Error: Organization '${PROJECT_OWNER_FINAL}' not found."
             exit 1
+          else 
+            echo "Organization '${PROJECT_OWNER_FINAL}' found."
           fi
         else
           gh api users/"${PROJECT_OWNER_FINAL}" > /dev/null
           if [ $? -ne 0 ]; then
             echo "Error: User '${PROJECT_OWNER_FINAL}' not found."
             exit 1
+          else
+            echo "User '${PROJECT_OWNER_FINAL}' found."
           fi
         fi
 
