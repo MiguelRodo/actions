@@ -157,7 +157,10 @@ runs:
         echo "project_list: $project_list"
 
         # Attempt to extract the project ID
-        project_id=$(echo "$project_list" | jq '.[] | select(.title=="'"${PROJECT_NAME}"'") | .id')
+        project_id=$(echo "$project_list" | jq -r '.projects[] | select(.title=="'"${PROJECT_NAME}"'") | .id') || {
+          echo "Error: Could not extract project ID."
+          exit 1
+        }
 
         if [ -z "$project_id" ]; then
           echo "Error: Project ID not found for project '${PROJECT_NAME}' owned by '${PROJECT_OWNER}'."
@@ -167,7 +170,7 @@ runs:
         fi
 
         # Export project ID to the GitHub environment
-        echo "project_id=${
+        echo "project_id=${project_id}" >> $GITHUB_ENV
 
     - name: Get issues from source repository
       id: get-issues
