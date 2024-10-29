@@ -34,17 +34,17 @@ runs:
         sudo apt update -y
         sudo apt install -y gh jq
 
-        gh auth status  # Verify that gh is authenticated
-
     - name: Authenticate with PAT
       shell: bash
       env:
         GITHUB_TOKEN: "${{ inputs.ADD_ISSUES_TO_PROJECT_TOKEN }}"
       run: |
-        echo "$ADD_ISSUES_TO_PROJECT_TOKEN" | gh auth login --with-token
+        gh auth login -h github.com
 
     - name: Install gh-projects extension
       shell: bash
+      env: 
+        GITHUB_TOKEN: "${{ inputs.ADD_ISSUES_TO_PROJECT_TOKEN }}"
       run: gh extension install github/gh-projects
     
     - name: Validate input and format used values
@@ -56,6 +56,7 @@ runs:
         SOURCE_REPO_NAME: "${{ inputs.source_repo_name }}"
         SOURCE_REPO_OWNER: "${{ inputs.source_repo_owner }}"
         CURRENT_USER: "${{ github.actor }}"
+        GITHUB_TOKEN: "${{ inputs.ADD_ISSUES_TO_PROJECT_TOKEN }}"
       run: |
         if [ -z "${SOURCE_REPO_NAME}" ]; then
           SOURCE_REPO_NAME=$(basename "$(pwd)")
@@ -114,6 +115,7 @@ runs:
         PROJECT_NAME: "${{ env.project_name }}"
         PROJECT_OWNER: "${{ env.project_owner }}"
         IS_PROJECT_OWNER_ORG: "${{ inputs.is_project_owner_org }}"
+        GITHUB_TOKEN: "${{ inputs.ADD_ISSUES_TO_PROJECT_TOKEN }}"
       run: |
         if [ "${IS_PROJECT_OWNER_ORG}" = "true" ]; then
           project_id=$(gh projects list --org "${PROJECT_OWNER}" --format json | jq '.projects[] | select(.title=="'"${PROJECT_NAME}"'") | .id')
@@ -135,6 +137,7 @@ runs:
       shell: bash
       env:
         SOURCE_REPO: "${{ env.source_repo }}"
+        GITHUB_TOKEN: "${{ inputs.ADD_ISSUES_TO_PROJECT_TOKEN }}"
       run: |
         issues=$(gh issue list --repo "${SOURCE_REPO}" --limit 9999 --json number --jq '.[].number' | tr '\n' ' ')
         if [ -z "$issues" ]; then
@@ -150,6 +153,7 @@ runs:
         ADD_ISSUES_TO_PROJECT_TOKEN: "${{ inputs.ADD_ISSUES_TO_PROJECT_TOKEN }}"
         PROJECT_ID: "${{ env.project_id }}"
         SOURCE_REPO: "${{ env.source_repo }}"
+        GITHUB_TOKEN: "${{ inputs.ADD_ISSUES_TO_PROJECT_TOKEN }}"
       run: |
         existing_issue_ids=()
         has_next_page=true
