@@ -59,23 +59,20 @@ runs:
     - name: Set dynamic image name
       shell: bash
       run: |
-        INPUT_IMAGE_NAME="${{ inputs.image_name }}"
-        REGISTRY="${{ inputs.registry }}"
-        APPEND_SHA="${{ inputs.append_sha }}"
+        BRANCH_SUFFIX=${BRANCH_NAME//\//-}
+        SHORT_SHA=$(git rev-parse --short HEAD)
+        # Remove the tag from here
+        echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}-${BRANCH_SUFFIX,,}" >> $GITHUB_ENV
+        echo "IMAGE_TAG=${SHORT_SHA}" >> $GITHUB_ENV
 
-        if [ -n "$INPUT_IMAGE_NAME" ]; then
-          BASE_IMAGE="$INPUT_IMAGE_NAME"
-        else
-          BRANCH_SUFFIX=${BRANCH_NAME//\//-}
-          BASE_IMAGE="${REGISTRY}/${GITHUB_REPOSITORY,,}-${BRANCH_SUFFIX,,}"
-        fi
-
-        if [ "$APPEND_SHA" = "true" ]; then
-          SHORT_SHA=$(git rev-parse --short HEAD)
-          echo "IMAGE_NAME=${BASE_IMAGE}:${SHORT_SHA}" >> $GITHUB_ENV
-        else
-          echo "IMAGE_NAME=${BASE_IMAGE}:latest" >> $GITHUB_ENV
-        fi
+    - name: Pre-build dev container image
+      uses: devcontainers/ci@v0.3
+      with:
+        imageName: ${{ env.IMAGE_NAME }}
+        # Pass the tag explicitly here
+        imageTag: ${{ env.IMAGE_TAG }}
+        push: always
+        noCache: ${{ inputs.no_cache }}
 
     - name: Compute devcontainer subfolder
       shell: bash
@@ -103,6 +100,8 @@ runs:
       if: ${{ inputs.create_prebuild_json == 'true' }}
       shell: bash
       run: |
+        # Construct full reference for the JSON file
+        FULL_IMAGE_REF="${IMAGE_NAME}:${IMAGE_TAG}"
         DEVCONTAINER_PATH="${{ inputs.devcontainer_path }}"
         DEVCONTAINER_JSON="${DEVCONTAINER_PATH}/devcontainer.json"
         PREBUILD_JSON="${DEVCONTAINER_PATH}/prebuild/devcontainer.json"
@@ -110,10 +109,10 @@ runs:
         mkdir -p "$(dirname "$PREBUILD_JSON")"
 
         if [ -f "$PREBUILD_JSON" ]; then
-          jq --arg image "$IMAGE_NAME" '.image = $image' "$PREBUILD_JSON" > temp.json && mv temp.json "$PREBUILD_JSON"
+          jq --arg image "$FULL_IMAGE_REF" '.image = $image' "$PREBUILD_JSON" > temp.json && mv temp.json "$PREBUILD_JSON"
         else
           if [ -f "$DEVCONTAINER_JSON" ]; then
-            jq --arg image "$IMAGE_NAME" \
+            jq --arg image "$FULL_IMAGE_REF" \
               '{image: $image, customizations: .customizations}' \
               "$DEVCONTAINER_JSON" > "$PREBUILD_JSON"
           else
