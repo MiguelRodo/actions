@@ -1,0 +1,102 @@
+name: "Pre-build Dev Container"
+description: "Builds a devcontainer, pushes it to GHCR with a dynamic SHA tag, and optionally updates the prebuild JSON."
+author: "MiguelRodo"
+
+inputs:
+  github_token:
+    description: "GitHub token for logging into GHCR and pushing commits"
+    required: true
+  no_cache:
+    description: "Disable Docker cache during build (true/false). Defaults to false."
+    required: false
+    default: "false"
+  create_prebuild_json:
+    description: "Generate, commit, and push the .devcontainer/prebuild/devcontainer.json file (true/false). Defaults to true."
+    required: false
+    default: "true"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set branch name
+      id: extract_branch
+      shell: bash
+      run: |
+        if [[ "${GITHUB_REF}" == refs/heads/* ]]; then
+          branch="${GITHUB_REF#refs/heads/}"
+        else
+          branch="main"
+        fi
+        echo "BRANCH_NAME=$branch" >> $GITHUB_ENV
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ inputs.github_token }}
+
+    - name: Set dynamic image name
+      shell: bash
+      run: |
+        BRANCH_SUFFIX=${BRANCH_NAME//\//-}
+        SHORT_SHA=$(git rev-parse --short HEAD)
+        echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}-${BRANCH_SUFFIX,,}:${SHORT_SHA}" >> $GITHUB_ENV
+
+    - name: Pre-build dev container image
+      uses: devcontainers/ci@v0.3
+      with:
+        imageName: ${{ env.IMAGE_NAME }}
+        push: always
+        noCache: ${{ inputs.no_cache }}
+
+    - name: Update or create prebuild/devcontainer.json
+      if: ${{ inputs.create_prebuild_json == 'true' }}
+      shell: bash
+      run: |
+        DEVCONTAINER_JSON=".devcontainer/devcontainer.json"
+        PREBUILD_JSON=".devcontainer/prebuild/devcontainer.json"
+
+        mkdir -p "$(dirname "$PREBUILD_JSON")"
+
+        if [ -f "$PREBUILD_JSON" ]; then
+          jq --arg image "$IMAGE_NAME" '.image = $image' "$PREBUILD_JSON" > temp.json && mv temp.json "$PREBUILD_JSON"
+        else
+          if [ -f "$DEVCONTAINER_JSON" ]; then
+            jq --arg image "$IMAGE_NAME" \
+              '{image: $image, customizations: .customizations}' \
+              "$DEVCONTAINER_JSON" > "$PREBUILD_JSON"
+          else
+            echo "No devcontainer.json found to copy customizations from!"
+            exit 1
+          fi
+        fi
+
+    - name: Commit and push changes
+      if: ${{ inputs.create_prebuild_json == 'true' }}
+      shell: bash
+      run: |
+        git config --local user.email "actions@github.com"
+        git config --local user.name "GitHub Actions"
+        git add .devcontainer/prebuild/devcontainer.json
+
+        if git diff --cached --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "Update prebuild devcontainer.json with image ${{ env.IMAGE_NAME }}"
+          
+          # Attempt to push. If it fails, catch the error and print instructions.
+          if ! git push; then
+            echo "::error::Failed to push the prebuild/devcontainer.json file to the repository."
+            echo "======================================================================================="
+            echo "❌ GITHUB ACTIONS PERMISSION ERROR"
+            echo ""
+            echo "By default, GitHub Actions lack write permissions to commit back to the repository."
+            echo ""
+            echo "🛠️  HOW TO FIX THIS:"
+            echo "1. Go to your repository on GitHub."
+            echo "2. Click 'Settings' -> 'Actions' -> 'General'."
+            echo "3. Scroll down to 'Workflow permissions'."
+            echo "4. Change the selection to 'Read and write permissions'."
+            echo "5. Click 'Save' and re-run this workflow."
+            echo "======================================================================================="
