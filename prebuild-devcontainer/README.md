@@ -42,7 +42,7 @@ jobs:
 | `no_cache` | Disable Docker cache during build (`true`/`false`). | No | `false` |
 | `create_prebuild_json` | Generate and commit a `prebuild/devcontainer.json` (`true`/`false`). | No | `true` |
 | `devcontainer_path` | Path to the `.devcontainer` directory, relative to the repo root. | No | `.devcontainer` |
-| `image_name` | Full image name without tag (e.g. `ghcr.io/myorg/myimage`). | No | `{registry}/{repo}-{branch}` |
+| `image_name` | Full image name without tag (e.g. `ghcr.io/myorg/myimage`). For `owner/myrepo` on branch `feature/test`, defaults to `ghcr.io/owner/myrepo-feature-test`. | No | `{registry}/{repo}-{branch}` |
 | `append_sha` | Append the Git short SHA as the image tag. If `false`, uses `latest`. | No | `true` |
 | `registry` | Container registry URL. | No | `ghcr.io` |
 | `registry_username` | Username for registry login. | No | Repository owner |
@@ -71,6 +71,8 @@ jobs:
 ```
 
 ### Using a non-GitHub container registry
+
+When using a custom `image_name`, the `registry` input is only used for login—it is not automatically prepended to the image name. Ensure they match.
 
 ```yaml
       - name: Run Dev Container Prebuild

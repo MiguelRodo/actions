@@ -80,7 +80,10 @@ runs:
     - name: Compute devcontainer subfolder
       shell: bash
       run: |
+        # Strip trailing slashes and compute the parent directory.
+        # devcontainers/ci subFolder is the directory containing .devcontainer.
         DEVCONTAINER_PATH="${{ inputs.devcontainer_path }}"
+        DEVCONTAINER_PATH="${DEVCONTAINER_PATH%/}"
         DIR=$(dirname "$DEVCONTAINER_PATH")
         if [ "$DIR" = "." ]; then
           echo "DEVCONTAINER_SUBFOLDER=" >> $GITHUB_ENV
