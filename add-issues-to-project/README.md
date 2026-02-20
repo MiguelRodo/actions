@@ -1,243 +1,101 @@
-# Add Issues to Project GitHub Action
+# Add Issues to Project Action
 
 ![GitHub Marketplace](https://img.shields.io/badge/Marketplace-GitHub%20Action-blue)
 
-**Add Issues to Project** is a GitHub Action that automates the process of adding issues from a specified repository to a designated GitHub Project. It ensures that each issue is only added once, preventing duplicates and keeping your project organized.
+**Add Issues to Project** is a composite GitHub Action that automates the process of fetching issues from a specified repository and adding them to a designated GitHub Project (V2). It features built-in duplicate detection, ensuring issues are only added once, keeping your project boards clean and organized.
 
 ## 📋 TL;DR
 
-To quickly set up the **Add Issues to Project** action:
+To quickly set up this action in your repository:
 
-1. **Copy the workflow template** below.
-2. **Paste it** into your repository's `.github/workflows/` directory (e.g., `.github/workflows/add-issues-to-project.yml`).
-3. **Create repository token** with projects acccess:
-    - *Generate a token*:
-        - Go to https://github.com/settings/tokens/new
-        - Select `repo`, `project` and `read:org` scopes.
-        - Click `Generate token` and copy token.
-    - *Save token* as a repository secret:
-        - Go to https://github.com/<user_name>/<repo_name>/settings/secrets/actions
-        - Click `New repository secret`, paste copied token and name it `ADD_ISSUES_TO_PROJECT_TOKEN`.
-3. **Configure the inputs** as needed.
-    - By default, it assumes that the project's name and owner are the same as the repo. Typically, you will at least change the project name.
-4. **Run the workflow** manually from the GitHub Actions tab.
+1. **Generate a Personal Access Token (PAT)** with `repo`, `project`, and `read:org` (if applicable) scopes.
+2. **Save the PAT** as a repository secret named `ADD_ISSUES_TO_PROJECT_TOKEN`.
+3. **Create a workflow file** (e.g., `.github/workflows/sync-issues.yml`) using the template below.
 
 ```yaml
-name: Add Issues to Project
+name: Sync Issues to Project
 
 on:
   workflow_dispatch:
-    inputs:
-      project_name:
-        description: "Project name."
-        default: "PhD"
-        required: false
-      project_owner:
-        description: "Project owner. Defaults to repository owner."
-        required: false
-      is_project_owner_org:
-        description: "Whether the project owner is an organization. Defaults to `false`."
-        required: false
-        default: "false"
-      source_repo_name:
-        description: "Repository name. Defaults to current repository."
-        required: false
-      source_repo_owner:
-        description: "Repository owner. Defaults to current GitHub user."
-        required: false
+  issues:
+    types: [opened, reopened]
 
 jobs:
-  add-issues-to-project:
+  add-to-project:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Run Add Issues to Project Action
-        uses: MiguelRodo/actions/add-issues-to-project@v1.0.16
+      - name: Add Issues to Project
+        uses: MiguelRodo/actions/add-issues-to-project@main
         with:
-          project_name: ${{ github.event.inputs.project_name }}
-          project_owner: ${{ github.event.inputs.project_owner }}
-          is_project_owner_org: ${{ github.event.inputs.is_project_owner_org }}
-          source_repo_name: ${{ github.event.inputs.source_repo_name }}
-          source_repo_owner: ${{ github.event.inputs.source_repo_owner }}
           ADD_ISSUES_TO_PROJECT_TOKEN: ${{ secrets.ADD_ISSUES_TO_PROJECT_TOKEN }}
+          # Optional overrides:
+          # project_name: "My Custom Project Board"
+          # is_project_owner_org: "true"
+
 ```
 
 ---
 
 ## 📖 Table of Contents
 
-- [Add Issues to Project GitHub Action](#add-issues-to-project-github-action)
-  - [📋 TL;DR](#-tldr)
-  - [📖 Table of Contents](#-table-of-contents)
-  - [🔍 Description](#-description)
-  - [⚙️ Prerequisites](#️-prerequisites)
-  - [🔧 Inputs](#-inputs)
-  - [🚀 Usage](#-usage)
-    - [1. Create or Obtain a Personal Access Token (PAT)](#1-create-or-obtain-a-personal-access-token-pat)
-    - [2. Store the PAT as a Secret](#2-store-the-pat-as-a-secret)
-    - [3. Set Up the Workflow](#3-set-up-the-workflow)
-    - [4. Trigger the Workflow](#4-trigger-the-workflow)
-  - [🛠️ Example](#️-example)
-  - [❓ Notes](#-notes)
-  - [🐞 Troubleshooting](#-troubleshooting)
-  - [📄 License](#-license)
-  - [🙌 Acknowledgments](#-acknowledgments)
-
----
-
-## 🔍 Description
-
-The **Add Issues to Project** action streamlines the management of your GitHub Projects by:
-
-- **Fetching all issues** from a specified repository.
-- **Checking for existing issues** in the project to avoid duplicates.
-- **Adding new issues** to the project seamlessly.
-
-Whether you're managing a personal project or an organizational one, this action adapts to your needs with flexible input options.
-
----
-
-## ⚙️ Prerequisites
-
-- **Personal Access Token (PAT):** Ensure you have a GitHub PAT with the following scopes:
-  - `repo`
-  - `read:org`
-  - `project`
-
-  Store this token securely as a secret in your repository or organization settings (e.g., `ADD_ISSUES_TO_PROJECT_TOKEN`).
+* [🔧 Inputs](https://www.google.com/search?q=%23-inputs)
+* [⚙️ How It Works](https://www.google.com/search?q=%23%EF%B8%8F-how-it-works)
+* [🛠️ Advanced Example](https://www.google.com/search?q=%23%EF%B8%8F-advanced-example)
+* [🐞 Troubleshooting](https://www.google.com/search?q=%23-troubleshooting)
 
 ---
 
 ## 🔧 Inputs
 
-| Input                  | Description                                                                                      | Required | Default            |
-| ---------------------- | ------------------------------------------------------------------------------------------------ | -------- | ------------------ |
-| `project_name`         | Name of the GitHub Project to which issues should be added. Defaults to repository name.        | No       | Repository Name    |
-| `project_owner`        | Owner of the GitHub Project. Defaults to repository owner.                                      | No       | Repository Owner   |
-| `is_project_owner_org` | Indicates if the project owner is an organization. Defaults to `false`.                         | No       | `false`            |
-| `source_repo_name`     | Name of the source repository. Defaults to the current repository.                              | No       | Current Repository |
-| `source_repo_owner`    | Owner of the source repository. Defaults to the current GitHub user.                            | No       | Current User       |
-| `ADD_ISSUES_TO_PROJECT_TOKEN` | GitHub token with correct access for accessing issues and writing to projects.                | Yes      | —                  |
+| Input | Description | Required | Default |
+| --- | --- | --- | --- |
+| `ADD_ISSUES_TO_PROJECT_TOKEN` | A GitHub PAT with permissions to read the source repository and write to the target GitHub Project. | **Yes** | — |
+| `project_name` | The name of the target GitHub Project. | No | *Current Repository Name* |
+| `project_owner` | The username or organization that owns the target project. | No | *Current Repository Owner* |
+| `is_project_owner_org` | Set to `"true"` if the project owner is a GitHub Organization. | No | `"false"` |
+| `source_repo_name` | The name of the repository to pull issues from. | No | *Current Repository Name* |
+| `source_repo_owner` | The owner of the source repository. | No | *Current GitHub User* |
 
 ---
 
-## 🚀 Usage
+## ⚙️ How It Works
 
-### 1. Create or Obtain a Personal Access Token (PAT)
+Under the hood, this action:
 
-If you need to create a new PAT:
-
-1. Go to [GitHub Settings](https://github.com/settings/tokens).
-2. Click on **Generate new token**.
-3. Select the scopes:
-   - `repo`
-   - `read:org`
-   - `project`
-4. Click **Generate token** and copy the token.
-
-### 2. Store the PAT as a Secret
-
-Add the PAT to your repository secrets:
-
-1. Navigate to your repository on GitHub.
-2. Go to **Settings** > **Secrets and variables** > **Actions**.
-3. Click **New repository secret**.
-4. Name it `ADD_ISSUES_TO_PROJECT_TOKEN` and paste your PAT.
-
-### 3. Set Up the Workflow
-
-Create a workflow file in your repository (e.g., `.github/workflows/add-issues-to-project.yml`) using the TL;DR template provided above.
-
-### 4. Trigger the Workflow
-
-You can manually trigger the workflow:
-
-1. Go to the **Actions** tab in your repository.
-2. Select **Add Issues to Project** workflow.
-3. Click **Run workflow**, fill in the required inputs, and start the workflow.
+1. Installs the GitHub CLI (`gh`) and the `gh-projects` extension.
+2. Authenticates using your provided `ADD_ISSUES_TO_PROJECT_TOKEN` (bypassing the default, lower-permission `GITHUB_TOKEN`).
+3. Validates that the target project, organization/user, and source repository actually exist.
+4. Uses GraphQL to fetch the target Project ID and paginate through all existing items on the board.
+5. Cross-references the board's existing issue IDs against the repository's issue list.
+6. Appends only the *missing* issues to the project via a GraphQL mutation.
 
 ---
 
-## 🛠️ Example
+## 🛠️ Advanced Example
 
-Here's an example configuration for adding issues to a project named "Awesome Project" owned by an organization:
+If you want to sync issues from a repository into a centrally managed Organization project board with a different name:
 
 ```yaml
-name: Add Issues to Project
-
-on:
-  workflow_dispatch:
-    inputs:
-      project_name:
-        description: "Project name."
-        default: "Awesome Project"
-        required: false
-      project_owner:
-        description: "Project owner. Defaults to repository owner."
-        required: false
-      is_project_owner_org:
-        description: "Whether the project owner is an organization. Defaults to `false`."
-        required: false
-        default: "true"
-      source_repo_name:
-        description: "Repository name. Defaults to current repository."
-        required: false
-      source_repo_owner:
-        description: "Repository owner. Defaults to current GitHub user."
-        required: false
-
-jobs:
-  add-issues-to-project:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Run Add Issues to Project Action
-        uses: MiguelRodo/actions/add-issues-to-project@v1.1.0
+      - name: Add Issues to Central Org Project
+        uses: MiguelRodo/actions/add-issues-to-project@main
         with:
-          project_name: ${{ github.event.inputs.project_name }}
-          project_owner: ${{ github.event.inputs.project_owner }}
-          is_project_owner_org: ${{ github.event.inputs.is_project_owner_org }}
-          source_repo_name: ${{ github.event.inputs.source_repo_name }}
-          source_repo_owner: ${{ github.event.inputs.source_repo_owner }}
-          ADD_ISSUES_TO_PROJECT_TOKEN: ${{ secrets.ADD_ISSUES_TO_PROJECT_TOKEN }}
+          ADD_ISSUES_TO_PROJECT_TOKEN: ${{ secrets.ORG_PROJECT_PAT }}
+          project_name: "Q1 Engineering Roadmap"
+          project_owner: "MyAwesomeOrg"
+          is_project_owner_org: "true"
+          source_repo_name: "frontend-client"
+          source_repo_owner: "MyAwesomeOrg"
+
 ```
-
----
-
-## ❓ Notes
-
-- **GitHub CLI and jq:** The action installs the GitHub CLI (`gh`) and `jq` during runtime to interact with GitHub's API.
-- **Authentication:** The action unsets any existing `GH_TOKEN` or `GITHUB_TOKEN` to ensure it uses your provided `ADD_ISSUES_TO_PROJECT_TOKEN`.
-- **Existing Issues:** The action checks for existing issues in the project to avoid duplicates.
-- **Organization Projects:** If you're adding issues to an organization project, set `is_project_owner_org` to `true`.
 
 ---
 
 ## 🐞 Troubleshooting
 
-- **Authentication Errors:** Ensure your `ADD_ISSUES_TO_PROJECT_TOKEN` has the correct scopes and is stored correctly as a secret.
-- **Project Not Found:** Verify that the `project_name` and `project_owner` are correct and that the project exists.
-- **Permission Issues:** Make sure the PAT has access to the organization and the project.
-- **Invalid Repository Format:** Ensure the `source_repo` follows the `owner/repo` format.
+* **Action fails at authentication:** Ensure your `ADD_ISSUES_TO_PROJECT_TOKEN` is active, has not expired, and contains the `project` scope. Classic PATs are often easier to configure for organization-wide project boards than fine-grained tokens.
+* **Project Not Found:** Double-check your spelling for `project_name`. If the project belongs to an organization rather than your personal user account, you *must* set `is_project_owner_org: "true"`.
 
----
-
-## 📄 License
-
-This project is licensed under the terms of the [MIT License](LICENSE).
-
----
-
-## 🙌 Acknowledgments
-
-Developed by [Miguel Rodo](https://github.com/MiguelRodo) (and extensive ChatGPT). Inspired by [SATVILab](https://github.com/SATVILab). Contributions and feedback are welcome!
-
----
-
-**Feel free to contribute or raise issues for any problems you encounter.**
+```
