@@ -1,19 +1,39 @@
 name: "Pre-build Dev Container"
-description: "Builds a devcontainer, pushes it to GHCR with a dynamic SHA tag, and optionally updates the prebuild JSON."
+description: "Builds a devcontainer, pushes it to a container registry with a dynamic SHA tag, and optionally updates the prebuild JSON."
 author: "MiguelRodo"
 
 inputs:
   github_token:
-    description: "GitHub token for logging into GHCR and pushing commits"
+    description: "Token for logging into the container registry and pushing commits."
     required: true
   no_cache:
-    description: "Disable Docker cache during build (true/false). Defaults to false."
+    description: "Disable Docker cache during build (true/false)."
     required: false
     default: "false"
   create_prebuild_json:
-    description: "Generate, commit, and push the .devcontainer/prebuild/devcontainer.json file (true/false). Defaults to true."
+    description: "Generate, commit, and push the prebuild devcontainer.json (true/false)."
     required: false
     default: "true"
+  devcontainer_path:
+    description: "Path to the .devcontainer directory, relative to the repo root."
+    required: false
+    default: ".devcontainer"
+  image_name:
+    description: "Full image name without tag (e.g. 'ghcr.io/myorg/myimage'). Defaults to '{registry}/{repo}-{branch}'."
+    required: false
+    default: ""
+  append_sha:
+    description: "Append the Git short SHA as the image tag. If false, uses 'latest'."
+    required: false
+    default: "true"
+  registry:
+    description: "Container registry URL."
+    required: false
+    default: "ghcr.io"
+  registry_username:
+    description: "Username for registry login. Defaults to the repository owner."
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -29,19 +49,47 @@ runs:
         fi
         echo "BRANCH_NAME=$branch" >> $GITHUB_ENV
 
-    - name: Login to GitHub Container Registry
+    - name: Login to container registry
       uses: docker/login-action@v3
       with:
-        registry: ghcr.io
-        username: ${{ github.repository_owner }}
+        registry: ${{ inputs.registry }}
+        username: ${{ inputs.registry_username != '' && inputs.registry_username || github.repository_owner }}
         password: ${{ inputs.github_token }}
 
     - name: Set dynamic image name
       shell: bash
       run: |
-        BRANCH_SUFFIX=${BRANCH_NAME//\//-}
-        SHORT_SHA=$(git rev-parse --short HEAD)
-        echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}-${BRANCH_SUFFIX,,}:${SHORT_SHA}" >> $GITHUB_ENV
+        INPUT_IMAGE_NAME="${{ inputs.image_name }}"
+        REGISTRY="${{ inputs.registry }}"
+        APPEND_SHA="${{ inputs.append_sha }}"
+
+        if [ -n "$INPUT_IMAGE_NAME" ]; then
+          BASE_IMAGE="$INPUT_IMAGE_NAME"
+        else
+          BRANCH_SUFFIX=${BRANCH_NAME//\//-}
+          BASE_IMAGE="${REGISTRY}/${GITHUB_REPOSITORY,,}-${BRANCH_SUFFIX,,}"
+        fi
+
+        if [ "$APPEND_SHA" = "true" ]; then
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          echo "IMAGE_NAME=${BASE_IMAGE}:${SHORT_SHA}" >> $GITHUB_ENV
+        else
+          echo "IMAGE_NAME=${BASE_IMAGE}:latest" >> $GITHUB_ENV
+        fi
+
+    - name: Compute devcontainer subfolder
+      shell: bash
+      run: |
+        # Strip trailing slashes and compute the parent directory.
+        # devcontainers/ci subFolder is the directory containing .devcontainer.
+        DEVCONTAINER_PATH="${{ inputs.devcontainer_path }}"
+        DEVCONTAINER_PATH="${DEVCONTAINER_PATH%/}"
+        DIR=$(dirname "$DEVCONTAINER_PATH")
+        if [ "$DIR" = "." ]; then
+          echo "DEVCONTAINER_SUBFOLDER=" >> $GITHUB_ENV
+        else
+          echo "DEVCONTAINER_SUBFOLDER=$DIR" >> $GITHUB_ENV
+        fi
 
     - name: Pre-build dev container image
       uses: devcontainers/ci@v0.3
@@ -49,13 +97,15 @@ runs:
         imageName: ${{ env.IMAGE_NAME }}
         push: always
         noCache: ${{ inputs.no_cache }}
+        subFolder: ${{ env.DEVCONTAINER_SUBFOLDER }}
 
     - name: Update or create prebuild/devcontainer.json
       if: ${{ inputs.create_prebuild_json == 'true' }}
       shell: bash
       run: |
-        DEVCONTAINER_JSON=".devcontainer/devcontainer.json"
-        PREBUILD_JSON=".devcontainer/prebuild/devcontainer.json"
+        DEVCONTAINER_PATH="${{ inputs.devcontainer_path }}"
+        DEVCONTAINER_JSON="${DEVCONTAINER_PATH}/devcontainer.json"
+        PREBUILD_JSON="${DEVCONTAINER_PATH}/prebuild/devcontainer.json"
 
         mkdir -p "$(dirname "$PREBUILD_JSON")"
 
@@ -67,7 +117,7 @@ runs:
               '{image: $image, customizations: .customizations}' \
               "$DEVCONTAINER_JSON" > "$PREBUILD_JSON"
           else
-            echo "No devcontainer.json found to copy customizations from!"
+            echo "No devcontainer.json found at '${DEVCONTAINER_JSON}' to copy customizations from!"
             exit 1
           fi
         fi
@@ -76,15 +126,18 @@ runs:
       if: ${{ inputs.create_prebuild_json == 'true' }}
       shell: bash
       run: |
+        DEVCONTAINER_PATH="${{ inputs.devcontainer_path }}"
+        PREBUILD_JSON="${DEVCONTAINER_PATH}/prebuild/devcontainer.json"
+
         git config --local user.email "actions@github.com"
         git config --local user.name "GitHub Actions"
-        git add .devcontainer/prebuild/devcontainer.json
+        git add "$PREBUILD_JSON"
 
         if git diff --cached --quiet; then
           echo "No changes to commit"
         else
           git commit -m "Update prebuild devcontainer.json with image ${{ env.IMAGE_NAME }}"
-          
+
           # Attempt to push. If it fails, catch the error and print instructions.
           if ! git push; then
             echo "::error::Failed to push the prebuild/devcontainer.json file to the repository."
@@ -100,3 +153,6 @@ runs:
             echo "4. Change the selection to 'Read and write permissions'."
             echo "5. Click 'Save' and re-run this workflow."
             echo "======================================================================================="
+            exit 1
+          fi
+        fi
