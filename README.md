@@ -1,14 +1,14 @@
 # Custom GitHub Actions
 
-A centralized collection of custom, reusable composite GitHub Actions built to automate repository management, issue tracking, and Dev Container deployments.
+Reusable composite GitHub Actions for Dev Container deployment and issue tracking.
 
-## 🚀 Available Actions
+## Actions
 
-### 1. [Pre-build Dev Container](./prebuild-devcontainer)
+### [Pre-build Dev Container](./prebuild-devcontainer)
 
-Automates the compilation and deployment of VS Code Dev Containers. Builds your Dockerfile, tags it dynamically with a unique commit SHA to bypass local caching issues, pushes it to GHCR, and generates a pre-built JSON configuration for instant loads.
+Builds your Dev Container, pushes it to a container registry (GHCR by default, or any registry you configure), and optionally generates a `prebuild/devcontainer.json` for instant loads.
 
-To use it, add the following to `.github/workflows/prebuild-devcontainer.yml` in your repo:
+Copy the following to `.github/workflows/prebuild-devcontainer.yml`:
 
 ```yaml
 name: 'Pre-build Dev Container'
@@ -36,18 +36,17 @@ jobs:
         uses: MiguelRodo/actions/prebuild-devcontainer@main
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          no_cache: 'false'
-          create_prebuild_json: 'true'
-  ```
+```
+
+See the [action README](./prebuild-devcontainer/README.md) for all inputs, including how to set a custom image name, use a non-default devcontainer path, disable SHA tagging, or use a non-GitHub container registry.
 
 ### [Add Issues to Project](./add-issues-to-project)
 
-Automates the synchronization between a repository's issues and a GitHub Project (V2) board. It safely fetches issues, checks the target board to prevent duplicates, and appends new issues automatically. Supports cross-repository syncing and organization-owned project boards.
+Syncs issues from a repository to a GitHub Project (V2) board with duplicate detection.
 
-* **Usage path:** `MiguelRodo/actions/add-issues-to-project@main`
-* **Requires:** A Personal Access Token (PAT) with `project` and `repo` scopes, named `Add_ISSUES_TO_PROJECT_TOKEN`.
+**Requires:** A Personal Access Token (PAT) with `repo`, `project`, and `read:org` (if applicable) scopes, saved as the `ADD_ISSUES_TO_PROJECT_TOKEN` secret.
 
-To use, dd the following to `.github/workflows/add-issues-to-project.yml` in your repo:
+Copy the following to `.github/workflows/add-issues-to-project.yml`:
 
 ```yaml
 name: Sync Issues to Project
@@ -73,21 +72,12 @@ jobs:
           # is_project_owner_org: "true"
 ```
 
-## 🛠️ General Usage
+See the [action README](./add-issues-to-project/README.md) for all inputs and advanced usage.
 
-To use any of these actions in your own repositories, you don't need to clone or copy the code. Simply reference the action directory in your workflow file.
+## Usage
 
-Example:
+Reference actions directly in your workflow files—no cloning required:
 
 ```yaml
-steps:
-  - name: Checkout repository
-    uses: actions/checkout@v4
-
-  - name: Run a custom action
-    uses: MiguelRodo/actions/<action-folder-name>@main
-    with:
-      # Action-specific inputs go here
+uses: MiguelRodo/actions/<action-folder-name>@main
 ```
-
-For detailed setup instructions, input variables, and permission requirements, please refer to the README.md located inside each action's respective folder.
