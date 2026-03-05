@@ -81,6 +81,32 @@ jobs:
 
 See the [action README](./add-issues-to-project/README.md) for all inputs and advanced usage.
 
+## Releasing a New Version
+
+This repository uses an automated release workflow (`.github/workflows/release.yml`) to handle version bumping, floating tag updates, and GitHub Release creation.
+
+### How to release
+
+**Option 1 — Push a tag directly:**
+
+```bash
+git tag v1.2.3
+git push origin v1.2.3
+```
+
+The workflow triggers automatically on any tag matching `vX.Y.Z`.
+
+**Option 2 — Run the workflow manually:**
+
+Go to **Actions → Publish Release and Bump Floating Tags → Run workflow**, enter the version (e.g. `v1.2.3`), and click **Run workflow**.
+
+### What the workflow does
+
+1. Validates that the version matches the strict `vX.Y.Z` semantic format.
+2. (Manual mode only) Creates and pushes the base tag (e.g. `v1.2.3`) if it does not already exist.
+3. Force-updates the floating major (`v1`) and minor (`v1.2`) tags to point to the new commit.
+4. Creates a GitHub Release for the specific version with auto-generated release notes and marks it as the latest release.
+
 ## Usage
 
 Reference actions directly in your workflow files—no cloning required:
