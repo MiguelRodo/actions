@@ -15,16 +15,19 @@ name: 'Pre-build Dev Container'
 
 on:
   push:
-    branches:
-      - 'main'
-    paths:
-      - '.devcontainer/**'
+    tags:
+      - 'v*'
+      - '*-v*'
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to build (e.g. v1.2.3 or main-v1.2.3)'
+        required: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    concurrency: 
+    concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: true
     permissions:
@@ -39,6 +42,7 @@ jobs:
         uses: MiguelRodo/actions/prebuild-devcontainer@v2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.event.inputs.tag }}
 ```
 
 See the [action README](./prebuild-devcontainer/README.md) for all inputs, including how to set a custom image name, use a non-default devcontainer path, disable SHA tagging, or use a non-GitHub container registry.
