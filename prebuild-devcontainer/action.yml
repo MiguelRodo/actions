@@ -1,6 +1,6 @@
 name: "Pre-build Dev Container"
 description: "Builds a devcontainer, pushes it to a container registry with a dynamic SHA tag, and optionally updates the prebuild JSON."
-author: "MiguelRodo"
+author: "Miguel Rodo <miguel.rodo@uct.ac.za>"
 
 inputs:
   github_token:
@@ -61,24 +61,22 @@ runs:
       run: |
         BRANCH_SUFFIX=${BRANCH_NAME//\//-}
         SHORT_SHA=$(git rev-parse --short HEAD)
-        # Remove the tag from here
-        echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}-${BRANCH_SUFFIX,,}" >> $GITHUB_ENV
-        echo "IMAGE_TAG=${SHORT_SHA}" >> $GITHUB_ENV
-
-    - name: Pre-build dev container image
-      uses: devcontainers/ci@v0.3
-      with:
-        imageName: ${{ env.IMAGE_NAME }}
-        # Pass the tag explicitly here
-        imageTag: ${{ env.IMAGE_TAG }}
-        push: always
-        noCache: ${{ inputs.no_cache }}
+        
+        if [ -z "${{ inputs.image_name }}" ]; then
+          echo "IMAGE_NAME=${{ inputs.registry }}/${GITHUB_REPOSITORY,,}-${BRANCH_SUFFIX,,}" >> $GITHUB_ENV
+        else
+          echo "IMAGE_NAME=${{ inputs.image_name }}" >> $GITHUB_ENV
+        fi
+        
+        if [ "${{ inputs.append_sha }}" = "true" ]; then
+          echo "IMAGE_TAG=${SHORT_SHA}" >> $GITHUB_ENV
+        else
+          echo "IMAGE_TAG=latest" >> $GITHUB_ENV
+        fi
 
     - name: Compute devcontainer subfolder
       shell: bash
       run: |
-        # Strip trailing slashes and compute the parent directory.
-        # devcontainers/ci subFolder is the directory containing .devcontainer.
         DEVCONTAINER_PATH="${{ inputs.devcontainer_path }}"
         DEVCONTAINER_PATH="${DEVCONTAINER_PATH%/}"
         DIR=$(dirname "$DEVCONTAINER_PATH")
@@ -92,6 +90,7 @@ runs:
       uses: devcontainers/ci@v0.3
       with:
         imageName: ${{ env.IMAGE_NAME }}
+        imageTag: ${{ env.IMAGE_TAG }}
         push: always
         noCache: ${{ inputs.no_cache }}
         subFolder: ${{ env.DEVCONTAINER_SUBFOLDER }}
@@ -100,7 +99,6 @@ runs:
       if: ${{ inputs.create_prebuild_json == 'true' }}
       shell: bash
       run: |
-        # Construct full reference for the JSON file
         FULL_IMAGE_REF="${IMAGE_NAME}:${IMAGE_TAG}"
         DEVCONTAINER_PATH="${{ inputs.devcontainer_path }}"
         DEVCONTAINER_JSON="${DEVCONTAINER_PATH}/devcontainer.json"
@@ -135,9 +133,8 @@ runs:
         if git diff --cached --quiet; then
           echo "No changes to commit"
         else
-          git commit -m "Update prebuild devcontainer.json with image ${{ env.IMAGE_NAME }}"
+          git commit -m "Update prebuild devcontainer.json with image ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}"
 
-          # Attempt to push. If it fails, catch the error and print instructions.
           if ! git push; then
             echo "::error::Failed to push the prebuild/devcontainer.json file to the repository."
             echo "======================================================================================="
@@ -146,11 +143,9 @@ runs:
             echo "By default, GitHub Actions lack write permissions to commit back to the repository."
             echo ""
             echo "🛠️  HOW TO FIX THIS:"
-            echo "1. Go to your repository on GitHub."
-            echo "2. Click 'Settings' -> 'Actions' -> 'General'."
-            echo "3. Scroll down to 'Workflow permissions'."
-            echo "4. Change the selection to 'Read and write permissions'."
-            echo "5. Click 'Save' and re-run this workflow."
+            echo "1. Ensure the calling workflow has 'permissions: contents: write'."
+            echo "2. Go to your repository settings -> Actions -> General."
+            echo "3. Change 'Workflow permissions' to 'Read and write permissions'."
             echo "======================================================================================="
             exit 1
           fi
