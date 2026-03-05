@@ -32,7 +32,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Dev Container Prebuild
-        uses: MiguelRodo/actions/prebuild-devcontainer@main
+        uses: MiguelRodo/actions/prebuild-devcontainer@v2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 ```

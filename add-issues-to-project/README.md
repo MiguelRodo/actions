@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Add Issues to Project
-        uses: MiguelRodo/actions/add-issues-to-project@main
+        uses: MiguelRodo/actions/add-issues-to-project@v2
         with:
           ADD_ISSUES_TO_PROJECT_TOKEN: ${{ secrets.ADD_ISSUES_TO_PROJECT_TOKEN }}
           # Optional overrides:
