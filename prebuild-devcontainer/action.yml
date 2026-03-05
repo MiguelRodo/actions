@@ -1,5 +1,5 @@
 name: "Pre-build Dev Container"
-description: "Builds a devcontainer, pushes it to a container registry with a dynamic SHA tag, and optionally updates the prebuild JSON."
+description: "Builds a devcontainer, pushes it to a container registry tagged with a git tag and SemVer aliases, and optionally updates the prebuild JSON."
 author: "Miguel Rodo <miguel.rodo@uct.ac.za>"
 
 inputs:
@@ -22,10 +22,10 @@ inputs:
     description: "Full image name without tag (e.g. 'ghcr.io/myorg/myimage'). Defaults to '{registry}/{repo}-{branch}'."
     required: false
     default: ""
-  append_sha:
-    description: "Append the Git short SHA as the image tag. If false, uses 'latest'."
+  tag:
+    description: "Git tag to use as the primary container image tag (e.g. 'v1.2.3' or 'main-v1.2.3'). Auto-detected from GITHUB_REF when triggered by a tag push."
     required: false
-    default: "true"
+    default: ""
   registry:
     description: "Container registry URL."
     required: false
@@ -60,19 +60,44 @@ runs:
       shell: bash
       run: |
         BRANCH_SUFFIX=${BRANCH_NAME//\//-}
-        SHORT_SHA=$(git rev-parse --short HEAD)
-        
+
         if [ -z "${{ inputs.image_name }}" ]; then
           echo "IMAGE_NAME=${{ inputs.registry }}/${GITHUB_REPOSITORY,,}-${BRANCH_SUFFIX,,}" >> $GITHUB_ENV
         else
           echo "IMAGE_NAME=${{ inputs.image_name }}" >> $GITHUB_ENV
         fi
-        
-        if [ "${{ inputs.append_sha }}" = "true" ]; then
-          echo "IMAGE_TAG=${SHORT_SHA}" >> $GITHUB_ENV
+
+        # Determine primary tag: use input, or auto-detect from GITHUB_REF on tag push
+        INPUT_TAG="${{ inputs.tag }}"
+        if [ -n "$INPUT_TAG" ]; then
+          IMAGE_TAG="$INPUT_TAG"
+        elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+          IMAGE_TAG="${GITHUB_REF#refs/tags/}"
         else
-          echo "IMAGE_TAG=latest" >> $GITHUB_ENV
+          IMAGE_TAG="latest"
         fi
+        echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+
+    - name: Parse SemVer aliases
+      shell: bash
+      run: |
+        TAG="${IMAGE_TAG}"
+        ALIAS_TAGS=""
+
+        # Standard SemVer: vX.Y.Z[...] -> also tag vX.Y and vX
+        if [[ "$TAG" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
+          MAJOR="${BASH_REMATCH[1]}"
+          MINOR="${BASH_REMATCH[2]}"
+          ALIAS_TAGS="v${MAJOR}.${MINOR},v${MAJOR}"
+        # Branch-prefixed SemVer: {prefix}-vX.Y.Z[...] -> also tag {prefix}-vX.Y and {prefix}-vX
+        elif [[ "$TAG" =~ ^(.+)-v([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
+          PREFIX="${BASH_REMATCH[1]}"
+          MAJOR="${BASH_REMATCH[2]}"
+          MINOR="${BASH_REMATCH[3]}"
+          ALIAS_TAGS="${PREFIX}-v${MAJOR}.${MINOR},${PREFIX}-v${MAJOR}"
+        fi
+
+        echo "ALIAS_TAGS=${ALIAS_TAGS}" >> $GITHUB_ENV
 
     - name: Compute devcontainer subfolder
       shell: bash
@@ -94,6 +119,17 @@ runs:
         push: always
         noCache: ${{ inputs.no_cache }}
         subFolder: ${{ env.DEVCONTAINER_SUBFOLDER }}
+
+    - name: Tag and push SemVer alias images
+      shell: bash
+      run: |
+        if [ -n "${ALIAS_TAGS}" ]; then
+          IFS=',' read -ra TAGS <<< "${ALIAS_TAGS}"
+          for alias_tag in "${TAGS[@]}"; do
+            docker tag "${IMAGE_NAME}:${IMAGE_TAG}" "${IMAGE_NAME}:${alias_tag}"
+            docker push "${IMAGE_NAME}:${alias_tag}"
+          done
+        fi
 
     - name: Update or create prebuild/devcontainer.json
       if: ${{ inputs.create_prebuild_json == 'true' }}
