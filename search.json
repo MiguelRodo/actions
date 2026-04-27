@@ -1,68 +1,5 @@
 [
   {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "Custom GitHub Actions",
-    "section": "",
-    "text": "Reusable composite GitHub Actions for common CI/CD tasks."
-  },
-  {
-    "objectID": "index.html#available-actions",
-    "href": "index.html#available-actions",
-    "title": "Custom GitHub Actions",
-    "section": "Available Actions",
-    "text": "Available Actions\n\n\n\nAction\nDescription\n\n\n\n\nPre-build Dev Container\nBuild and push a Dev Container image to GHCR, with optional SemVer alias tags and a prebuild/devcontainer.json.\n\n\nAdd Issues to Project\nSync issues to a GitHub Project V2 board with duplicate detection.\n\n\nVersion and Release\nBump versions in Python/R packages, create versioned git tags, and publish a GitHub Release.\n\n\nPublish Quarto Site\nRender and publish a Quarto website to gh-pages, creating the branch automatically if needed."
-  },
-  {
-    "objectID": "index.html#usage",
-    "href": "index.html#usage",
-    "title": "Custom GitHub Actions",
-    "section": "Usage",
-    "text": "Usage\nReference any action directly in a workflow — no cloning required:\nuses: MiguelRodo/actions/&lt;action-folder-name&gt;@v2"
-  },
-  {
-    "objectID": "index.html#releasing",
-    "href": "index.html#releasing",
-    "title": "Custom GitHub Actions",
-    "section": "Releasing",
-    "text": "Releasing\nThis repository manages its own versions with an automated workflow. Push a vX.Y.Z tag or run Actions → Publish Release and Bump Floating Tags manually to create a release and update floating major/minor tags."
-  },
-  {
-    "objectID": "prebuild-devcontainer.html",
-    "href": "prebuild-devcontainer.html",
-    "title": "Pre-build Dev Container",
-    "section": "",
-    "text": "Pre-build Dev Container builds your .devcontainer/Dockerfile, pushes it to a container registry (GHCR by default), and optionally generates a prebuild/devcontainer.json so environments load instantly."
-  },
-  {
-    "objectID": "prebuild-devcontainer.html#quick-start",
-    "href": "prebuild-devcontainer.html#quick-start",
-    "title": "Pre-build Dev Container",
-    "section": "Quick Start",
-    "text": "Quick Start\nCopy this to .github/workflows/prebuild-devcontainer.yml:\nname: 'Pre-build Dev Container'\n\non:\n  push:\n    tags:\n      - 'v*'\n      - '*-v*'\n  workflow_dispatch:\n    inputs:\n      tag:\n        description: 'Tag to build (e.g. v1.2.3 or main-v1.2.3)'\n        required: true\n\njobs:\n  build:\n    runs-on: ubuntu-latest\n    concurrency:\n      group: ${{ github.workflow }}-${{ github.ref }}\n      cancel-in-progress: true\n    permissions:\n      contents: write\n      packages: write\n    steps:\n      - uses: actions/checkout@v4\n      - uses: MiguelRodo/actions/prebuild-devcontainer@v2\n        with:\n          github_token: ${{ secrets.GITHUB_TOKEN }}\n          tag: ${{ github.event.inputs.tag }}"
-  },
-  {
-    "objectID": "prebuild-devcontainer.html#inputs",
-    "href": "prebuild-devcontainer.html#inputs",
-    "title": "Pre-build Dev Container",
-    "section": "Inputs",
-    "text": "Inputs\n\n\n\n\n\n\n\n\n\nInput\nDescription\nRequired\nDefault\n\n\n\n\ngithub_token\nToken for logging into the container registry and pushing commits.\nYes\n—\n\n\nno_cache\nDisable Docker cache during build (true/false).\nNo\nfalse\n\n\ncreate_prebuild_json\nGenerate and commit a prebuild/devcontainer.json (true/false).\nNo\ntrue\n\n\ndevcontainer_path\nPath to the .devcontainer directory, relative to the repo root.\nNo\n.devcontainer\n\n\nimage_name\nFull image name without tag (e.g. ghcr.io/myorg/myimage). Defaults to {registry}/{repo}-{branch}.\nNo\n{registry}/{repo}-{branch}\n\n\ntag\nGit tag used as the primary container image tag. Auto-detected from GITHUB_REF on tag push; falls back to latest.\nNo\n\"\"\n\n\nregistry\nContainer registry URL.\nNo\nghcr.io\n\n\nregistry_username\nUsername for registry login.\nNo\nRepository owner"
-  },
-  {
-    "objectID": "prebuild-devcontainer.html#semver-alias-tags",
-    "href": "prebuild-devcontainer.html#semver-alias-tags",
-    "title": "Pre-build Dev Container",
-    "section": "SemVer Alias Tags",
-    "text": "SemVer Alias Tags\nWhen the tag matches a semantic versioning pattern, the action automatically creates additional alias tags:\n\n\n\n\n\n\n\n\nTag format\nPrimary tag\nAlias tags\n\n\n\n\nvX.Y.Z (e.g. v1.2.3)\nv1.2.3\nv1.2, v1\n\n\n{prefix}-vX.Y.Z (e.g. main-v1.2.3)\nmain-v1.2.3\nmain-v1.2, main-v1\n\n\nAny other format (e.g. latest)\nas-is\n(none)"
-  },
-  {
-    "objectID": "prebuild-devcontainer.html#examples",
-    "href": "prebuild-devcontainer.html#examples",
-    "title": "Pre-build Dev Container",
-    "section": "Examples",
-    "text": "Examples\n\nCustom image name\n- uses: MiguelRodo/actions/prebuild-devcontainer@v2\n  with:\n    github_token: ${{ secrets.GITHUB_TOKEN }}\n    image_name: 'ghcr.io/myorg/my-devcontainer'\n\n\nNon-default devcontainer path\n- uses: MiguelRodo/actions/prebuild-devcontainer@v2\n  with:\n    github_token: ${{ secrets.GITHUB_TOKEN }}\n    devcontainer_path: 'src/.devcontainer'\n\n\nNon-GitHub container registry\nWhen using a custom image_name, the registry input is used only for login — it is not prepended to the image name automatically.\n- uses: MiguelRodo/actions/prebuild-devcontainer@v2\n  with:\n    github_token: ${{ secrets.REGISTRY_TOKEN }}\n    registry: 'registry.example.com'\n    registry_username: 'my-username'\n    image_name: 'registry.example.com/myorg/my-devcontainer'"
-  },
-  {
     "objectID": "add-issues-to-project.html",
     "href": "add-issues-to-project.html",
     "title": "Add Issues to Project",
@@ -180,5 +117,68 @@
     "title": "Publish Quarto Site",
     "section": "Troubleshooting",
     "text": "Troubleshooting\n\nPermission denied pushing to gh-pages: Ensure the calling workflow sets permissions: contents: write (and pages: write if using GitHub Pages deployments).\nQuarto render errors: Rendering is delegated to quarto-dev/quarto-actions/publish. See the quarto-actions documentation for render-related issues."
+  },
+  {
+    "objectID": "prebuild-devcontainer.html",
+    "href": "prebuild-devcontainer.html",
+    "title": "Pre-build Dev Container",
+    "section": "",
+    "text": "Pre-build Dev Container builds your .devcontainer/Dockerfile, pushes it to a container registry (GHCR by default), and optionally generates a prebuild/devcontainer.json so environments load instantly."
+  },
+  {
+    "objectID": "prebuild-devcontainer.html#quick-start",
+    "href": "prebuild-devcontainer.html#quick-start",
+    "title": "Pre-build Dev Container",
+    "section": "Quick Start",
+    "text": "Quick Start\nCopy this to .github/workflows/prebuild-devcontainer.yml:\nname: 'Pre-build Dev Container'\n\non:\n  push:\n    tags:\n      - 'v*'\n      - '*-v*'\n  workflow_dispatch:\n    inputs:\n      tag:\n        description: 'Tag to build (e.g. v1.2.3 or main-v1.2.3)'\n        required: true\n\njobs:\n  build:\n    runs-on: ubuntu-latest\n    concurrency:\n      group: ${{ github.workflow }}-${{ github.ref }}\n      cancel-in-progress: true\n    permissions:\n      contents: write\n      packages: write\n    steps:\n      - uses: actions/checkout@v4\n      - uses: MiguelRodo/actions/prebuild-devcontainer@v2\n        with:\n          github_token: ${{ secrets.GITHUB_TOKEN }}\n          tag: ${{ github.event.inputs.tag }}"
+  },
+  {
+    "objectID": "prebuild-devcontainer.html#inputs",
+    "href": "prebuild-devcontainer.html#inputs",
+    "title": "Pre-build Dev Container",
+    "section": "Inputs",
+    "text": "Inputs\n\n\n\n\n\n\n\n\n\nInput\nDescription\nRequired\nDefault\n\n\n\n\ngithub_token\nToken for logging into the container registry and pushing commits.\nYes\n—\n\n\nno_cache\nDisable Docker cache during build (true/false).\nNo\nfalse\n\n\ncreate_prebuild_json\nGenerate and commit a prebuild/devcontainer.json (true/false).\nNo\ntrue\n\n\ndevcontainer_path\nPath to the .devcontainer directory, relative to the repo root.\nNo\n.devcontainer\n\n\nimage_name\nFull image name without tag (e.g. ghcr.io/myorg/myimage). Defaults to {registry}/{repo}-{branch}.\nNo\n{registry}/{repo}-{branch}\n\n\ntag\nGit tag used as the primary container image tag. Auto-detected from GITHUB_REF on tag push; falls back to latest.\nNo\n\"\"\n\n\nregistry\nContainer registry URL.\nNo\nghcr.io\n\n\nregistry_username\nUsername for registry login.\nNo\nRepository owner"
+  },
+  {
+    "objectID": "prebuild-devcontainer.html#semver-alias-tags",
+    "href": "prebuild-devcontainer.html#semver-alias-tags",
+    "title": "Pre-build Dev Container",
+    "section": "SemVer Alias Tags",
+    "text": "SemVer Alias Tags\nWhen the tag matches a semantic versioning pattern, the action automatically creates additional alias tags:\n\n\n\n\n\n\n\n\nTag format\nPrimary tag\nAlias tags\n\n\n\n\nvX.Y.Z (e.g. v1.2.3)\nv1.2.3\nv1.2, v1\n\n\n{prefix}-vX.Y.Z (e.g. main-v1.2.3)\nmain-v1.2.3\nmain-v1.2, main-v1\n\n\nAny other format (e.g. latest)\nas-is\n(none)"
+  },
+  {
+    "objectID": "prebuild-devcontainer.html#examples",
+    "href": "prebuild-devcontainer.html#examples",
+    "title": "Pre-build Dev Container",
+    "section": "Examples",
+    "text": "Examples\n\nCustom image name\n- uses: MiguelRodo/actions/prebuild-devcontainer@v2\n  with:\n    github_token: ${{ secrets.GITHUB_TOKEN }}\n    image_name: 'ghcr.io/myorg/my-devcontainer'\n\n\nNon-default devcontainer path\n- uses: MiguelRodo/actions/prebuild-devcontainer@v2\n  with:\n    github_token: ${{ secrets.GITHUB_TOKEN }}\n    devcontainer_path: 'src/.devcontainer'\n\n\nNon-GitHub container registry\nWhen using a custom image_name, the registry input is used only for login — it is not prepended to the image name automatically.\n- uses: MiguelRodo/actions/prebuild-devcontainer@v2\n  with:\n    github_token: ${{ secrets.REGISTRY_TOKEN }}\n    registry: 'registry.example.com'\n    registry_username: 'my-username'\n    image_name: 'registry.example.com/myorg/my-devcontainer'"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Custom GitHub Actions",
+    "section": "",
+    "text": "Reusable composite GitHub Actions for common CI/CD tasks."
+  },
+  {
+    "objectID": "index.html#available-actions",
+    "href": "index.html#available-actions",
+    "title": "Custom GitHub Actions",
+    "section": "Available Actions",
+    "text": "Available Actions\n\n\n\nAction\nDescription\n\n\n\n\nPre-build Dev Container\nBuild and push a Dev Container image to GHCR, with optional SemVer alias tags and a prebuild/devcontainer.json.\n\n\nAdd Issues to Project\nSync issues to a GitHub Project V2 board with duplicate detection.\n\n\nVersion and Release\nBump versions in Python/R packages, create versioned git tags, and publish a GitHub Release.\n\n\nPublish Quarto Site\nRender and publish a Quarto website to gh-pages, creating the branch automatically if needed."
+  },
+  {
+    "objectID": "index.html#usage",
+    "href": "index.html#usage",
+    "title": "Custom GitHub Actions",
+    "section": "Usage",
+    "text": "Usage\nReference any action directly in a workflow — no cloning required:\nuses: MiguelRodo/actions/&lt;action-folder-name&gt;@v2"
+  },
+  {
+    "objectID": "index.html#releasing",
+    "href": "index.html#releasing",
+    "title": "Custom GitHub Actions",
+    "section": "Releasing",
+    "text": "Releasing\nThis repository manages its own versions with an automated workflow. Push a vX.Y.Z tag or run Actions → Publish Release and Bump Floating Tags manually to create a release and update floating major/minor tags."
   }
 ]
