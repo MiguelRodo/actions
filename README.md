@@ -136,6 +136,38 @@ jobs:
 ```
 
 See the [action README](./version-release/README.md) for all inputs, outputs, and version-precedence rules.
+### [Publish Quarto Site](./publish-quarto-site)
+
+Publishes a Quarto site to the `gh-pages` branch, creating the branch automatically if it does not already exist.
+
+Copy the following to `.github/workflows/publish-quarto-site.yml`:
+
+```yaml
+name: Publish Quarto Site
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pages: write
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Publish Quarto Site
+        uses: MiguelRodo/actions/publish-quarto-site@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+```
+
+See the [action README](./publish-quarto-site/README.md) for all inputs and troubleshooting tips.
 
 ## Releasing a New Version
 
