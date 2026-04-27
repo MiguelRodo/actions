@@ -1,0 +1,277 @@
+name: "Version and Release"
+description: >
+  Bumps versions for Python (pyproject.toml) and R (DESCRIPTION) packages when
+  present, creates a versioned git tag, updates floating major/minor tags, and
+  publishes a GitHub Release.
+author: "MiguelRodo"
+
+inputs:
+  github_token:
+    description: "GitHub token for pushing tags and creating releases."
+    required: true
+  version:
+    description: >
+      Exact version to apply to all packages (e.g. 1.2.3).
+      Overridden per-package by python_version or r_version.
+      Cannot be set together with bump_type.
+    required: false
+    default: ""
+  bump_type:
+    description: >
+      Version component to bump (major | minor | patch).
+      The new version is derived by bumping the most recent semver git tag.
+      Cannot be set together with version.
+    required: false
+    default: ""
+  python_version:
+    description: "Override: exact version to set for the Python package (e.g. 1.2.3)."
+    required: false
+    default: ""
+  r_version:
+    description: "Override: exact version to set for the R package (e.g. 1.2.3)."
+    required: false
+    default: ""
+
+outputs:
+  version:
+    description: "Released version without a leading v (e.g. 1.2.3)."
+    value: ${{ steps.get_version.outputs.version }}
+  tag:
+    description: "Git tag that was created (e.g. v1.2.3)."
+    value: ${{ steps.get_version.outputs.tag }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Configure Git
+      shell: bash
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Determine version
+      id: get_version
+      shell: bash
+      run: |
+        VERSION_INPUT="${{ inputs.version }}"
+        BUMP_INPUT="${{ inputs.bump_type }}"
+
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          # version and bump_type are mutually exclusive
+          if [ -n "$VERSION_INPUT" ] && [ -n "$BUMP_INPUT" ]; then
+            echo "Error: cannot set both 'version' and 'bump_type'." >&2
+            exit 1
+          fi
+
+          # Must provide at least one
+          if [ -z "$VERSION_INPUT" ] && [ -z "$BUMP_INPUT" ]; then
+            echo "Error: provide one of 'version' or 'bump_type'. Valid bump_type values: major, minor, patch." >&2
+            exit 1
+          fi
+
+          if [ -n "$BUMP_INPUT" ]; then
+            # Bump mode: derive next version from the most recent semver tag
+            PREV_TAG=$(git tag --sort=version:refname \
+              | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+              | tail -1)
+            if [ -z "$PREV_TAG" ]; then
+              echo "Error: no previous semver tag found to bump from." >&2
+              exit 1
+            fi
+            CURRENT="${PREV_TAG#v}"
+            IFS='.' read -r cur_major cur_minor cur_patch <<< "$CURRENT"
+            cur_major="${cur_major:-0}"; cur_minor="${cur_minor:-0}"; cur_patch="${cur_patch:-0}"
+            case "$BUMP_INPUT" in
+              major) VERSION="$((cur_major + 1)).0.0" ;;
+              minor) VERSION="${cur_major}.$((cur_minor + 1)).0" ;;
+              patch) VERSION="${cur_major}.${cur_minor}.$((cur_patch + 1))" ;;
+              *)
+                echo "Error: bump_type must be major, minor, or patch. Got: '$BUMP_INPUT'" >&2
+                exit 1
+                ;;
+            esac
+          else
+            VERSION="${VERSION_INPUT#v}"
+          fi
+
+        elif [ "${{ github.ref_type }}" = "tag" ]; then
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+        else
+          echo "Error: this action only runs on tag pushes or workflow_dispatch with version/bump_type." >&2
+          exit 1
+        fi
+
+        if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "Error: version '$VERSION' is not valid semver (X.Y.Z)." >&2
+          exit 1
+        fi
+
+        TAG="v${VERSION}"
+        echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+        echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+        echo "Resolved version: $VERSION"
+
+    - name: Determine bump type
+      id: determine_bump_type
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.bump_type }}" ]; then
+          BUMP_TYPE="${{ inputs.bump_type }}"
+        else
+          NEW_VERSION="${{ steps.get_version.outputs.version }}"
+          NEW_TAG="v${NEW_VERSION}"
+
+          # All full semver tags sorted by version, excluding the new one
+          PREV_TAG=$(git tag --sort=version:refname \
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+            | grep -vF "$NEW_TAG" \
+            | tail -1)
+
+          if [ -z "$PREV_TAG" ]; then
+            BUMP_TYPE="patch"
+          else
+            PREV_VERSION="${PREV_TAG#v}"
+            IFS='.' read -r prev_major prev_minor prev_patch <<< "$PREV_VERSION"
+            IFS='.' read -r new_major new_minor new_patch <<< "$NEW_VERSION"
+            prev_major="${prev_major:-0}"; prev_minor="${prev_minor:-0}"; prev_patch="${prev_patch:-0}"
+            new_major="${new_major:-0}";  new_minor="${new_minor:-0}";  new_patch="${new_patch:-0}"
+            if [ "$new_major" -gt "$prev_major" ]; then
+              BUMP_TYPE="major"
+            elif [ "$new_minor" -gt "$prev_minor" ]; then
+              BUMP_TYPE="minor"
+            else
+              BUMP_TYPE="patch"
+            fi
+          fi
+        fi
+
+        echo "bump_type=${BUMP_TYPE}" >> "$GITHUB_OUTPUT"
+        echo "Bump type: ${BUMP_TYPE}"
+
+    - name: Update Python version
+      id: update_python
+      shell: bash
+      run: |
+        if [ ! -f pyproject.toml ]; then
+          echo "No pyproject.toml found; skipping Python version update."
+          echo "updated=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        GLOBAL_VERSION="${{ inputs.version }}"
+        GLOBAL_VERSION="${GLOBAL_VERSION#v}"
+        PY_INPUT="${{ inputs.python_version }}"
+        PY_INPUT="${PY_INPUT#v}"
+
+        if [ -n "$PY_INPUT" ]; then
+          NEW_PY_VERSION="$PY_INPUT"
+        elif [ -n "$GLOBAL_VERSION" ]; then
+          NEW_PY_VERSION="$GLOBAL_VERSION"
+        else
+          BUMP_TYPE="${{ steps.determine_bump_type.outputs.bump_type }}"
+          CURRENT_PY=$(sed -n "s/^version = [\"']\([^\"']*\)[\"']/\1/p" pyproject.toml | tr -d '[:space:]')
+          if [ -z "$CURRENT_PY" ]; then
+            echo "Error: could not read version from pyproject.toml" >&2
+            exit 1
+          fi
+          IFS='.' read -r py_major py_minor py_patch <<< "$CURRENT_PY"
+          py_major="${py_major:-0}"; py_minor="${py_minor:-0}"; py_patch="${py_patch:-0}"
+          case "$BUMP_TYPE" in
+            major) NEW_PY_VERSION="$((py_major + 1)).0.0" ;;
+            minor) NEW_PY_VERSION="${py_major}.$((py_minor + 1)).0" ;;
+            *)     NEW_PY_VERSION="${py_major}.${py_minor}.$((py_patch + 1))" ;;
+          esac
+        fi
+
+        sed -i "s/^version = \"[^\"]*\"/version = \"${NEW_PY_VERSION}\"/" pyproject.toml
+        echo "updated=true" >> "$GITHUB_OUTPUT"
+        echo "Python version → ${NEW_PY_VERSION}"
+
+    - name: Update R version
+      id: update_r
+      shell: bash
+      run: |
+        if [ ! -f DESCRIPTION ]; then
+          echo "No DESCRIPTION found; skipping R version update."
+          echo "updated=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        GLOBAL_VERSION="${{ inputs.version }}"
+        GLOBAL_VERSION="${GLOBAL_VERSION#v}"
+        R_INPUT="${{ inputs.r_version }}"
+        R_INPUT="${R_INPUT#v}"
+
+        if [ -n "$R_INPUT" ]; then
+          NEW_R_VERSION="$R_INPUT"
+        elif [ -n "$GLOBAL_VERSION" ]; then
+          NEW_R_VERSION="$GLOBAL_VERSION"
+        else
+          BUMP_TYPE="${{ steps.determine_bump_type.outputs.bump_type }}"
+          CURRENT_R=$(sed -n 's/^Version: \([0-9][0-9.]*\).*/\1/p' DESCRIPTION | tr -d '[:space:]')
+          if [ -z "$CURRENT_R" ]; then
+            echo "Error: could not read Version from DESCRIPTION" >&2
+            exit 1
+          fi
+          IFS='.' read -r r_major r_minor r_patch <<< "$CURRENT_R"
+          r_major="${r_major:-0}"; r_minor="${r_minor:-0}"; r_patch="${r_patch:-0}"
+          case "$BUMP_TYPE" in
+            major) NEW_R_VERSION="$((r_major + 1)).0.0" ;;
+            minor) NEW_R_VERSION="${r_major}.$((r_minor + 1)).0" ;;
+            *)     NEW_R_VERSION="${r_major}.${r_minor}.$((r_patch + 1))" ;;
+          esac
+        fi
+
+        sed -i "s/^Version: .*/Version: ${NEW_R_VERSION}/" DESCRIPTION
+        echo "updated=true" >> "$GITHUB_OUTPUT"
+        echo "R version → ${NEW_R_VERSION}"
+
+    - name: Commit version changes
+      shell: bash
+      run: |
+        if git diff --quiet; then
+          echo "No version file changes to commit."
+        else
+          FILES_TO_ADD=()
+          [ -f pyproject.toml ] && FILES_TO_ADD+=(pyproject.toml)
+          [ -f DESCRIPTION ] && FILES_TO_ADD+=(DESCRIPTION)
+          if [ ${#FILES_TO_ADD[@]} -gt 0 ]; then
+            git add "${FILES_TO_ADD[@]}"
+          fi
+          git commit -m "chore: bump version to ${{ steps.get_version.outputs.version }}"
+          git push
+        fi
+
+    - name: Create or verify base tag
+      shell: bash
+      run: |
+        TAG="${{ steps.get_version.outputs.tag }}"
+        if git show-ref --tags --verify --quiet "refs/tags/$TAG"; then
+          echo "Tag $TAG already exists."
+        else
+          echo "Creating tag $TAG"
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
+        fi
+
+    - name: Update floating major and minor tags
+      shell: bash
+      run: |
+        TAG="${{ steps.get_version.outputs.tag }}"
+        MAJOR=$(echo "$TAG" | cut -d'.' -f1)
+        MINOR=$(echo "$TAG" | cut -d'.' -f1,2)
+
+        echo "Updating floating tags to $TAG..."
+        git tag -fa "$MINOR" -m "Update $MINOR to point to $TAG"
+        git tag -fa "$MAJOR" -m "Update $MAJOR to point to $TAG"
+        git push origin "$MINOR" --force
+        git push origin "$MAJOR" --force
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ steps.get_version.outputs.tag }}
+        generate_release_notes: true
+        make_latest: true
+        token: ${{ inputs.github_token }}
