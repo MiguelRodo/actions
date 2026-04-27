@@ -15,7 +15,7 @@ inputs:
     required: false
     default: "false"
   renv_restore:
-    description: "Whether to restore renv dependencies when setup_r is true and a renv.lock file is present."
+    description: "Deprecated. renv is now restored automatically by r-lib/actions/setup-r-dependencies when a renv.lock file is present."
     required: false
     default: "true"
   setup_python:
@@ -52,23 +52,12 @@ runs:
       with:
         use-public-rspm: true
 
-    - name: Restore renv dependencies
-      if: ${{ inputs.setup_r == 'true' && inputs.renv_restore == 'true' }}
-      shell: bash
-      run: |
-        PROJ_PATH="${{ inputs.path }}"
-        if [ -f "${PROJ_PATH}/renv.lock" ]; then
-          (
-            cd "${PROJ_PATH}"
-            Rscript -e '
-              if (!requireNamespace("remotes", quietly = TRUE)) {
-                install.packages("remotes", repos = "https://cloud.r-project.org")
-              }
-              remotes::install_github("MiguelRodo/renvvv")
-              renvvv::restore()
-            '
-          )
-        fi
+    - name: Install R dependencies
+      if: ${{ inputs.setup_r == 'true' }}
+      uses: r-lib/actions/setup-r-dependencies@v2
+      with:
+        working-directory: ${{ inputs.path }}
+        needs: website
 
     - name: Set up Python
       if: ${{ inputs.setup_python == 'true' }}
