@@ -1,14 +1,17 @@
 # Custom GitHub Actions
 
-Reusable composite GitHub Actions for Dev Container deployment and issue tracking.
+Reusable composite GitHub Actions for common CI/CD tasks: pre-building Dev Containers, syncing issues to GitHub Projects, automating version bumps and releases, and publishing Quarto sites.
+
+> **Full documentation:** [https://miguelrodo.github.io/actions](https://miguelrodo.github.io/actions)
 
 ## Actions
 
 ### [Pre-build Dev Container](./prebuild-devcontainer)
 
-Builds your Dev Container, pushes it to a container registry (GHCR by default, or any registry you configure), and optionally generates a `prebuild/devcontainer.json` for instant loads.
+Builds your Dev Container image, pushes it to a container registry (GHCR by default), and optionally generates a `prebuild/devcontainer.json` for instant environment loads.
 
-Copy the following to `.github/workflows/prebuild-devcontainer.yml`:
+<details>
+<summary>Minimal workflow</summary>
 
 ```yaml
 name: 'Pre-build Dev Container'
@@ -33,27 +36,28 @@ jobs:
     permissions:
       contents: write
       packages: write
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Run Dev Container Prebuild
-        uses: MiguelRodo/actions/prebuild-devcontainer@v2
+      - uses: actions/checkout@v4
+      - uses: MiguelRodo/actions/prebuild-devcontainer@v2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.event.inputs.tag }}
 ```
 
-See the [action README](./prebuild-devcontainer/README.md) for all inputs, including how to set a custom image name, use a non-default devcontainer path, disable SHA tagging, or use a non-GitHub container registry.
+</details>
+
+See the [action README](./prebuild-devcontainer/README.md) for all inputs, including custom image names, non-default devcontainer paths, and alternative container registries.
+
+---
 
 ### [Add Issues to Project](./add-issues-to-project)
 
-Syncs issues from a repository to a GitHub Project (V2) board with duplicate detection.
+Syncs issues from a repository to a GitHub Project (V2) board with built-in duplicate detection.
 
-**Requires:** A Personal Access Token (PAT) with `repo`, `project`, and `read:org` (if applicable) scopes, saved as the `ADD_ISSUES_TO_PROJECT_TOKEN` secret.
+**Requires:** A PAT with `repo`, `project`, and `read:org` scopes saved as the `ADD_ISSUES_TO_PROJECT_TOKEN` secret.
 
-Copy the following to `.github/workflows/add-issues-to-project.yml`:
+<details>
+<summary>Minimal workflow</summary>
 
 ```yaml
 name: Sync Issues to Project
@@ -67,25 +71,26 @@ jobs:
   add-to-project:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Add Issues to Project
-        uses: MiguelRodo/actions/add-issues-to-project@v2
+      - uses: actions/checkout@v4
+      - uses: MiguelRodo/actions/add-issues-to-project@v2
         with:
           ADD_ISSUES_TO_PROJECT_TOKEN: ${{ secrets.ADD_ISSUES_TO_PROJECT_TOKEN }}
-          # Optional overrides:
           # project_name: "My Custom Project Board"
           # is_project_owner_org: "true"
 ```
 
+</details>
+
 See the [action README](./add-issues-to-project/README.md) for all inputs and advanced usage.
+
+---
 
 ### [Version and Release](./version-release)
 
-Bumps versions for Python (`pyproject.toml`) and R (`DESCRIPTION`) packages when present, creates a versioned git tag with floating major/minor aliases, and publishes a GitHub Release.
+Bumps versions in Python (`pyproject.toml`) and/or R (`DESCRIPTION`) packages, creates a versioned git tag with floating major/minor aliases, and publishes a GitHub Release.
 
-Copy the following to `.github/workflows/version-release.yml`:
+<details>
+<summary>Minimal workflow</summary>
 
 ```yaml
 name: Version and Release
@@ -97,20 +102,16 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: >
-          Exact version to apply to all packages (e.g. 1.2.3).
-          Cannot be set together with bump_type.
+        description: 'Exact version (e.g. 1.2.3). Cannot be used with bump_type.'
         required: false
       bump_type:
-        description: >
-          Version component to bump (major | minor | patch).
-          Cannot be set together with version.
+        description: 'Component to bump: major | minor | patch. Cannot be used with version.'
         required: false
       python_version:
-        description: 'Override: exact version to set for the Python package (e.g. 1.2.3).'
+        description: 'Override: exact version for the Python package.'
         required: false
       r_version:
-        description: 'Override: exact version to set for the R package (e.g. 1.2.3).'
+        description: 'Override: exact version for the R package.'
         required: false
 
 jobs:
@@ -118,15 +119,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Version and Release
-        uses: MiguelRodo/actions/version-release@v2
+      - uses: MiguelRodo/actions/version-release@v2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           version: ${{ inputs.version }}
@@ -135,12 +132,18 @@ jobs:
           r_version: ${{ inputs.r_version }}
 ```
 
+</details>
+
 See the [action README](./version-release/README.md) for all inputs, outputs, and version-precedence rules.
+
+---
+
 ### [Publish Quarto Site](./publish-quarto-site)
 
 Publishes a Quarto site to the `gh-pages` branch, creating the branch automatically if it does not already exist.
 
-Copy the following to `.github/workflows/publish-quarto-site.yml`:
+<details>
+<summary>Minimal workflow</summary>
 
 ```yaml
 name: Publish Quarto Site
@@ -160,20 +163,20 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Publish Quarto Site
-        uses: MiguelRodo/actions/publish-quarto-site@v2
+      - uses: MiguelRodo/actions/publish-quarto-site@v2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
+</details>
+
 See the [action README](./publish-quarto-site/README.md) for all inputs and troubleshooting tips.
+
+---
 
 ## Releasing a New Version
 
-This repository uses an automated release workflow (`.github/workflows/release.yml`) to handle version bumping, floating tag updates, and GitHub Release creation.
-
-### How to release
+This repository uses an automated workflow (`.github/workflows/release.yml`) to validate, tag, and release.
 
 **Option 1 — Push a tag directly:**
 
@@ -182,23 +185,18 @@ git tag v1.2.3
 git push origin v1.2.3
 ```
 
-The workflow triggers automatically on any tag matching `vX.Y.Z`.
+**Option 2 — Run manually:** go to **Actions → Publish Release and Bump Floating Tags → Run workflow**, enter the version (e.g. `v1.2.3`), and click **Run workflow**.
 
-**Option 2 — Run the workflow manually:**
-
-Go to **Actions → Publish Release and Bump Floating Tags → Run workflow**, enter the version (e.g. `v1.2.3`), and click **Run workflow**.
-
-### What the workflow does
-
-1. Validates that the version matches the strict `vX.Y.Z` semantic format.
-2. (Manual mode only) Creates and pushes the base tag (e.g. `v1.2.3`) if it does not already exist.
-3. Force-updates the floating major (`v1`) and minor (`v1.2`) tags to point to the new commit.
-4. Creates a GitHub Release for the specific version with auto-generated release notes and marks it as the latest release.
+The workflow:
+1. Validates the `vX.Y.Z` format.
+2. Creates and pushes the base tag (manual mode only, if not already present).
+3. Force-updates floating major (`v1`) and minor (`v1.2`) tags.
+4. Creates a GitHub Release with auto-generated release notes.
 
 ## Usage
 
-Reference actions directly in your workflow files—no cloning required:
+Reference any action in your workflow without cloning this repository:
 
 ```yaml
-uses: MiguelRodo/actions/<action-folder-name>@main
+uses: MiguelRodo/actions/<action-folder-name>@v2
 ```
