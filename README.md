@@ -81,6 +81,61 @@ jobs:
 
 See the [action README](./add-issues-to-project/README.md) for all inputs and advanced usage.
 
+### [Version and Release](./version-release)
+
+Bumps versions for Python (`pyproject.toml`) and R (`DESCRIPTION`) packages when present, creates a versioned git tag with floating major/minor aliases, and publishes a GitHub Release.
+
+Copy the following to `.github/workflows/version-release.yml`:
+
+```yaml
+name: Version and Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: >
+          Exact version to apply to all packages (e.g. 1.2.3).
+          Cannot be set together with bump_type.
+        required: false
+      bump_type:
+        description: >
+          Version component to bump (major | minor | patch).
+          Cannot be set together with version.
+        required: false
+      python_version:
+        description: 'Override: exact version to set for the Python package (e.g. 1.2.3).'
+        required: false
+      r_version:
+        description: 'Override: exact version to set for the R package (e.g. 1.2.3).'
+        required: false
+
+jobs:
+  version-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Version and Release
+        uses: MiguelRodo/actions/version-release@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          version: ${{ inputs.version }}
+          bump_type: ${{ inputs.bump_type }}
+          python_version: ${{ inputs.python_version }}
+          r_version: ${{ inputs.r_version }}
+```
+
+See the [action README](./version-release/README.md) for all inputs, outputs, and version-precedence rules.
 ### [Publish Quarto Site](./publish-quarto-site)
 
 Publishes a Quarto site to the `gh-pages` branch, creating the branch automatically if it does not already exist.
