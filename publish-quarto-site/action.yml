@@ -6,6 +6,10 @@ inputs:
   github_token:
     description: "GitHub token used to push to the gh-pages branch."
     required: true
+  path:
+    description: "Path to the Quarto project to publish."
+    required: false
+    default: "."
 
 runs:
   using: "composite"
@@ -37,5 +41,6 @@ runs:
       uses: quarto-dev/quarto-actions/publish@v2
       with:
         target: gh-pages
+        path: ${{ inputs.path }}
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
