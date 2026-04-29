@@ -28,3 +28,21 @@ jobs:
         # when it is available on PATH, covering both workflow files and
         # composite action.yml inline `run:` blocks.
         run: actionlint
+
+      - name: Run shellcheck on standalone shell scripts
+        run: find . -name '*.sh' -not -path './.git/*' -print0 | xargs -0 -r shellcheck
+
+  bats:
+    name: BATS unit tests (shell scripts)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install BATS
+        run: |
+          sudo apt-get install -y bats
+
+      - name: Run BATS tests
+        run: bats scripts/tests/
