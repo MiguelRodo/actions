@@ -2,6 +2,10 @@ name: "Add Issues to Project"
 description: "Adds issues from a specified repository to a specified GitHub Project."
 author: "MiguelRodo"
 
+branding:
+  icon: "list"
+  color: "blue"
+
 inputs:
   project_name:
     description: "Project name. Defaults to repository name."
@@ -22,6 +26,12 @@ inputs:
   ADD_ISSUES_TO_PROJECT_TOKEN:
     description: "GitHub token with correct access for accessing issues and writing to projects"
     required: true
+
+outputs:
+  issues_added:
+    description: "Number of issues that were newly added to the project."
+    value: ${{ steps.add-issues.outputs.issues_added }}
+
 runs:
   using: "composite"
   steps:
@@ -186,6 +196,7 @@ runs:
         echo "issues=$issues" >> $GITHUB_ENV
 
     - name: Add issues to project if not already present
+      id: add-issues
       shell: bash
       env:
         ISSUES: "${{ env.issues }}"
@@ -207,6 +218,7 @@ runs:
         done
 
         existing_issue_ids_str="${existing_issue_ids[*]}"
+        issues_added=0
         for issue in $ISSUES; do
           issue_node_id=$(gh issue view "$issue" --repo "${SOURCE_REPO}" --json id --jq '.id')
           if [[ " ${existing_issue_ids_str[@]} " =~ " $issue_node_id " ]]; then
@@ -214,5 +226,7 @@ runs:
           else
             gh api graphql -f query='mutation($projectId: ID!, $contentId: ID!) { addProjectV2ItemById(input: {projectId: $projectId, contentId: $contentId}) { item { id } } }' -f projectId="$PROJECT_ID" -f contentId="$issue_node_id"
             echo "Added issue #$issue to the project."
+            issues_added=$((issues_added + 1))
           fi
         done
+        echo "issues_added=${issues_added}" >> "$GITHUB_OUTPUT"

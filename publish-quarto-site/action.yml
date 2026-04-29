@@ -2,6 +2,10 @@ name: "Publish Quarto Site"
 description: "Publishes a Quarto site to the gh-pages branch, creating the branch if it does not already exist."
 author: "MiguelRodo"
 
+branding:
+  icon: "book-open"
+  color: "orange"
+
 inputs:
   github_token:
     description: "GitHub token used to push to the gh-pages branch."

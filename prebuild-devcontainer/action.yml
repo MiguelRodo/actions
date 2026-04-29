@@ -2,6 +2,10 @@ name: "Pre-build Dev Container"
 description: "Builds a devcontainer, pushes it to a container registry tagged with a git tag and SemVer aliases, and optionally updates the prebuild JSON."
 author: "Miguel Rodo <miguel.rodo@uct.ac.za>"
 
+branding:
+  icon: "box"
+  color: "green"
+
 inputs:
   github_token:
     description: "Token for logging into the container registry and pushing commits."
@@ -34,6 +38,20 @@ inputs:
     description: "Username for registry login. Defaults to the repository owner."
     required: false
     default: ""
+
+outputs:
+  image_name:
+    description: "Full image name without tag (e.g. 'ghcr.io/owner/repo-main')."
+    value: ${{ steps.set_outputs.outputs.image_name }}
+  image_tag:
+    description: "Primary image tag that was built and pushed (e.g. 'v1.2.3')."
+    value: ${{ steps.set_outputs.outputs.image_tag }}
+  image_ref:
+    description: "Full image reference including tag (e.g. 'ghcr.io/owner/repo-main:v1.2.3')."
+    value: ${{ steps.set_outputs.outputs.image_ref }}
+  alias_tags:
+    description: "Comma-separated list of SemVer alias tags that were also pushed (e.g. 'v1.2,v1')."
+    value: ${{ steps.set_outputs.outputs.alias_tags }}
 
 runs:
   using: "composite"
@@ -186,3 +204,12 @@ runs:
             exit 1
           fi
         fi
+
+    - name: Set action outputs
+      id: set_outputs
+      shell: bash
+      run: |
+        echo "image_name=${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
+        echo "image_tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+        echo "image_ref=${IMAGE_NAME}:${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+        echo "alias_tags=${ALIAS_TAGS}" >> "$GITHUB_OUTPUT"

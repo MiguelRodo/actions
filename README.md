@@ -171,32 +171,3 @@ jobs:
 </details>
 
 See the [action README](./publish-quarto-site/README.md) for all inputs and troubleshooting tips.
-
----
-
-## Releasing a New Version
-
-This repository uses an automated workflow (`.github/workflows/release.yml`) to validate, tag, and release.
-
-**Option 1 — Push a tag directly:**
-
-```bash
-git tag v1.2.3
-git push origin v1.2.3
-```
-
-**Option 2 — Run manually:** go to **Actions → Publish Release and Bump Floating Tags → Run workflow**, enter the version (e.g. `v1.2.3`), and click **Run workflow**.
-
-The workflow:
-1. Validates the `vX.Y.Z` format.
-2. Creates and pushes the base tag (manual mode only, if not already present).
-3. Force-updates floating major (`v1`) and minor (`v1.2`) tags.
-4. Creates a GitHub Release with auto-generated release notes.
-
-## Usage
-
-Reference any action in your workflow without cloning this repository:
-
-```yaml
-uses: MiguelRodo/actions/<action-folder-name>@v2
-```

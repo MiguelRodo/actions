@@ -41,6 +41,35 @@ jobs:
           tag: ${{ github.event.inputs.tag }}
 ```
 
+## Outputs
+
+| Output | Description |
+| --- | --- |
+| `image_name` | Full image name without tag (e.g. `ghcr.io/owner/repo-main`). |
+| `image_tag` | Primary image tag that was built and pushed (e.g. `v1.2.3`). |
+| `image_ref` | Full image reference including tag (e.g. `ghcr.io/owner/repo-main:v1.2.3`). |
+| `alias_tags` | Comma-separated list of SemVer alias tags also pushed (e.g. `v1.2,v1`). |
+
+## Permissions
+
+The calling workflow needs the following permissions:
+
+| Permission | Why it is needed |
+| --- | --- |
+| `contents: write` | Push the updated `prebuild/devcontainer.json` back to the repository. |
+| `packages: write` | Push the built container image to the GitHub Container Registry (GHCR). |
+
+```yaml
+permissions:
+  contents: write
+  packages: write
+```
+
+> **Version pinning:** For stricter supply-chain security, pin to a specific commit SHA instead of a floating tag:
+> ```yaml
+> uses: MiguelRodo/actions/prebuild-devcontainer@<full-commit-sha>
+> ```
+
 ## Inputs
 
 | Input | Description | Required | Default |

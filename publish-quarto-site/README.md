@@ -33,6 +33,28 @@ jobs:
 
 ---
 
+## 🔐 Permissions
+
+The calling workflow needs the following permissions:
+
+| Permission | Why it is needed |
+| --- | --- |
+| `contents: write` | Push rendered output to the `gh-pages` branch. |
+| `pages: write` | Required when deploying through GitHub Pages environments. |
+
+```yaml
+permissions:
+  contents: write
+  pages: write
+```
+
+> **Version pinning:** For stricter supply-chain security, pin to a specific commit SHA instead of a floating tag:
+> ```yaml
+> uses: MiguelRodo/actions/publish-quarto-site@<full-commit-sha>
+> ```
+
+---
+
 ## 🔧 Inputs
 
 | Input | Description | Required | Default |

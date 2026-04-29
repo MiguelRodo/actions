@@ -41,10 +41,12 @@ jobs:
 
 ## 📖 Table of Contents
 
-* [🔧 Inputs](https://www.google.com/search?q=%23-inputs)
-* [⚙️ How It Works](https://www.google.com/search?q=%23%EF%B8%8F-how-it-works)
-* [🛠️ Advanced Example](https://www.google.com/search?q=%23%EF%B8%8F-advanced-example)
-* [🐞 Troubleshooting](https://www.google.com/search?q=%23-troubleshooting)
+* [🔧 Inputs](#-inputs)
+* [📤 Outputs](#-outputs)
+* [🔐 Permissions](#-permissions)
+* [⚙️ How It Works](#️-how-it-works)
+* [🛠️ Advanced Example](#️-advanced-example)
+* [🐞 Troubleshooting](#-troubleshooting)
 
 ---
 
@@ -58,6 +60,33 @@ jobs:
 | `is_project_owner_org` | Set to `"true"` if the project owner is a GitHub Organization. | No | `"false"` |
 | `source_repo_name` | The name of the repository to pull issues from. | No | *Current Repository Name* |
 | `source_repo_owner` | The owner of the source repository. | No | *Current GitHub User* |
+
+---
+
+## 📤 Outputs
+
+| Output | Description |
+| --- | --- |
+| `issues_added` | Number of issues that were newly added to the project in this run. |
+
+---
+
+## 🔐 Permissions
+
+This action requires a **Personal Access Token (PAT)** — the default `GITHUB_TOKEN` does not have permission to write to GitHub Projects (V2). The PAT must be stored as a secret and passed via the `ADD_ISSUES_TO_PROJECT_TOKEN` input.
+
+| PAT scope | Why it is needed |
+| --- | --- |
+| `repo` | Read issues from the source repository. |
+| `project` | Read and write to the GitHub Project board. |
+| `read:org` | Required when `is_project_owner_org` is `"true"` to verify the org exists. |
+
+> **Security note:** Store the PAT as a repository or organisation secret (e.g. `ADD_ISSUES_TO_PROJECT_TOKEN`). Never hard-code tokens in workflow files.
+>
+> **Version pinning:** For stricter supply-chain security, pin to a specific commit SHA instead of a floating tag:
+> ```yaml
+> uses: MiguelRodo/actions/add-issues-to-project@<full-commit-sha>
+> ```
 
 ---
 
@@ -97,5 +126,3 @@ If you want to sync issues from a repository into a centrally managed Organizati
 
 * **Action fails at authentication:** Ensure your `ADD_ISSUES_TO_PROJECT_TOKEN` is active, has not expired, and contains the `project` scope. Classic PATs are often easier to configure for organization-wide project boards than fine-grained tokens.
 * **Project Not Found:** Double-check your spelling for `project_name`. If the project belongs to an organization rather than your personal user account, you *must* set `is_project_owner_org: "true"`.
-
-```
