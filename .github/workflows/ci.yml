@@ -10,6 +10,8 @@ jobs:
   actionlint:
     name: Lint workflow and action files (actionlint + shellcheck)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
