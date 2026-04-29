@@ -90,17 +90,7 @@ runs:
             if [ -z "$CURRENT" ]; then
               CURRENT="0.0.0"
             fi
-            IFS='.' read -r cur_major cur_minor cur_patch <<< "$CURRENT"
-            cur_major="${cur_major:-0}"; cur_minor="${cur_minor:-0}"; cur_patch="${cur_patch:-0}"
-            case "$BUMP_INPUT" in
-              major) VERSION="$((cur_major + 1)).0.0" ;;
-              minor) VERSION="${cur_major}.$((cur_minor + 1)).0" ;;
-              patch) VERSION="${cur_major}.${cur_minor}.$((cur_patch + 1))" ;;
-              *)
-                echo "Error: bump_type must be major, minor, or patch. Got: '$BUMP_INPUT'" >&2
-                exit 1
-                ;;
-            esac
+            VERSION=$("$GITHUB_ACTION_PATH/../scripts/apply-version-bump.sh" "$BUMP_INPUT" "$CURRENT")
           else
             VERSION="${VERSION_INPUT#v}"
           fi
@@ -128,8 +118,6 @@ runs:
       shell: bash
       run: |
         NEW_VERSION="${{ steps.get_version.outputs.version }}"
-        IFS='.' read -r new_major new_minor new_patch <<< "$NEW_VERSION"
-        new_major="${new_major:-0}"; new_minor="${new_minor:-0}"; new_patch="${new_patch:-0}"
 
         # Get the latest semver tag, ignoring the new tag if it already exists
         PREV_TAG=$(git tag --sort=version:refname \
@@ -143,40 +131,7 @@ runs:
         fi
 
         PREV_VERSION="${PREV_TAG#v}"
-        IFS='.' read -r prev_major prev_minor prev_patch <<< "$PREV_VERSION"
-        prev_major="${prev_major:-0}"; prev_minor="${prev_minor:-0}"; prev_patch="${prev_patch:-0}"
-
-        next_major=$((prev_major + 1))
-        next_minor=$((prev_minor + 1))
-        next_patch=$((prev_patch + 1))
-
-        # Reject versions that are not strictly ahead of the previous release
-        if [ "$new_major" -lt "$prev_major" ] || \
-           ([ "$new_major" -eq "$prev_major" ] && [ "$new_minor" -lt "$prev_minor" ]) || \
-           ([ "$new_major" -eq "$prev_major" ] && [ "$new_minor" -eq "$prev_minor" ] && [ "$new_patch" -le "$prev_patch" ]); then
-          echo "Error: version '$NEW_VERSION' is not ahead of the previous release '$PREV_VERSION'." >&2
-          echo "  Set version_check: 'false' to override this guard." >&2
-          exit 1
-        fi
-
-        # Accept only a single major, minor, or patch increment
-        VALID=false
-        if [ "$new_major" -eq "$next_major" ] && [ "$new_minor" -eq 0 ] && [ "$new_patch" -eq 0 ]; then
-          VALID=true
-        elif [ "$new_major" -eq "$prev_major" ] && [ "$new_minor" -eq "$next_minor" ] && [ "$new_patch" -eq 0 ]; then
-          VALID=true
-        elif [ "$new_major" -eq "$prev_major" ] && [ "$new_minor" -eq "$prev_minor" ] && [ "$new_patch" -eq "$next_patch" ]; then
-          VALID=true
-        fi
-
-        if [ "$VALID" = false ]; then
-          echo "Error: version '$NEW_VERSION' is more than one increment ahead of '$PREV_VERSION'." >&2
-          echo "  Valid next versions: ${next_major}.0.0, ${prev_major}.${next_minor}.0, ${prev_major}.${prev_minor}.${next_patch}" >&2
-          echo "  Set version_check: 'false' to override this guard." >&2
-          exit 1
-        fi
-
-        echo "Version check passed: '$PREV_VERSION' → '$NEW_VERSION'"
+        "$GITHUB_ACTION_PATH/../scripts/check-version-progression.sh" "$NEW_VERSION" "$PREV_VERSION"
 
     - name: Determine bump type
       id: determine_bump_type
@@ -198,17 +153,7 @@ runs:
             BUMP_TYPE="patch"
           else
             PREV_VERSION="${PREV_TAG#v}"
-            IFS='.' read -r prev_major prev_minor prev_patch <<< "$PREV_VERSION"
-            IFS='.' read -r new_major new_minor new_patch <<< "$NEW_VERSION"
-            prev_major="${prev_major:-0}"; prev_minor="${prev_minor:-0}"; prev_patch="${prev_patch:-0}"
-            new_major="${new_major:-0}";  new_minor="${new_minor:-0}";  new_patch="${new_patch:-0}"
-            if [ "$new_major" -gt "$prev_major" ]; then
-              BUMP_TYPE="major"
-            elif [ "$new_minor" -gt "$prev_minor" ]; then
-              BUMP_TYPE="minor"
-            else
-              BUMP_TYPE="patch"
-            fi
+            BUMP_TYPE=$("$GITHUB_ACTION_PATH/../scripts/determine-bump-type.sh" "$NEW_VERSION" "$PREV_VERSION")
           fi
         fi
 

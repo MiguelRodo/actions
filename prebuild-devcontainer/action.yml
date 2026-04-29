@@ -99,23 +99,8 @@ runs:
     - name: Parse SemVer aliases
       shell: bash
       run: |
-        TAG="${IMAGE_TAG}"
-        ALIAS_TAGS=""
-
-        # Standard SemVer: vX.Y.Z[...] -> also tag vX.Y and vX
-        if [[ "$TAG" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
-          MAJOR="${BASH_REMATCH[1]}"
-          MINOR="${BASH_REMATCH[2]}"
-          ALIAS_TAGS="v${MAJOR}.${MINOR},v${MAJOR}"
-        # Branch-prefixed SemVer: {prefix}-vX.Y.Z[...] -> also tag {prefix}-vX.Y and {prefix}-vX
-        elif [[ "$TAG" =~ ^(.+)-v([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
-          PREFIX="${BASH_REMATCH[1]}"
-          MAJOR="${BASH_REMATCH[2]}"
-          MINOR="${BASH_REMATCH[3]}"
-          ALIAS_TAGS="${PREFIX}-v${MAJOR}.${MINOR},${PREFIX}-v${MAJOR}"
-        fi
-
-        echo "ALIAS_TAGS=${ALIAS_TAGS}" >> $GITHUB_ENV
+        ALIAS_TAGS=$("$GITHUB_ACTION_PATH/../scripts/parse-semver-aliases.sh" "${IMAGE_TAG}")
+        echo "ALIAS_TAGS=${ALIAS_TAGS}" >> "$GITHUB_ENV"
 
     - name: Compute devcontainer subfolder
       shell: bash
