@@ -60,6 +60,24 @@ jobs:
           r_version: ${{ inputs.r_version }}
 ```
 
+## Permissions
+
+The calling workflow needs the following permission:
+
+| Permission | Why it is needed |
+| --- | --- |
+| `contents: write` | Push version-bump commits, create/update tags, and publish the GitHub Release. |
+
+```yaml
+permissions:
+  contents: write
+```
+
+> **Version pinning:** For stricter supply-chain security, pin to a specific commit SHA instead of a floating tag:
+> ```yaml
+> uses: MiguelRodo/actions/version-release@<full-commit-sha>
+> ```
+
 ## Inputs
 
 | Input | Description | Required |

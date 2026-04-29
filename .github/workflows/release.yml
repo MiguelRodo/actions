@@ -39,6 +39,16 @@ jobs:
             exit 1
           fi
 
+          # For tag-push triggers, ensure the tag points to a commit on main
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            COMMIT_SHA="${{ github.sha }}"
+            if ! git merge-base --is-ancestor "$COMMIT_SHA" origin/main 2>/dev/null && \
+               ! git merge-base --is-ancestor origin/main "$COMMIT_SHA" 2>/dev/null; then
+              echo "❌ Error: Tagged commit is not on the main branch. Releases must originate from main."
+              exit 1
+            fi
+          fi
+
           # Extract major and minor versions
           MAJOR_VERSION=$(echo "$VERSION" | cut -d'.' -f1)
           MINOR_VERSION=$(echo "$VERSION" | cut -d'.' -f1,2)
