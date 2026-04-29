@@ -5,6 +5,10 @@ description: >
   publishes a GitHub Release.
 author: "MiguelRodo"
 
+branding:
+  icon: "tag"
+  color: "purple"
+
 inputs:
   github_token:
     description: "GitHub token for pushing tags and creating releases."

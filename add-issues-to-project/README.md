@@ -41,10 +41,10 @@ jobs:
 
 ## 📖 Table of Contents
 
-* [🔧 Inputs](https://www.google.com/search?q=%23-inputs)
-* [⚙️ How It Works](https://www.google.com/search?q=%23%EF%B8%8F-how-it-works)
-* [🛠️ Advanced Example](https://www.google.com/search?q=%23%EF%B8%8F-advanced-example)
-* [🐞 Troubleshooting](https://www.google.com/search?q=%23-troubleshooting)
+* [🔧 Inputs](#-inputs)
+* [⚙️ How It Works](#️-how-it-works)
+* [🛠️ Advanced Example](#️-advanced-example)
+* [🐞 Troubleshooting](#-troubleshooting)
 
 ---
 
@@ -97,5 +97,3 @@ If you want to sync issues from a repository into a centrally managed Organizati
 
 * **Action fails at authentication:** Ensure your `ADD_ISSUES_TO_PROJECT_TOKEN` is active, has not expired, and contains the `project` scope. Classic PATs are often easier to configure for organization-wide project boards than fine-grained tokens.
 * **Project Not Found:** Double-check your spelling for `project_name`. If the project belongs to an organization rather than your personal user account, you *must* set `is_project_owner_org: "true"`.
-
-```
