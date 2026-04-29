@@ -1,87 +1,87 @@
 [
   {
-    "objectID": "add-issues-to-project.html",
-    "href": "add-issues-to-project.html",
-    "title": "Add Issues to Project",
+    "objectID": "CONTRIBUTING.html",
+    "href": "CONTRIBUTING.html",
+    "title": "Contributing",
     "section": "",
-    "text": "Add Issues to Project automates syncing issues from a repository to a GitHub Project (V2) board. It includes duplicate detection so issues are only added once."
+    "text": "Thank you for considering a contribution to this repository! All improvements — bug fixes, documentation, new features, and tests — are welcome.\n\n\n\nFork the repository and create a feature branch from main.\nMake your changes following the guidelines below.\nOpen a pull request against main with a clear description of what changed and why.\n\n\n\n\n\n\nEach action lives in its own subdirectory (e.g. prebuild-devcontainer/). The entry point is always action.yml.\n\nKeep all logic inside action.yml. Avoid adding separate shell scripts unless the complexity makes inline scripts unreadable.\nUse $GITHUB_OUTPUT (not ::set-output) for outputs and $GITHUB_ENV for inter-step environment variables.\nEvery new input must have a description and a required field. Provide a default for optional inputs.\nEvery new output must be declared in the outputs: block of action.yml and documented in the action’s README.md.\n\n\n\n\nInline run: blocks are linted by actionlint (which delegates to shellcheck). Before submitting:\n\nEnsure your scripts pass shellcheck --shell=bash.\nPrefer [[ ... ]] over [ ... ] for conditionals in bash.\nQuote all variable expansions (e.g. \"$VAR\") unless word-splitting is intentional.\n\n\n\n\n\nEach action has its own README.md. Keep the Inputs, Outputs, Permissions, and example workflow sections up to date.\nThe root README.md provides a concise overview and quick-start snippet for each action. Update it when adding or removing an action.\nComplete, copy-paste-ready workflow files live in the examples/ directory.\n\n\n\n\nReleases are managed by the .github/workflows/release.yml workflow. Tags must originate from the main branch and follow the vX.Y.Z format.\n\n\n\n\nPlease be respectful and constructive in all interactions. This project follows the Contributor Covenant code of conduct."
   },
   {
-    "objectID": "add-issues-to-project.html#quick-start",
-    "href": "add-issues-to-project.html#quick-start",
-    "title": "Add Issues to Project",
-    "section": "Quick Start",
-    "text": "Quick Start\n\nGenerate a Personal Access Token (PAT) with repo, project, and read:org scopes.\nSave the PAT as a repository secret named ADD_ISSUES_TO_PROJECT_TOKEN.\nCopy the workflow below to .github/workflows/add-issues-to-project.yml.\n\nname: Sync Issues to Project\n\non:\n  workflow_dispatch:\n  issues:\n    types: [opened, reopened]\n\njobs:\n  add-to-project:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: MiguelRodo/actions/add-issues-to-project@v2\n        with:\n          ADD_ISSUES_TO_PROJECT_TOKEN: ${{ secrets.ADD_ISSUES_TO_PROJECT_TOKEN }}\n          # project_name: \"My Custom Project Board\"\n          # is_project_owner_org: \"true\""
-  },
-  {
-    "objectID": "add-issues-to-project.html#inputs",
-    "href": "add-issues-to-project.html#inputs",
-    "title": "Add Issues to Project",
-    "section": "Inputs",
-    "text": "Inputs\n\n\n\n\n\n\n\n\n\nInput\nDescription\nRequired\nDefault\n\n\n\n\nADD_ISSUES_TO_PROJECT_TOKEN\nPAT with permissions to read the source repo and write to the target project.\nYes\n—\n\n\nproject_name\nName of the target GitHub Project.\nNo\nCurrent repository name\n\n\nproject_owner\nUsername or organization owning the target project.\nNo\nCurrent repository owner\n\n\nis_project_owner_org\nSet to \"true\" if the project owner is an organization.\nNo\n\"false\"\n\n\nsource_repo_name\nRepository to pull issues from.\nNo\nCurrent repository name\n\n\nsource_repo_owner\nOwner of the source repository.\nNo\nCurrent GitHub user"
-  },
-  {
-    "objectID": "add-issues-to-project.html#how-it-works",
-    "href": "add-issues-to-project.html#how-it-works",
-    "title": "Add Issues to Project",
-    "section": "How It Works",
-    "text": "How It Works\n\nInstalls the GitHub CLI (gh) and the gh-projects extension.\nAuthenticates with the provided ADD_ISSUES_TO_PROJECT_TOKEN.\nValidates the target project, organization/user, and source repository.\nUses GraphQL to fetch the Project ID and all existing items.\nCross-references the board’s existing issue IDs against the repository’s issue list.\nAppends only the missing issues via a GraphQL mutation."
-  },
-  {
-    "objectID": "add-issues-to-project.html#advanced-example",
-    "href": "add-issues-to-project.html#advanced-example",
-    "title": "Add Issues to Project",
-    "section": "Advanced Example",
-    "text": "Advanced Example\nSync issues from a repository into a centrally managed organization project board:\n- uses: MiguelRodo/actions/add-issues-to-project@v2\n  with:\n    ADD_ISSUES_TO_PROJECT_TOKEN: ${{ secrets.ORG_PROJECT_PAT }}\n    project_name: \"Q1 Engineering Roadmap\"\n    project_owner: \"MyAwesomeOrg\"\n    is_project_owner_org: \"true\"\n    source_repo_name: \"frontend-client\"\n    source_repo_owner: \"MyAwesomeOrg\""
-  },
-  {
-    "objectID": "add-issues-to-project.html#troubleshooting",
-    "href": "add-issues-to-project.html#troubleshooting",
-    "title": "Add Issues to Project",
-    "section": "Troubleshooting",
-    "text": "Troubleshooting\n\nAuthentication fails: Ensure the PAT is active, unexpired, and has the project scope. Classic PATs are generally easier to configure for organization-wide boards than fine-grained tokens.\nProject not found: Check the spelling of project_name. If the project belongs to an organization, you must set is_project_owner_org: \"true\"."
-  },
-  {
-    "objectID": "version-release.html",
-    "href": "version-release.html",
-    "title": "Version and Release",
+    "objectID": "CONTRIBUTING.html#getting-started",
+    "href": "CONTRIBUTING.html#getting-started",
+    "title": "Contributing",
     "section": "",
-    "text": "Version and Release determines the next version, updates version fields in Python (pyproject.toml) and/or R (DESCRIPTION) packages, creates a versioned git tag with floating aliases, and publishes a GitHub Release."
+    "text": "Fork the repository and create a feature branch from main.\nMake your changes following the guidelines below.\nOpen a pull request against main with a clear description of what changed and why."
   },
   {
-    "objectID": "version-release.html#quick-start",
-    "href": "version-release.html#quick-start",
-    "title": "Version and Release",
-    "section": "Quick Start",
-    "text": "Quick Start\nCopy the following to .github/workflows/version-release.yml:\nname: Version and Release\n\non:\n  push:\n    tags:\n      - 'v[0-9]+.[0-9]+.[0-9]+'\n  workflow_dispatch:\n    inputs:\n      version:\n        description: 'Exact version (e.g. 1.2.3). Cannot be used with bump_type.'\n        required: false\n      bump_type:\n        description: 'Component to bump: major | minor | patch. Cannot be used with version.'\n        required: false\n      python_version:\n        description: 'Override: exact version for the Python package.'\n        required: false\n      r_version:\n        description: 'Override: exact version for the R package.'\n        required: false\n\njobs:\n  version-release:\n    runs-on: ubuntu-latest\n    permissions:\n      contents: write\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          fetch-depth: 0\n      - uses: MiguelRodo/actions/version-release@v2\n        with:\n          github_token: ${{ secrets.GITHUB_TOKEN }}\n          version: ${{ inputs.version }}\n          bump_type: ${{ inputs.bump_type }}\n          python_version: ${{ inputs.python_version }}\n          r_version: ${{ inputs.r_version }}"
+    "objectID": "CONTRIBUTING.html#development-guidelines",
+    "href": "CONTRIBUTING.html#development-guidelines",
+    "title": "Contributing",
+    "section": "",
+    "text": "Each action lives in its own subdirectory (e.g. prebuild-devcontainer/). The entry point is always action.yml.\n\nKeep all logic inside action.yml. Avoid adding separate shell scripts unless the complexity makes inline scripts unreadable.\nUse $GITHUB_OUTPUT (not ::set-output) for outputs and $GITHUB_ENV for inter-step environment variables.\nEvery new input must have a description and a required field. Provide a default for optional inputs.\nEvery new output must be declared in the outputs: block of action.yml and documented in the action’s README.md.\n\n\n\n\nInline run: blocks are linted by actionlint (which delegates to shellcheck). Before submitting:\n\nEnsure your scripts pass shellcheck --shell=bash.\nPrefer [[ ... ]] over [ ... ] for conditionals in bash.\nQuote all variable expansions (e.g. \"$VAR\") unless word-splitting is intentional.\n\n\n\n\n\nEach action has its own README.md. Keep the Inputs, Outputs, Permissions, and example workflow sections up to date.\nThe root README.md provides a concise overview and quick-start snippet for each action. Update it when adding or removing an action.\nComplete, copy-paste-ready workflow files live in the examples/ directory.\n\n\n\n\nReleases are managed by the .github/workflows/release.yml workflow. Tags must originate from the main branch and follow the vX.Y.Z format."
   },
   {
-    "objectID": "version-release.html#inputs",
-    "href": "version-release.html#inputs",
-    "title": "Version and Release",
-    "section": "Inputs",
-    "text": "Inputs\n\n\n\n\n\n\n\n\nInput\nDescription\nRequired\n\n\n\n\ngithub_token\nToken for pushing tags and creating releases.\nYes\n\n\nversion\nExact version to apply to all packages (e.g. 1.2.3). Cannot be used with bump_type.\nNo\n\n\nbump_type\nVersion component to bump: major, minor, or patch. Cannot be used with version.\nNo\n\n\npython_version\nPer-package override: exact version for the Python package.\nNo\n\n\nr_version\nPer-package override: exact version for the R package.\nNo"
+    "objectID": "CONTRIBUTING.html#code-of-conduct",
+    "href": "CONTRIBUTING.html#code-of-conduct",
+    "title": "Contributing",
+    "section": "",
+    "text": "Please be respectful and constructive in all interactions. This project follows the Contributor Covenant code of conduct."
   },
   {
-    "objectID": "version-release.html#outputs",
-    "href": "version-release.html#outputs",
-    "title": "Version and Release",
-    "section": "Outputs",
-    "text": "Outputs\n\n\n\nOutput\nDescription\n\n\n\n\nversion\nReleased version without a leading v (e.g. 1.2.3).\n\n\ntag\nGit tag that was created (e.g. v1.2.3)."
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Custom GitHub Actions",
+    "section": "",
+    "text": "Reusable composite GitHub Actions for common CI/CD tasks."
   },
   {
-    "objectID": "version-release.html#how-it-works",
-    "href": "version-release.html#how-it-works",
-    "title": "Version and Release",
-    "section": "How It Works",
-    "text": "How It Works\n\nTag push trigger (v*)\nThe version is taken directly from the pushed tag (e.g. v1.2.3 → 1.2.3). The version and bump_type inputs are ignored.\n\n\nworkflow_dispatch trigger\nExactly one of the following must be supplied:\n\nversion — use an explicit version for all packages.\nbump_type — derive the new version by bumping the most recent semver git tag.\n\nThe python_version and r_version inputs always override the global version for their respective packages.\n\n\nPython package (pyproject.toml)\nIf pyproject.toml is present at the repository root, the version = \"X.Y.Z\" field is updated to the resolved version. If absent, the step is silently skipped.\n\n\nR package (DESCRIPTION)\nIf DESCRIPTION is present at the repository root, the Version: X.Y.Z field is updated. If absent, the step is silently skipped."
+    "objectID": "index.html#available-actions",
+    "href": "index.html#available-actions",
+    "title": "Custom GitHub Actions",
+    "section": "Available Actions",
+    "text": "Available Actions\n\n\n\nAction\nDescription\n\n\n\n\nPre-build Dev Container\nBuild and push a Dev Container image to GHCR, with optional SemVer alias tags and a prebuild/devcontainer.json.\n\n\nAdd Issues to Project\nSync issues to a GitHub Project V2 board with duplicate detection.\n\n\nVersion and Release\nBump versions in Python/R packages, create versioned git tags, and publish a GitHub Release.\n\n\nPublish Quarto Site\nRender and publish a Quarto website to gh-pages, creating the branch automatically if needed."
   },
   {
-    "objectID": "version-release.html#version-precedence",
-    "href": "version-release.html#version-precedence",
-    "title": "Version and Release",
-    "section": "Version Precedence",
-    "text": "Version Precedence\n\n\n\nPriority\nSource\n\n\n\n\n1 (highest)\npython_version / r_version input\n\n\n2\nGlobal version input\n\n\n3\nBump the current file version using bump_type\n\n\n4\nVersion from the pushed tag"
+    "objectID": "index.html#usage",
+    "href": "index.html#usage",
+    "title": "Custom GitHub Actions",
+    "section": "Usage",
+    "text": "Usage\nReference any action directly in a workflow — no cloning required:\nuses: MiguelRodo/actions/&lt;action-folder-name&gt;@v2"
+  },
+  {
+    "objectID": "index.html#releasing",
+    "href": "index.html#releasing",
+    "title": "Custom GitHub Actions",
+    "section": "Releasing",
+    "text": "Releasing\nThis repository manages its own versions with an automated workflow. Push a vX.Y.Z tag or run Actions → Publish Release and Bump Floating Tags manually to create a release and update floating major/minor tags."
+  },
+  {
+    "objectID": "SECURITY.html",
+    "href": "SECURITY.html",
+    "title": "Security Policy",
+    "section": "",
+    "text": "Security fixes are applied to the latest release only. We recommend always using the most recent tag.\n\n\n\nVersion\nSupported\n\n\n\n\nLatest (v2)\n✅\n\n\nOlder major versions\n❌\n\n\n\n\n\n\nPlease do not open a public GitHub issue for security vulnerabilities.\nReport vulnerabilities by using GitHub’s private vulnerability reporting:\n\nGo to the Security tab of this repository.\nClick Report a vulnerability.\nFill in the details and submit.\n\nYou can expect an initial response within 72 hours. If a fix is warranted, a patched release will be published and you will be credited in the release notes (unless you prefer to remain anonymous).\n\n\n\n\n\nEach action documents the minimum token scopes it requires. Never grant broader scopes than necessary:\n\nprebuild-devcontainer — contents: write, packages: write\nadd-issues-to-project — PAT with repo, project, read:org (org projects only)\nversion-release — contents: write\npublish-quarto-site — contents: write, pages: write\n\n\n\n\nFloating tags (e.g. @v2) are convenient but can be updated at any time. For environments with strict supply-chain requirements, pin to a specific commit SHA:\nuses: MiguelRodo/actions/prebuild-devcontainer@&lt;full-commit-sha&gt;\nFind the SHA for any release on the Releases page or by running:\ngit ls-remote https://github.com/MiguelRodo/actions refs/tags/v2"
+  },
+  {
+    "objectID": "SECURITY.html#supported-versions",
+    "href": "SECURITY.html#supported-versions",
+    "title": "Security Policy",
+    "section": "",
+    "text": "Security fixes are applied to the latest release only. We recommend always using the most recent tag.\n\n\n\nVersion\nSupported\n\n\n\n\nLatest (v2)\n✅\n\n\nOlder major versions\n❌"
+  },
+  {
+    "objectID": "SECURITY.html#reporting-a-vulnerability",
+    "href": "SECURITY.html#reporting-a-vulnerability",
+    "title": "Security Policy",
+    "section": "",
+    "text": "Please do not open a public GitHub issue for security vulnerabilities.\nReport vulnerabilities by using GitHub’s private vulnerability reporting:\n\nGo to the Security tab of this repository.\nClick Report a vulnerability.\nFill in the details and submit.\n\nYou can expect an initial response within 72 hours. If a fix is warranted, a patched release will be published and you will be credited in the release notes (unless you prefer to remain anonymous)."
+  },
+  {
+    "objectID": "SECURITY.html#security-considerations-for-users",
+    "href": "SECURITY.html#security-considerations-for-users",
+    "title": "Security Policy",
+    "section": "",
+    "text": "Each action documents the minimum token scopes it requires. Never grant broader scopes than necessary:\n\nprebuild-devcontainer — contents: write, packages: write\nadd-issues-to-project — PAT with repo, project, read:org (org projects only)\nversion-release — contents: write\npublish-quarto-site — contents: write, pages: write\n\n\n\n\nFloating tags (e.g. @v2) are convenient but can be updated at any time. For environments with strict supply-chain requirements, pin to a specific commit SHA:\nuses: MiguelRodo/actions/prebuild-devcontainer@&lt;full-commit-sha&gt;\nFind the SHA for any release on the Releases page or by running:\ngit ls-remote https://github.com/MiguelRodo/actions refs/tags/v2"
   },
   {
     "objectID": "publish-quarto-site.html",
@@ -154,31 +154,87 @@
     "text": "Examples\n\nCustom image name\n- uses: MiguelRodo/actions/prebuild-devcontainer@v2\n  with:\n    github_token: ${{ secrets.GITHUB_TOKEN }}\n    image_name: 'ghcr.io/myorg/my-devcontainer'\n\n\nNon-default devcontainer path\n- uses: MiguelRodo/actions/prebuild-devcontainer@v2\n  with:\n    github_token: ${{ secrets.GITHUB_TOKEN }}\n    devcontainer_path: 'src/.devcontainer'\n\n\nNon-GitHub container registry\nWhen using a custom image_name, the registry input is used only for login — it is not prepended to the image name automatically.\n- uses: MiguelRodo/actions/prebuild-devcontainer@v2\n  with:\n    github_token: ${{ secrets.REGISTRY_TOKEN }}\n    registry: 'registry.example.com'\n    registry_username: 'my-username'\n    image_name: 'registry.example.com/myorg/my-devcontainer'"
   },
   {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "Custom GitHub Actions",
+    "objectID": "version-release.html",
+    "href": "version-release.html",
+    "title": "Version and Release",
     "section": "",
-    "text": "Reusable composite GitHub Actions for common CI/CD tasks."
+    "text": "Version and Release determines the next version, updates version fields in Python (pyproject.toml) and/or R (DESCRIPTION) packages, creates a versioned git tag with floating aliases, and publishes a GitHub Release."
   },
   {
-    "objectID": "index.html#available-actions",
-    "href": "index.html#available-actions",
-    "title": "Custom GitHub Actions",
-    "section": "Available Actions",
-    "text": "Available Actions\n\n\n\nAction\nDescription\n\n\n\n\nPre-build Dev Container\nBuild and push a Dev Container image to GHCR, with optional SemVer alias tags and a prebuild/devcontainer.json.\n\n\nAdd Issues to Project\nSync issues to a GitHub Project V2 board with duplicate detection.\n\n\nVersion and Release\nBump versions in Python/R packages, create versioned git tags, and publish a GitHub Release.\n\n\nPublish Quarto Site\nRender and publish a Quarto website to gh-pages, creating the branch automatically if needed."
+    "objectID": "version-release.html#quick-start",
+    "href": "version-release.html#quick-start",
+    "title": "Version and Release",
+    "section": "Quick Start",
+    "text": "Quick Start\nCopy the following to .github/workflows/version-release.yml:\nname: Version and Release\n\non:\n  push:\n    tags:\n      - 'v[0-9]+.[0-9]+.[0-9]+'\n  workflow_dispatch:\n    inputs:\n      version:\n        description: 'Exact version (e.g. 1.2.3). Cannot be used with bump_type.'\n        required: false\n      bump_type:\n        description: 'Component to bump: major | minor | patch. Cannot be used with version.'\n        required: false\n      python_version:\n        description: 'Override: exact version for the Python package.'\n        required: false\n      r_version:\n        description: 'Override: exact version for the R package.'\n        required: false\n\njobs:\n  version-release:\n    runs-on: ubuntu-latest\n    permissions:\n      contents: write\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          fetch-depth: 0\n      - uses: MiguelRodo/actions/version-release@v2\n        with:\n          github_token: ${{ secrets.GITHUB_TOKEN }}\n          version: ${{ inputs.version }}\n          bump_type: ${{ inputs.bump_type }}\n          python_version: ${{ inputs.python_version }}\n          r_version: ${{ inputs.r_version }}"
   },
   {
-    "objectID": "index.html#usage",
-    "href": "index.html#usage",
-    "title": "Custom GitHub Actions",
-    "section": "Usage",
-    "text": "Usage\nReference any action directly in a workflow — no cloning required:\nuses: MiguelRodo/actions/&lt;action-folder-name&gt;@v2"
+    "objectID": "version-release.html#inputs",
+    "href": "version-release.html#inputs",
+    "title": "Version and Release",
+    "section": "Inputs",
+    "text": "Inputs\n\n\n\n\n\n\n\n\nInput\nDescription\nRequired\n\n\n\n\ngithub_token\nToken for pushing tags and creating releases.\nYes\n\n\nversion\nExact version to apply to all packages (e.g. 1.2.3). Cannot be used with bump_type.\nNo\n\n\nbump_type\nVersion component to bump: major, minor, or patch. Cannot be used with version.\nNo\n\n\npython_version\nPer-package override: exact version for the Python package.\nNo\n\n\nr_version\nPer-package override: exact version for the R package.\nNo"
   },
   {
-    "objectID": "index.html#releasing",
-    "href": "index.html#releasing",
-    "title": "Custom GitHub Actions",
-    "section": "Releasing",
-    "text": "Releasing\nThis repository manages its own versions with an automated workflow. Push a vX.Y.Z tag or run Actions → Publish Release and Bump Floating Tags manually to create a release and update floating major/minor tags."
+    "objectID": "version-release.html#outputs",
+    "href": "version-release.html#outputs",
+    "title": "Version and Release",
+    "section": "Outputs",
+    "text": "Outputs\n\n\n\nOutput\nDescription\n\n\n\n\nversion\nReleased version without a leading v (e.g. 1.2.3).\n\n\ntag\nGit tag that was created (e.g. v1.2.3)."
+  },
+  {
+    "objectID": "version-release.html#how-it-works",
+    "href": "version-release.html#how-it-works",
+    "title": "Version and Release",
+    "section": "How It Works",
+    "text": "How It Works\n\nTag push trigger (v*)\nThe version is taken directly from the pushed tag (e.g. v1.2.3 → 1.2.3). The version and bump_type inputs are ignored.\n\n\nworkflow_dispatch trigger\nExactly one of the following must be supplied:\n\nversion — use an explicit version for all packages.\nbump_type — derive the new version by bumping the most recent semver git tag.\n\nThe python_version and r_version inputs always override the global version for their respective packages.\n\n\nPython package (pyproject.toml)\nIf pyproject.toml is present at the repository root, the version = \"X.Y.Z\" field is updated to the resolved version. If absent, the step is silently skipped.\n\n\nR package (DESCRIPTION)\nIf DESCRIPTION is present at the repository root, the Version: X.Y.Z field is updated. If absent, the step is silently skipped."
+  },
+  {
+    "objectID": "version-release.html#version-precedence",
+    "href": "version-release.html#version-precedence",
+    "title": "Version and Release",
+    "section": "Version Precedence",
+    "text": "Version Precedence\n\n\n\nPriority\nSource\n\n\n\n\n1 (highest)\npython_version / r_version input\n\n\n2\nGlobal version input\n\n\n3\nBump the current file version using bump_type\n\n\n4\nVersion from the pushed tag"
+  },
+  {
+    "objectID": "add-issues-to-project.html",
+    "href": "add-issues-to-project.html",
+    "title": "Add Issues to Project",
+    "section": "",
+    "text": "Add Issues to Project automates syncing issues from a repository to a GitHub Project (V2) board. It includes duplicate detection so issues are only added once."
+  },
+  {
+    "objectID": "add-issues-to-project.html#quick-start",
+    "href": "add-issues-to-project.html#quick-start",
+    "title": "Add Issues to Project",
+    "section": "Quick Start",
+    "text": "Quick Start\n\nGenerate a Personal Access Token (PAT) with repo, project, and read:org scopes.\nSave the PAT as a repository secret named ADD_ISSUES_TO_PROJECT_TOKEN.\nCopy the workflow below to .github/workflows/add-issues-to-project.yml.\n\nname: Sync Issues to Project\n\non:\n  workflow_dispatch:\n  issues:\n    types: [opened, reopened]\n\njobs:\n  add-to-project:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: MiguelRodo/actions/add-issues-to-project@v2\n        with:\n          ADD_ISSUES_TO_PROJECT_TOKEN: ${{ secrets.ADD_ISSUES_TO_PROJECT_TOKEN }}\n          # project_name: \"My Custom Project Board\"\n          # is_project_owner_org: \"true\""
+  },
+  {
+    "objectID": "add-issues-to-project.html#inputs",
+    "href": "add-issues-to-project.html#inputs",
+    "title": "Add Issues to Project",
+    "section": "Inputs",
+    "text": "Inputs\n\n\n\n\n\n\n\n\n\nInput\nDescription\nRequired\nDefault\n\n\n\n\nADD_ISSUES_TO_PROJECT_TOKEN\nPAT with permissions to read the source repo and write to the target project.\nYes\n—\n\n\nproject_name\nName of the target GitHub Project.\nNo\nCurrent repository name\n\n\nproject_owner\nUsername or organization owning the target project.\nNo\nCurrent repository owner\n\n\nis_project_owner_org\nSet to \"true\" if the project owner is an organization.\nNo\n\"false\"\n\n\nsource_repo_name\nRepository to pull issues from.\nNo\nCurrent repository name\n\n\nsource_repo_owner\nOwner of the source repository.\nNo\nCurrent GitHub user"
+  },
+  {
+    "objectID": "add-issues-to-project.html#how-it-works",
+    "href": "add-issues-to-project.html#how-it-works",
+    "title": "Add Issues to Project",
+    "section": "How It Works",
+    "text": "How It Works\n\nInstalls the GitHub CLI (gh) and the gh-projects extension.\nAuthenticates with the provided ADD_ISSUES_TO_PROJECT_TOKEN.\nValidates the target project, organization/user, and source repository.\nUses GraphQL to fetch the Project ID and all existing items.\nCross-references the board’s existing issue IDs against the repository’s issue list.\nAppends only the missing issues via a GraphQL mutation."
+  },
+  {
+    "objectID": "add-issues-to-project.html#advanced-example",
+    "href": "add-issues-to-project.html#advanced-example",
+    "title": "Add Issues to Project",
+    "section": "Advanced Example",
+    "text": "Advanced Example\nSync issues from a repository into a centrally managed organization project board:\n- uses: MiguelRodo/actions/add-issues-to-project@v2\n  with:\n    ADD_ISSUES_TO_PROJECT_TOKEN: ${{ secrets.ORG_PROJECT_PAT }}\n    project_name: \"Q1 Engineering Roadmap\"\n    project_owner: \"MyAwesomeOrg\"\n    is_project_owner_org: \"true\"\n    source_repo_name: \"frontend-client\"\n    source_repo_owner: \"MyAwesomeOrg\""
+  },
+  {
+    "objectID": "add-issues-to-project.html#troubleshooting",
+    "href": "add-issues-to-project.html#troubleshooting",
+    "title": "Add Issues to Project",
+    "section": "Troubleshooting",
+    "text": "Troubleshooting\n\nAuthentication fails: Ensure the PAT is active, unexpired, and has the project scope. Classic PATs are generally easier to configure for organization-wide boards than fine-grained tokens.\nProject not found: Check the spelling of project_name. If the project belongs to an organization, you must set is_project_owner_org: \"true\"."
   }
 ]

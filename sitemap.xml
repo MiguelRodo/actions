@@ -1,23 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://MiguelRodo.github.io/actions/add-issues-to-project.html</loc>
-    <lastmod>2026-04-27T22:01:11.419Z</lastmod>
-  </url>
-  <url>
-    <loc>https://MiguelRodo.github.io/actions/version-release.html</loc>
-    <lastmod>2026-04-27T22:01:11.420Z</lastmod>
-  </url>
-  <url>
-    <loc>https://MiguelRodo.github.io/actions/publish-quarto-site.html</loc>
-    <lastmod>2026-04-27T22:01:11.420Z</lastmod>
-  </url>
-  <url>
-    <loc>https://MiguelRodo.github.io/actions/prebuild-devcontainer.html</loc>
-    <lastmod>2026-04-27T22:01:11.420Z</lastmod>
+    <loc>https://MiguelRodo.github.io/actions/CONTRIBUTING.html</loc>
+    <lastmod>2026-04-29T06:26:50.565Z</lastmod>
   </url>
   <url>
     <loc>https://MiguelRodo.github.io/actions/index.html</loc>
-    <lastmod>2026-04-27T22:01:11.420Z</lastmod>
+    <lastmod>2026-04-29T06:26:50.566Z</lastmod>
+  </url>
+  <url>
+    <loc>https://MiguelRodo.github.io/actions/SECURITY.html</loc>
+    <lastmod>2026-04-29T06:26:50.565Z</lastmod>
+  </url>
+  <url>
+    <loc>https://MiguelRodo.github.io/actions/publish-quarto-site.html</loc>
+    <lastmod>2026-04-29T06:26:50.566Z</lastmod>
+  </url>
+  <url>
+    <loc>https://MiguelRodo.github.io/actions/prebuild-devcontainer.html</loc>
+    <lastmod>2026-04-29T06:26:50.566Z</lastmod>
+  </url>
+  <url>
+    <loc>https://MiguelRodo.github.io/actions/version-release.html</loc>
+    <lastmod>2026-04-29T06:26:50.566Z</lastmod>
+  </url>
+  <url>
+    <loc>https://MiguelRodo.github.io/actions/add-issues-to-project.html</loc>
+    <lastmod>2026-04-29T06:26:50.565Z</lastmod>
   </url>
 </urlset>
