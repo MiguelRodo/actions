@@ -54,9 +54,11 @@ jobs:
           MINOR_VERSION=$(echo "$VERSION" | cut -d'.' -f1,2)
 
           # Set outputs for subsequent steps
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "major=$MAJOR_VERSION" >> $GITHUB_OUTPUT
-          echo "minor=$MINOR_VERSION" >> $GITHUB_OUTPUT
+          {
+            echo "version=$VERSION"
+            echo "major=$MAJOR_VERSION"
+            echo "minor=$MINOR_VERSION"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Configure Git
         run: |
