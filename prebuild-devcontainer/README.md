@@ -82,6 +82,7 @@ permissions:
 | `tag` | Git tag used as the primary container image tag (e.g. `v1.2.3` or `main-v1.2.3`). Auto-detected from `GITHUB_REF` on tag push. Falls back to `latest` if not set and not a tag push. | No | `""` |
 | `registry` | Container registry URL. | No | `ghcr.io` |
 | `registry_username` | Username for registry login. | No | Repository owner |
+| `version_force` | When `'true'`, skip the version progression check and push the specified version as-is. Useful when jumping more than one increment at a time or when no previous image exists and you want an explicit override. | No | `false` |
 
 ## SemVer Alias Tags
 
@@ -94,6 +95,17 @@ When the tag matches a semantic versioning pattern, the action automatically cre
 | Any other format (e.g. `latest`) | as-is | _(none)_ |
 
 This allows callers to pin to a specific patch (`v1.2.3`), minor (`v1.2`), or major (`v1`) version.
+
+## Version Progression Check
+
+When the image tag is a SemVer tag and the registry is `ghcr.io`, the action queries the registry for existing image versions and verifies that the new version is exactly **one major, minor, or patch increment** ahead of the previous one. This prevents accidental large version jumps or downgrades.
+
+The check is automatically **skipped** when:
+- The tag is not a SemVer tag (e.g., `latest`).
+- No previous image exists in the registry yet.
+- The registry is not `ghcr.io`.
+
+Set `version_force: 'true'` to bypass the check entirely.
 
 ## Examples
 
