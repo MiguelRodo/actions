@@ -1,0 +1,141 @@
+name: "Go Version and Release"
+description: >
+  Determines a Go project release version, validates semver progression, creates
+  and pushes a git tag, then runs GoReleaser.
+author: "MiguelRodo"
+
+branding:
+  icon: "tag"
+  color: "blue"
+
+inputs:
+  github_token:
+    description: "GitHub token for pushing tags and publishing releases."
+    required: true
+  version:
+    description: "Exact version to apply (e.g. 1.2.3). Cannot be used with bump_type."
+    required: false
+    default: ""
+  bump_type:
+    description: "Version component to bump (major | minor | patch). Cannot be used with version."
+    required: false
+    default: ""
+  version_check:
+    description: "When true (default), enforce strict version progression from latest semver tag."
+    required: false
+    default: "true"
+  go_version:
+    description: "Go version to install with actions/setup-go."
+    required: false
+    default: "1.22"
+
+outputs:
+  version:
+    description: "Released version without a leading v (e.g. 1.2.3)."
+    value: ${{ steps.get_version.outputs.version }}
+  tag:
+    description: "Git tag that was created or reused (e.g. v1.2.3)."
+    value: ${{ steps.get_version.outputs.tag }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Configure Git
+      shell: bash
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Determine version
+      id: get_version
+      shell: bash
+      run: |
+        VERSION_INPUT="${{ inputs.version }}"
+        BUMP_INPUT="${{ inputs.bump_type }}"
+
+        if [ -n "$VERSION_INPUT" ] && [ -n "$BUMP_INPUT" ]; then
+          echo "Error: cannot set both 'version' and 'bump_type'." >&2
+          exit 1
+        fi
+
+        if [ -n "$BUMP_INPUT" ]; then
+          PREV_TAG=$(git tag --sort=version:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | tail -1 || true)
+          CURRENT="${PREV_TAG#v}"
+          if [ -z "$CURRENT" ]; then
+            CURRENT="0.0.0"
+          fi
+          VERSION=$("$GITHUB_ACTION_PATH/../scripts/apply-version-bump.sh" "$BUMP_INPUT" "$CURRENT")
+        elif [ -n "$VERSION_INPUT" ]; then
+          VERSION="${VERSION_INPUT#v}"
+        elif [ "${{ github.ref_type }}" = "tag" ]; then
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+        else
+          echo "Error: provide one of 'version' or 'bump_type', or run from a tag ref." >&2
+          exit 1
+        fi
+
+        if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "Error: version '$VERSION' is not valid semver (X.Y.Z)." >&2
+          exit 1
+        fi
+
+        echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+        echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+
+    - name: Check version progression
+      if: inputs.version_check == 'true'
+      shell: bash
+      run: |
+        NEW_VERSION="${{ steps.get_version.outputs.version }}"
+        PREV_TAG=$(git tag --sort=version:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | grep -vxF "v${NEW_VERSION}" | tail -1 || true)
+
+        if [ -z "$PREV_TAG" ]; then
+          echo "No previous semver tag found; skipping version progression check."
+          exit 0
+        fi
+
+        PREV_VERSION="${PREV_TAG#v}"
+        "$GITHUB_ACTION_PATH/../scripts/check-version-progression.sh" "$NEW_VERSION" "$PREV_VERSION"
+
+    - name: Create and push git tag
+      shell: bash
+      run: |
+        TAG="${{ steps.get_version.outputs.tag }}"
+        HEAD_SHA="$(git rev-parse HEAD)"
+
+        if git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null 2>&1; then
+          git fetch --no-tags origin "refs/tags/${TAG}:refs/tags/${TAG}"
+          TAG_SHA="$(git rev-list -n 1 "${TAG}")"
+          if [ "$TAG_SHA" != "$HEAD_SHA" ]; then
+            echo "Error: tag ${TAG} already exists on origin but points to ${TAG_SHA}, not HEAD ${HEAD_SHA}." >&2
+            exit 1
+          fi
+          echo "Tag ${TAG} already exists on origin and points to HEAD."
+          exit 0
+        fi
+
+        if git show-ref --tags --verify --quiet "refs/tags/${TAG}"; then
+          TAG_SHA="$(git rev-list -n 1 "${TAG}")"
+          if [ "$TAG_SHA" != "$HEAD_SHA" ]; then
+            echo "Error: local tag ${TAG} points to ${TAG_SHA}, not HEAD ${HEAD_SHA}." >&2
+            exit 1
+          fi
+          echo "Tag ${TAG} already exists locally and points to HEAD."
+        else
+          git tag -a "$TAG" -m "Release $TAG"
+        fi
+
+        git push origin "refs/tags/${TAG}"
+
+    - name: Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ inputs.go_version }}
+
+    - name: Run GoReleaser
+      uses: goreleaser/goreleaser-action@v5
+      with:
+        args: release --clean
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
