@@ -138,6 +138,50 @@ See the [action README](./version-release/README.md) for all inputs, outputs, an
 
 ---
 
+### [Go Version and Release](./go-version-release)
+
+Creates a Go release by resolving a semantic version (explicit or bumped), optionally validating version progression, pushing the git tag, and running GoReleaser.
+
+<details>
+<summary>Minimal workflow</summary>
+
+```yaml
+name: Go Version and Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Exact version (e.g. 1.2.3). Cannot be used with bump_type.'
+        required: false
+      bump_type:
+        description: 'Component to bump: major | minor | patch. Cannot be used with version.'
+        required: false
+      go_version:
+        description: 'Go version to install (defaults to 1.22).'
+        required: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: MiguelRodo/actions/go-version-release@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          version: ${{ inputs.version }}
+          bump_type: ${{ inputs.bump_type }}
+          go_version: ${{ inputs.go_version }}
+```
+
+</details>
+
+---
+
 ### [Publish Quarto Site](./publish-quarto-site)
 
 Publishes a Quarto site to the `gh-pages` branch, creating the branch automatically if it does not already exist.
