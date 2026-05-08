@@ -102,14 +102,26 @@ runs:
       shell: bash
       run: |
         TAG="${{ steps.get_version.outputs.tag }}"
+        HEAD_SHA="$(git rev-parse HEAD)"
 
         if git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null 2>&1; then
-          echo "Tag ${TAG} already exists on origin; reusing existing tag."
+          git fetch --no-tags origin "refs/tags/${TAG}:refs/tags/${TAG}"
+          TAG_SHA="$(git rev-list -n 1 "${TAG}")"
+          if [ "$TAG_SHA" != "$HEAD_SHA" ]; then
+            echo "Error: tag ${TAG} already exists on origin but points to ${TAG_SHA}, not HEAD ${HEAD_SHA}." >&2
+            exit 1
+          fi
+          echo "Tag ${TAG} already exists on origin and points to HEAD."
           exit 0
         fi
 
         if git show-ref --tags --verify --quiet "refs/tags/${TAG}"; then
-          echo "Tag ${TAG} already exists locally; pushing to origin."
+          TAG_SHA="$(git rev-list -n 1 "${TAG}")"
+          if [ "$TAG_SHA" != "$HEAD_SHA" ]; then
+            echo "Error: local tag ${TAG} points to ${TAG_SHA}, not HEAD ${HEAD_SHA}." >&2
+            exit 1
+          fi
+          echo "Tag ${TAG} already exists locally and points to HEAD."
         else
           git tag -a "$TAG" -m "Release $TAG"
         fi

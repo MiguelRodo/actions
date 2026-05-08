@@ -180,6 +180,8 @@ jobs:
 
 </details>
 
+See the [action README](./go-version-release/README.md) for all inputs, outputs, and behavior details.
+
 ---
 
 ### [Publish Quarto Site](./publish-quarto-site)

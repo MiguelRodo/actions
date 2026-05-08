@@ -1,6 +1,7 @@
 #!/usr/bin/env bats
 
 ACTION_FILE="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-release/action.yml"
+ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-release/README.md"
 
 @test "go-version-release action exists and is a composite action" {
   [ -f "$ACTION_FILE" ]
@@ -46,5 +47,20 @@ ACTION_FILE="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-re
   [ "$status" -eq 0 ]
 
   run grep -F 'args: release --clean' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+}
+
+@test "tag handling validates existing tag points to HEAD" {
+  run grep -F 'git fetch --no-tags origin "refs/tags/${TAG}:refs/tags/${TAG}"' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'already exists on origin but points to' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+}
+
+@test "go-version-release has dedicated README with checkout guidance" {
+  [ -f "$ACTION_README" ]
+
+  run grep -F 'fetch-depth: 0' "$ACTION_README"
   [ "$status" -eq 0 ]
 }
