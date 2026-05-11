@@ -186,20 +186,6 @@ runs:
 
         APT_REPO_OWNER="${APT_REPO_INPUT%%/*}"
         APT_REPO_NAME="${APT_REPO_INPUT##*/}"
-        APT_ARCH="$(dpkg-deb -f "${DEB_FILES[0]}" Architecture | tr -d '\n')"
-
-        if [ -z "$APT_ARCH" ]; then
-          echo "Error: could not determine package architecture from ${DEB_FILES[0]}." >&2
-          exit 1
-        fi
-
-        for DEB_FILE in "${DEB_FILES[@]}"; do
-          DEB_ARCH="$(dpkg-deb -f "$DEB_FILE" Architecture | tr -d '\n')"
-          if [ "$DEB_ARCH" != "$APT_ARCH" ]; then
-            echo "Error: multiple package architectures found in dist/: ${APT_ARCH} and ${DEB_ARCH}. Only a single architecture is supported." >&2
-            exit 1
-          fi
-        done
 
         APT_REPO_DIR=""
         ASKPASS_SCRIPT=""
@@ -237,33 +223,92 @@ runs:
           "${{ github.server_url }}/${APT_REPO_INPUT}.git" \
           "$APT_REPO_DIR"
 
-        cp "${DEB_FILES[@]}" "$APT_REPO_DIR/"
+        declare -A ARCH_SEEN=()
+        publish_deb() {
+          local SOURCE_DEB="$1"
+          local COPY_MODE="$2"
+          local PACKAGE_NAME
+          local PACKAGE_ARCH
+          local BUCKET
+          local DEST_DIR
+          local DEST_FILE
 
-        mapfile -d '' REPO_DEB_FILES < <(find "$APT_REPO_DIR" -maxdepth 1 -type f -name '*.deb' -print0 | sort -z)
-        for REPO_DEB_FILE in "${REPO_DEB_FILES[@]}"; do
-          REPO_DEB_ARCH="$(dpkg-deb -f "$REPO_DEB_FILE" Architecture | tr -d '\n')"
-          if [ "$REPO_DEB_ARCH" != "$APT_ARCH" ]; then
-            echo "Error: apt repository contains package architecture ${REPO_DEB_ARCH} in $(basename "$REPO_DEB_FILE"), expected ${APT_ARCH}. Only a single architecture is supported." >&2
+          PACKAGE_NAME="$(dpkg-deb -f "$SOURCE_DEB" Package | tr -d '\n')"
+          PACKAGE_ARCH="$(dpkg-deb -f "$SOURCE_DEB" Architecture | tr -d '\n')"
+
+          if [ -z "$PACKAGE_NAME" ]; then
+            echo "Error: could not determine package name from $SOURCE_DEB." >&2
             exit 1
           fi
+
+          if [ -z "$PACKAGE_ARCH" ]; then
+            echo "Error: could not determine package architecture from $SOURCE_DEB." >&2
+            exit 1
+          fi
+
+          BUCKET="$(printf '%s' "$PACKAGE_NAME" | cut -c1 | tr '[:upper:]' '[:lower:]')"
+          if [[ ! "$BUCKET" =~ ^[a-z0-9]$ ]]; then
+            BUCKET="_"
+          fi
+
+          DEST_DIR="$APT_REPO_DIR/pool/main/$BUCKET"
+          DEST_FILE="$DEST_DIR/$(basename "$SOURCE_DEB")"
+          mkdir -p "$DEST_DIR"
+
+          if [ "$COPY_MODE" = "move" ]; then
+            if [ "$SOURCE_DEB" != "$DEST_FILE" ]; then
+              mv -f "$SOURCE_DEB" "$DEST_FILE"
+            fi
+          else
+            cp -f "$SOURCE_DEB" "$DEST_FILE"
+          fi
+
+          ARCH_SEEN["$PACKAGE_ARCH"]=1
+        }
+
+        mapfile -d '' EXISTING_DEB_FILES < <(find "$APT_REPO_DIR" -type f -name '*.deb' -not -path "$APT_REPO_DIR/.git/*" -print0 | sort -z)
+        for EXISTING_DEB_FILE in "${EXISTING_DEB_FILES[@]}"; do
+          publish_deb "$EXISTING_DEB_FILE" "move"
         done
+
+        for DEB_FILE in "${DEB_FILES[@]}"; do
+          publish_deb "$DEB_FILE" "copy"
+        done
+
+        mapfile -t PUBLISHED_ARCHES < <(printf '%s\n' "${!ARCH_SEEN[@]}" | sort -u)
+        if [ "${#PUBLISHED_ARCHES[@]}" -eq 0 ]; then
+          echo "Error: no package architectures were detected while publishing apt repository contents." >&2
+          exit 1
+        fi
 
         (
           cd "$APT_REPO_DIR"
 
-          dpkg-scanpackages --multiversion . /dev/null > Packages
-          gzip -9c Packages > Packages.gz
+          rm -rf dists/stable/main/binary-*
+          mkdir -p dists/stable/main
+
+          for ARCH in "${PUBLISHED_ARCHES[@]}"; do
+            BINARY_DIR="dists/stable/main/binary-${ARCH}"
+            mkdir -p "$BINARY_DIR"
+            dpkg-scanpackages --multiversion -a "$ARCH" pool /dev/null > "$BINARY_DIR/Packages"
+            gzip -9c "$BINARY_DIR/Packages" > "$BINARY_DIR/Packages.gz"
+          done
+
+          ARCH_LIST="$(printf '%s ' "${PUBLISHED_ARCHES[@]}")"
+          ARCH_LIST="${ARCH_LIST% }"
           apt-ftparchive \
             -o APT::FTPArchive::Release::Origin="$APT_REPO_OWNER" \
             -o APT::FTPArchive::Release::Label="$APT_REPO_NAME" \
             -o APT::FTPArchive::Release::Suite="stable" \
             -o APT::FTPArchive::Release::Codename="stable" \
-            -o APT::FTPArchive::Release::Architectures="$APT_ARCH" \
+            -o APT::FTPArchive::Release::Architectures="$ARCH_LIST" \
             -o APT::FTPArchive::Release::Components="main" \
-            release . > Release
+            release dists/stable > dists/stable/Release
 
-          # Remove stale signed metadata because this initial implementation only publishes unsigned apt metadata.
-          rm -f InRelease Release.gpg
+          rm -f Packages Packages.gz Release
+
+          # Remove stale signed metadata because this action only publishes unsigned apt metadata.
+          rm -f InRelease Release.gpg dists/stable/InRelease dists/stable/Release.gpg
 
           git add -A
 

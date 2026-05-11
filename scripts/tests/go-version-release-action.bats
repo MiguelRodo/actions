@@ -61,7 +61,7 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   [ "$status" -eq 0 ]
 }
 
-@test "apt publishing is optional and regenerates apt metadata from dist debs" {
+@test "apt publishing is optional and generates structured multi-arch apt metadata from dist debs" {
   run grep -F "if: inputs.apt_repo != ''" "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
@@ -80,13 +80,22 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   run grep -F '${{ github.server_url }}/${APT_REPO_INPUT}.git' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
-  run grep -F 'find "$APT_REPO_DIR" -maxdepth 1 -type f -name '\''*.deb'\''' "$ACTION_FILE"
+  run grep -F 'publish_deb() {' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
-  run grep -F 'dpkg-scanpackages --multiversion . /dev/null > Packages' "$ACTION_FILE"
+  run grep -F 'DEST_DIR="$APT_REPO_DIR/pool/main/$BUCKET"' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'dpkg-scanpackages --multiversion -a "$ARCH" pool /dev/null > "$BINARY_DIR/Packages"' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'gzip -9c "$BINARY_DIR/Packages" > "$BINARY_DIR/Packages.gz"' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
   run grep -F 'apt-ftparchive \' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'release dists/stable > dists/stable/Release' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
   run grep -F 'git push origin HEAD:main' "$ACTION_FILE"
