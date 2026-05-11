@@ -1,6 +1,6 @@
 # Go Version and Release Action
 
-Standalone composite action for pure Go releases. It resolves a semantic version, optionally validates strict progression from the latest semver tag, creates/pushes the release tag, updates floating major/minor tags, sets up Go, runs GoReleaser, and can publish generated `.deb` artifacts to a separate GitHub repository that acts as a flat apt repository.
+Standalone composite action for pure Go releases. It resolves a semantic version, optionally validates strict progression from the latest semver tag, creates/pushes the release tag, updates floating major/minor tags, sets up Go, runs GoReleaser, and can publish generated `.deb` artifacts to a separate GitHub repository as a structured apt repository.
 
 ## Usage
 
@@ -59,7 +59,7 @@ jobs:
 | `bump_type` | Version component to bump: `major`, `minor`, or `patch`. Cannot be used with `version`. | No |
 | `version_check` | When `true` (default), enforce strict progression from latest semver tag. | No |
 | `go_version` | Go version for `actions/setup-go` (default `1.22`). | No |
-| `apt_repo` | Optional GitHub repository in `owner/name` form. When set, generated `.deb` artifacts from `dist/` are published to that repo's `main` branch as a flat apt repository. | No |
+| `apt_repo` | Optional GitHub repository in `owner/name` form. When set, generated `.deb` artifacts from `dist/` are published to that repo's `main` branch using a structured apt layout (`pool/` and `dists/stable/main/binary-*`). | No |
 
 ## Outputs
 
@@ -95,14 +95,14 @@ For example, releasing `v1.2.3` updates `v1` and `v1.2` to point to the same com
 When `apt_repo` is set, the action:
 
 1. Finds generated `.deb` artifacts in `dist/`
-2. Verifies they all target the same package architecture
-3. Clones the target repository's `main` branch
-4. Copies the `.deb` files into the repository root
-5. Regenerates `Packages`, `Packages.gz`, and `Release`
+2. Clones the target repository's `main` branch
+3. Publishes `.deb` files under `pool/main/<bucket>/`
+4. Regenerates architecture-specific `Packages` / `Packages.gz` indexes in `dists/stable/main/binary-<arch>/`
+5. Regenerates `dists/stable/Release` with all detected architectures
 6. Commits and pushes the updated apt repository contents
 
 Notes:
 
 - The same `github_token` is used for the release flow and for pushing to `apt_repo`, so it must have write access to the target repository.
 - For the initial target repository described in this repo, set `apt_repo` to `MiguelRodo/apt-miguelrodo`.
-- This first implementation publishes a single-architecture flat apt repository and does not generate signed `InRelease` / `Release.gpg` metadata.
+- This implementation publishes unsigned metadata (`Release`) and does not generate signed `InRelease` / `Release.gpg`.
