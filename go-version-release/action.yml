@@ -32,7 +32,10 @@ inputs:
     description: "Optional target GitHub repository in owner/name form for publishing generated .deb artifacts as an apt repository."
     required: false
     default: ""
-
+  goreleaser_config:
+    description: "Optional path to the GoReleaser config file."
+    required: false
+    default: ".goreleaser.yml"
 outputs:
   version:
     description: "Released version without a leading v (e.g. 1.2.3)."
@@ -153,7 +156,7 @@ runs:
     - name: Run GoReleaser
       uses: goreleaser/goreleaser-action@v5
       with:
-        args: release --clean
+        args: release --clean --config "${{ inputs.goreleaser_config }}"  
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
 
