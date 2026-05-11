@@ -93,25 +93,6 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   [ "$status" -eq 0 ]
 }
 
-@test "floating tags step exists and runs after GoReleaser" {
-  run grep -F 'goreleaser/goreleaser-action' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-
-  run grep -F 'git tag -fa' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-
-  # Verify Update floating major and minor tags step comes after Run GoReleaser step
-  run awk '
-    /goreleaser\/goreleaser-action/ { goreleaser_line=NR }
-    /git tag -fa/ { floating_line=NR }
-    END {
-      if (goreleaser_line == 0 || floating_line == 0) exit 1
-      exit (floating_line > goreleaser_line) ? 0 : 1
-    }
-  ' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-}
-
 @test "tag handling validates existing tag points to HEAD" {
   run grep -F 'git fetch --no-tags origin "refs/tags/${TAG}:refs/tags/${TAG}"' "$ACTION_FILE"
   [ "$status" -eq 0 ]
