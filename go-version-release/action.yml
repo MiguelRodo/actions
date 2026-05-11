@@ -28,6 +28,10 @@ inputs:
     description: "Go version to install with actions/setup-go."
     required: false
     default: "1.22"
+  apt_repo:
+    description: "Optional target GitHub repository in owner/name form for publishing generated .deb artifacts as an apt repository."
+    required: false
+    default: ""
 
 outputs:
   version:
@@ -152,3 +156,119 @@ runs:
         args: release --clean
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
+
+    - name: Publish Debian packages to apt repository
+      if: inputs.apt_repo != ''
+      shell: bash
+      run: |
+        mapfile -d '' DEB_FILES < <(find dist -type f -name '*.deb' -print0 | sort -z)
+
+        if [ "${#DEB_FILES[@]}" -eq 0 ]; then
+          echo "Error: apt_repo was provided, but no .deb files were found in dist/." >&2
+          exit 1
+        fi
+
+        APT_REPO_INPUT="${{ inputs.apt_repo }}"
+        if [[ ! "$APT_REPO_INPUT" =~ ^[^/]+/[^/]+$ ]]; then
+          echo "Error: apt_repo must be in owner/name format." >&2
+          exit 1
+        fi
+
+        for REQUIRED_COMMAND in dpkg-deb dpkg-scanpackages apt-ftparchive; do
+          if ! command -v "$REQUIRED_COMMAND" >/dev/null 2>&1; then
+            echo "Error: required command '$REQUIRED_COMMAND' is not available on the runner." >&2
+            exit 1
+          fi
+        done
+
+        APT_REPO_OWNER="${APT_REPO_INPUT%%/*}"
+        APT_REPO_NAME="${APT_REPO_INPUT##*/}"
+        APT_ARCH="$(dpkg-deb -f "${DEB_FILES[0]}" Architecture | tr -d '\n')"
+
+        if [ -z "$APT_ARCH" ]; then
+          echo "Error: could not determine package architecture from ${DEB_FILES[0]}." >&2
+          exit 1
+        fi
+
+        for DEB_FILE in "${DEB_FILES[@]}"; do
+          DEB_ARCH="$(dpkg-deb -f "$DEB_FILE" Architecture | tr -d '\n')"
+          if [ "$DEB_ARCH" != "$APT_ARCH" ]; then
+            echo "Error: multiple package architectures found in dist/: ${APT_ARCH} and ${DEB_ARCH}. Only a single architecture is supported." >&2
+            exit 1
+          fi
+        done
+
+        APT_REPO_DIR=""
+        ASKPASS_SCRIPT=""
+        cleanup() {
+          if [ -n "$APT_REPO_DIR" ]; then
+            rm -rf "$APT_REPO_DIR"
+          fi
+
+          if [ -n "$ASKPASS_SCRIPT" ]; then
+            rm -f "$ASKPASS_SCRIPT"
+          fi
+        }
+        trap cleanup EXIT
+
+        APT_REPO_DIR="$(mktemp -d "${RUNNER_TEMP:-/tmp}/apt-repo-XXXXXX")"
+        ASKPASS_SCRIPT="$(mktemp "${RUNNER_TEMP:-/tmp}/git-askpass-XXXXXX")"
+        cat >"$ASKPASS_SCRIPT" <<'EOF'
+        #!/usr/bin/env bash
+        # Git over HTTPS prompts for "Username for ..." and then "Password for ..."; the cases below mirror that sequence.
+        case "$1" in
+          Username\ for\ *) printf '%s\n' "x-access-token" ;;
+          Password\ for\ *) printf '%s\n' "$GIT_TOKEN_FOR_ASKPASS" ;;
+          *) exit 1 ;;
+        esac
+        EOF
+        # mktemp creates the file with private permissions; add owner execute permission so Git can run it.
+        chmod u+x "$ASKPASS_SCRIPT"
+        export GIT_TERMINAL_PROMPT=0
+        export GIT_ASKPASS="$ASKPASS_SCRIPT"
+        export GIT_TOKEN_FOR_ASKPASS="${{ inputs.github_token }}"
+
+        git clone \
+          --branch main \
+          --single-branch \
+          "${{ github.server_url }}/${APT_REPO_INPUT}.git" \
+          "$APT_REPO_DIR"
+
+        cp "${DEB_FILES[@]}" "$APT_REPO_DIR/"
+
+        mapfile -d '' REPO_DEB_FILES < <(find "$APT_REPO_DIR" -maxdepth 1 -type f -name '*.deb' -print0 | sort -z)
+        for REPO_DEB_FILE in "${REPO_DEB_FILES[@]}"; do
+          REPO_DEB_ARCH="$(dpkg-deb -f "$REPO_DEB_FILE" Architecture | tr -d '\n')"
+          if [ "$REPO_DEB_ARCH" != "$APT_ARCH" ]; then
+            echo "Error: apt repository contains package architecture ${REPO_DEB_ARCH} in $(basename "$REPO_DEB_FILE"), expected ${APT_ARCH}. Only a single architecture is supported." >&2
+            exit 1
+          fi
+        done
+
+        (
+          cd "$APT_REPO_DIR"
+
+          dpkg-scanpackages --multiversion . /dev/null > Packages
+          gzip -9c Packages > Packages.gz
+          apt-ftparchive \
+            -o APT::FTPArchive::Release::Origin="$APT_REPO_OWNER" \
+            -o APT::FTPArchive::Release::Label="$APT_REPO_NAME" \
+            -o APT::FTPArchive::Release::Suite="stable" \
+            -o APT::FTPArchive::Release::Codename="stable" \
+            -o APT::FTPArchive::Release::Architectures="$APT_ARCH" \
+            -o APT::FTPArchive::Release::Components="main" \
+            release . > Release
+ 
+          # Remove stale signed metadata because this initial implementation only publishes unsigned apt metadata.
+          rm -f InRelease Release.gpg
+
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "No apt repository changes to publish."
+            exit 0
+          fi
+
+          git commit -m "Publish Debian packages for ${{ steps.get_version.outputs.tag }}"
+          git push origin HEAD:main
+        )
