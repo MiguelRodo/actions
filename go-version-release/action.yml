@@ -223,7 +223,7 @@ runs:
           *) exit 1 ;;
         esac
         EOF
-        chmod 700 "$ASKPASS_SCRIPT"
+        chmod u+x "$ASKPASS_SCRIPT"
         export GIT_TERMINAL_PROMPT=0
         export GIT_ASKPASS="$ASKPASS_SCRIPT"
         export GIT_TOKEN_FOR_ASKPASS="${{ inputs.github_token }}"
