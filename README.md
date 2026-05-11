@@ -179,7 +179,7 @@ jobs:
           version: ${{ inputs.version }}
           bump_type: ${{ inputs.bump_type }}
           go_version: ${{ inputs.go_version }}
-          apt_repo: MiguelRodo/apt-miguelrodo
+          apt_repo: ${{ inputs.apt_repo }}
 ```
 
 </details>

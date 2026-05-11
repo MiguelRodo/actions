@@ -44,7 +44,7 @@ jobs:
           bump_type: ${{ inputs.bump_type }}
           version_check: ${{ inputs.version_check }}
           go_version: ${{ inputs.go_version }}
-          apt_repo: MiguelRodo/apt-miguelrodo
+          apt_repo: ${{ inputs.apt_repo }}
 ```
 
 > [!IMPORTANT]
@@ -104,4 +104,5 @@ When `apt_repo` is set, the action:
 Notes:
 
 - The same `github_token` is used for the release flow and for pushing to `apt_repo`, so it must have write access to the target repository.
+- For the initial target repository described in this repo, set `apt_repo` to `MiguelRodo/apt-miguelrodo`.
 - This first implementation publishes a single-architecture flat apt repository and does not generate signed `InRelease` / `Release.gpg` metadata.

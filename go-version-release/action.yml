@@ -169,6 +169,18 @@ runs:
         fi
 
         APT_REPO_INPUT="${{ inputs.apt_repo }}"
+        if [[ ! "$APT_REPO_INPUT" =~ ^[^/]+/[^/]+$ ]]; then
+          echo "Error: apt_repo must be in owner/name format." >&2
+          exit 1
+        fi
+
+        for REQUIRED_COMMAND in dpkg-deb dpkg-scanpackages apt-ftparchive; do
+          if ! command -v "$REQUIRED_COMMAND" >/dev/null 2>&1; then
+            echo "Error: required command '$REQUIRED_COMMAND' is not available on the runner." >&2
+            exit 1
+          fi
+        done
+
         APT_REPO_OWNER="${APT_REPO_INPUT%%/*}"
         APT_REPO_NAME="${APT_REPO_INPUT##*/}"
         APT_ARCH="$(dpkg-deb -f "${DEB_FILES[0]}" Architecture | tr -d '\n')"
@@ -186,16 +198,50 @@ runs:
           fi
         done
 
+        APT_REPO_DIR=""
+        ASKPASS_SCRIPT=""
+        cleanup() {
+          if [ -n "$APT_REPO_DIR" ]; then
+            rm -rf "$APT_REPO_DIR"
+          fi
+
+          if [ -n "$ASKPASS_SCRIPT" ]; then
+            rm -f "$ASKPASS_SCRIPT"
+          fi
+        }
+        trap cleanup EXIT
+
         APT_REPO_DIR="$(mktemp -d "${RUNNER_TEMP:-/tmp}/apt-repo-XXXXXX")"
-        trap 'rm -rf "$APT_REPO_DIR"' EXIT
+        ASKPASS_SCRIPT="$(mktemp "${RUNNER_TEMP:-/tmp}/git-askpass-XXXXXX")"
+        cat >"$ASKPASS_SCRIPT" <<'EOF'
+        #!/usr/bin/env bash
+        case "$1" in
+          *Username*) printf '%s\n' "x-access-token" ;;
+          *Password*) printf '%s\n' "$GIT_TOKEN_FOR_ASKPASS" ;;
+          *) exit 1 ;;
+        esac
+        EOF
+        chmod 700 "$ASKPASS_SCRIPT"
+        export GIT_TERMINAL_PROMPT=0
+        export GIT_ASKPASS="$ASKPASS_SCRIPT"
+        export GIT_TOKEN_FOR_ASKPASS="${{ inputs.github_token }}"
 
         git clone \
           --branch main \
           --single-branch \
-          "https://x-access-token:${{ inputs.github_token }}@github.com/${APT_REPO_INPUT}.git" \
+          "${{ github.server_url }}/${APT_REPO_INPUT}.git" \
           "$APT_REPO_DIR"
 
         cp "${DEB_FILES[@]}" "$APT_REPO_DIR/"
+
+        mapfile -d '' REPO_DEB_FILES < <(find "$APT_REPO_DIR" -maxdepth 1 -type f -name '*.deb' -print0 | sort -z)
+        for REPO_DEB_FILE in "${REPO_DEB_FILES[@]}"; do
+          REPO_DEB_ARCH="$(dpkg-deb -f "$REPO_DEB_FILE" Architecture | tr -d '\n')"
+          if [ "$REPO_DEB_ARCH" != "$APT_ARCH" ]; then
+            echo "Error: apt repository contains package architecture ${REPO_DEB_ARCH} in $(basename "$REPO_DEB_FILE"), expected ${APT_ARCH}. Only a single architecture is supported." >&2
+            exit 1
+          fi
+        done
 
         (
           cd "$APT_REPO_DIR"
