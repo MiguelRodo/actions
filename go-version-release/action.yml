@@ -210,7 +210,8 @@ runs:
             -o APT::FTPArchive::Release::Architectures="$APT_ARCH" \
             -o APT::FTPArchive::Release::Components="main" \
             release . > Release
-
+ 
+          # Remove stale signed metadata because this initial implementation only publishes unsigned apt metadata.
           rm -f InRelease Release.gpg
 
           git add -A
