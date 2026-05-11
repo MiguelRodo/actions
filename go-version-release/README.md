@@ -1,8 +1,6 @@
 # Go Version and Release Action
 
-Standalone composite action for pure Go releases. It resolves a semantic version,
-optionally validates strict progression from the latest semver tag, creates/pushes
-the release tag, sets up Go, and runs GoReleaser.
+Standalone composite action for pure Go releases. It resolves a semantic version, optionally validates strict progression from the latest semver tag, creates/pushes the release tag, updates floating major/minor tags, sets up Go, and runs GoReleaser.
 
 ## Usage
 
@@ -77,3 +75,12 @@ jobs:
 
 When `version_check: true`, the action validates the new version against the latest
 previous semver tag using `scripts/check-version-progression.sh`.
+
+## Tag behavior
+
+The action creates or reuses the release tag `vX.Y.Z` and also updates floating tags:
+
+- `vX`
+- `vX.Y`
+
+For example, releasing `v1.2.3` updates `v1` and `v1.2` to point to the same commit.
