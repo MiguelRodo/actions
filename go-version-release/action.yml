@@ -128,6 +128,19 @@ runs:
 
         git push origin "refs/tags/${TAG}"
 
+    - name: Update floating major and minor tags
+      shell: bash
+      run: |
+        TAG="${{ steps.get_version.outputs.tag }}"
+        MAJOR=$(echo "$TAG" | cut -d'.' -f1)
+        MINOR=$(echo "$TAG" | cut -d'.' -f1,2)
+
+        echo "Updating floating tags to $TAG..."
+        git tag -fa "$MINOR" -m "Update $MINOR to point to $TAG"
+        git tag -fa "$MAJOR" -m "Update $MAJOR to point to $TAG"
+        git push origin "refs/tags/$MINOR" --force
+        git push origin "refs/tags/$MAJOR" --force
+
     - name: Setup Go
       uses: actions/setup-go@v5
       with:
