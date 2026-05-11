@@ -140,7 +140,7 @@ See the [action README](./version-release/README.md) for all inputs, outputs, an
 
 ### [Go Version and Release](./go-version-release)
 
-Creates a Go release by resolving a semantic version (explicit or bumped), optionally validating version progression, pushing the git tag, and running GoReleaser.
+Creates a Go release by resolving a semantic version (explicit or bumped), optionally validating version progression, pushing the git tag, running GoReleaser, and optionally publishing generated `.deb` artifacts to a separate apt repository.
 
 <details>
 <summary>Minimal workflow</summary>
@@ -160,6 +160,9 @@ on:
       go_version:
         description: 'Go version to install (defaults to 1.22).'
         required: false
+      apt_repo:
+        description: 'Optional target GitHub repository in owner/name form for publishing generated .deb artifacts.'
+        required: false
 
 jobs:
   release:
@@ -176,6 +179,7 @@ jobs:
           version: ${{ inputs.version }}
           bump_type: ${{ inputs.bump_type }}
           go_version: ${{ inputs.go_version }}
+          apt_repo: MiguelRodo/apt-miguelrodo
 ```
 
 </details>

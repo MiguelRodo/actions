@@ -28,6 +28,10 @@ inputs:
     description: "Go version to install with actions/setup-go."
     required: false
     default: "1.22"
+  apt_repo:
+    description: "Optional target GitHub repository in owner/name form for publishing generated .deb artifacts as an apt repository."
+    required: false
+    default: ""
 
 outputs:
   version:
@@ -152,3 +156,70 @@ runs:
         args: release --clean
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
+
+    - name: Publish Debian packages to apt repository
+      if: inputs.apt_repo != ''
+      shell: bash
+      run: |
+        mapfile -d '' DEB_FILES < <(find dist -type f -name '*.deb' -print0 | sort -z)
+
+        if [ "${#DEB_FILES[@]}" -eq 0 ]; then
+          echo "Error: apt_repo was provided, but no .deb files were found in dist/." >&2
+          exit 1
+        fi
+
+        APT_REPO_INPUT="${{ inputs.apt_repo }}"
+        APT_REPO_OWNER="${APT_REPO_INPUT%%/*}"
+        APT_REPO_NAME="${APT_REPO_INPUT##*/}"
+        APT_ARCH="$(dpkg-deb -f "${DEB_FILES[0]}" Architecture | tr -d '\n')"
+
+        if [ -z "$APT_ARCH" ]; then
+          echo "Error: could not determine package architecture from ${DEB_FILES[0]}." >&2
+          exit 1
+        fi
+
+        for DEB_FILE in "${DEB_FILES[@]}"; do
+          DEB_ARCH="$(dpkg-deb -f "$DEB_FILE" Architecture | tr -d '\n')"
+          if [ "$DEB_ARCH" != "$APT_ARCH" ]; then
+            echo "Error: multiple package architectures found in dist/: ${APT_ARCH} and ${DEB_ARCH}. Only a single architecture is supported." >&2
+            exit 1
+          fi
+        done
+
+        APT_REPO_DIR="$(mktemp -d "${RUNNER_TEMP:-/tmp}/apt-repo-XXXXXX")"
+        trap 'rm -rf "$APT_REPO_DIR"' EXIT
+
+        git clone \
+          --branch main \
+          --single-branch \
+          "https://x-access-token:${{ inputs.github_token }}@github.com/${APT_REPO_INPUT}.git" \
+          "$APT_REPO_DIR"
+
+        cp "${DEB_FILES[@]}" "$APT_REPO_DIR/"
+
+        (
+          cd "$APT_REPO_DIR"
+
+          dpkg-scanpackages --multiversion . /dev/null > Packages
+          gzip -9c Packages > Packages.gz
+          apt-ftparchive \
+            -o APT::FTPArchive::Release::Origin="$APT_REPO_OWNER" \
+            -o APT::FTPArchive::Release::Label="$APT_REPO_NAME" \
+            -o APT::FTPArchive::Release::Suite="stable" \
+            -o APT::FTPArchive::Release::Codename="stable" \
+            -o APT::FTPArchive::Release::Architectures="$APT_ARCH" \
+            -o APT::FTPArchive::Release::Components="main" \
+            release . > Release
+
+          rm -f InRelease Release.gpg
+
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "No apt repository changes to publish."
+            exit 0
+          fi
+
+          git commit -m "Publish Debian packages for ${{ steps.get_version.outputs.tag }}"
+          git push origin HEAD:main
+        )

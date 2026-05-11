@@ -18,6 +18,12 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
 
   run grep -F 'default: "1.22"' "$ACTION_FILE"
   [ "$status" -eq 0 ]
+
+  run grep -F 'apt_repo:' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'default: ""' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
 }
 
 @test "determine version logic enforces mutual exclusivity and uses apply-version-bump script" {
@@ -50,6 +56,23 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   [ "$status" -eq 0 ]
 }
 
+@test "apt publishing is optional and regenerates apt metadata from dist debs" {
+  run grep -F "if: inputs.apt_repo != ''" "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F "find dist -type f -name '*.deb'" "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'dpkg-scanpackages --multiversion . /dev/null > Packages' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'apt-ftparchive \' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'git push origin HEAD:main' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+}
+
 @test "tag handling validates existing tag points to HEAD" {
   run grep -F 'git fetch --no-tags origin "refs/tags/${TAG}:refs/tags/${TAG}"' "$ACTION_FILE"
   [ "$status" -eq 0 ]
@@ -62,5 +85,8 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   [ -f "$ACTION_README" ]
 
   run grep -F 'fetch-depth: 0' "$ACTION_README"
+  [ "$status" -eq 0 ]
+
+  run grep -F '`apt_repo`' "$ACTION_README"
   [ "$status" -eq 0 ]
 }
