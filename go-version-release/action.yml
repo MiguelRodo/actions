@@ -266,7 +266,7 @@ runs:
           ARCH_SEEN["$PACKAGE_ARCH"]=1
         }
 
-        mapfile -d '' EXISTING_DEB_FILES < <(find "$APT_REPO_DIR" -type f -name '*.deb' -not -path "$APT_REPO_DIR/.git/*" -print0 | sort -z)
+        mapfile -d '' EXISTING_DEB_FILES < <(find "$APT_REPO_DIR" \( -path "$APT_REPO_DIR/.git" -prune \) -o \( -type f -name '*.deb' -print0 \) | sort -z)
         for EXISTING_DEB_FILE in "${EXISTING_DEB_FILES[@]}"; do
           publish_deb "$EXISTING_DEB_FILE" "move"
         done

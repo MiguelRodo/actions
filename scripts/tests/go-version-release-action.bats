@@ -83,6 +83,9 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   run grep -F 'publish_deb() {' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
+  run grep -F 'find "$APT_REPO_DIR" \( -path "$APT_REPO_DIR/.git" -prune \) -o \( -type f -name '\''*.deb'\'' -print0 \)' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
   run grep -F 'DEST_DIR="$APT_REPO_DIR/pool/main/$BUCKET"' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
