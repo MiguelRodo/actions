@@ -132,6 +132,18 @@ runs:
 
         git push origin "refs/tags/${TAG}"
 
+    - name: Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ inputs.go_version }}
+
+    - name: Run GoReleaser
+      uses: goreleaser/goreleaser-action@v5
+      with:
+        args: release --clean
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+
     - name: Update floating major and minor tags
       shell: bash
       run: |
@@ -144,18 +156,6 @@ runs:
         git tag -fa "$MAJOR" -m "Update $MAJOR to point to $TAG"
         git push origin "refs/tags/$MINOR" --force
         git push origin "refs/tags/$MAJOR" --force
-
-    - name: Setup Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: ${{ inputs.go_version }}
-
-    - name: Run GoReleaser
-      uses: goreleaser/goreleaser-action@v5
-      with:
-        args: release --clean
-      env:
-        GITHUB_TOKEN: ${{ inputs.github_token }}
 
     - name: Publish Debian packages to apt repository
       if: inputs.apt_repo != ''
