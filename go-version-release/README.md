@@ -1,6 +1,6 @@
 # Go Version and Release Action
 
-Standalone composite action for pure Go releases. It resolves a semantic version, optionally validates strict progression from the latest semver tag, creates/pushes the release tag, updates floating major/minor tags, sets up Go, runs GoReleaser, and can publish generated `.deb` artifacts to a separate GitHub repository as a structured apt repository.
+Standalone composite action for pure Go releases. It resolves a semantic version, optionally validates strict progression from the latest semver tag, creates/pushes the release tag, updates floating major/minor tags, runs GoReleaser to build packaged multiplatform artifacts, uploads those artifacts to the GitHub Release for the tag, and can also publish generated `.deb` artifacts to a separate GitHub repository as a structured apt repository.
 
 ## Usage
 
@@ -10,6 +10,9 @@ Copy the following to `.github/workflows/go-version-release.yml`:
 name: Go Version and Release
 
 on:
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
     inputs:
       version:
@@ -23,6 +26,9 @@ on:
         required: false
       go_version:
         description: 'Go version to install.'
+        required: false
+      goreleaser_config:
+        description: 'Optional path to the GoReleaser config file.'
         required: false
       apt_repo:
         description: 'Optional target GitHub repository in owner/name form for publishing generated .deb artifacts.'
@@ -48,6 +54,7 @@ jobs:
           bump_type: ${{ inputs.bump_type }}
           version_check: ${{ inputs.version_check }}
           go_version: ${{ inputs.go_version }}
+          goreleaser_config: ${{ inputs.goreleaser_config }}
           apt_repo: ${{ inputs.apt_repo }}
 ```
 
@@ -63,6 +70,7 @@ jobs:
 | `bump_type` | Version component to bump: `major`, `minor`, or `patch`. Cannot be used with `version`. | No |
 | `version_check` | When `true` (default), enforce strict progression from latest semver tag. | No |
 | `go_version` | Go version for `actions/setup-go` (default `1.22`). | No |
+| `goreleaser_config` | Path to the GoReleaser configuration file (default `.goreleaser.yml`). | No |
 | `apt_repo` | Optional GitHub repository in `owner/name` form. When set, generated `.deb` artifacts from `dist/` are published to that repo's `main` branch using a structured apt layout (`pool/` and `dists/stable/main/binary-*`). | No |
 | `apt_repo_token` | Optional token used only for `apt_repo` clone/push operations. If omitted, the action falls back to `github_token`. | No |
 
@@ -95,6 +103,44 @@ The action creates or reuses the release tag `vX.Y.Z` and also updates floating 
 
 For example, releasing `v1.2.3` updates `v1` and `v1.2` to point to the same commit.
 
+The action works for both:
+
+- tag-driven workflows (`push.tags`, where the tag name becomes the release version)
+- manual `workflow_dispatch` runs (where you provide `version` or `bump_type`)
+
+## Release assets
+
+GoReleaser is run with `release --clean --skip=publish --skip=announce`, so it is responsible for building release packages in `dist/`, while this action is responsible for creating/updating the GitHub Release and attaching the packaged artifacts it finds there.
+
+The action uploads every packaged release file in `dist/` that matches these categories:
+
+- Linux and macOS archives: `*.tar.gz`
+- Windows archives: `*.zip`
+- Debian packages: `*.deb`
+- Checksum manifests such as `checksums.txt`, `SHA256SUMS`, or similar names containing `checksums` / `sha256sum`
+
+At least one checksum file must exist or the action fails.
+
+### Recommended GoReleaser outputs
+
+To satisfy the release-asset expectations for downstream consumers such as Homebrew, Scoop, and direct downloads, configure GoReleaser to emit:
+
+- Linux `tar.gz` archives for each supported architecture (for example `amd64`, `arm64`)
+- macOS `tar.gz` archives
+- Windows `zip` archives
+- `.deb` packages for each Debian target architecture you support
+- a checksum manifest (for example `checksums.txt` or `SHA256SUMS`)
+
+Example asset names typically look like:
+
+- `myapp_1.2.3_linux_amd64.tar.gz`
+- `myapp_1.2.3_darwin_arm64.tar.gz`
+- `myapp_1.2.3_windows_amd64.zip`
+- `myapp_1.2.3_linux_amd64.deb`
+- `checksums.txt`
+
+One way to produce those artifacts is with a GoReleaser config that defines `builds`, `archives`, `nfpms`, and `checksum`.
+
 ## Optional apt publishing
 
 When `apt_repo` is set, the action:
@@ -105,6 +151,8 @@ When `apt_repo` is set, the action:
 4. Regenerates architecture-specific `Packages` / `Packages.gz` indexes in `dists/stable/main/binary-<arch>/`
 5. Regenerates `dists/stable/Release` with all detected architectures
 6. Commits and pushes the updated apt repository contents
+
+The same `.deb` files remain attached to the GitHub Release as downloadable assets.
 
 Notes:
 

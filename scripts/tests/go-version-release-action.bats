@@ -58,7 +58,7 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   [ "$status" -eq 0 ]
 }
 
-@test "action sets up Go and runs GoReleaser with release --clean" {
+@test "action sets up Go, runs GoReleaser without publishing, and uploads packaged release assets" {
   run grep -F 'uses: actions/setup-go@v5' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
@@ -68,7 +68,22 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   run grep -F 'uses: goreleaser/goreleaser-action@v5' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
-  run grep -F 'args: release --clean' "$ACTION_FILE"
+  run grep -F 'args: release --clean --skip=publish --skip=announce' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F "find dist -type f \\( -name '*.tar.gz' -o -name '*.zip' -o -name '*.deb'" "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'no checksum file was found in dist/' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'uses: softprops/action-gh-release@v2' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'files: ${{ steps.release_assets.outputs.files }}' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'fail_on_unmatched_files: true' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 }
 
@@ -145,9 +160,24 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   run grep -F '`apt_repo_token`' "$ACTION_README"
   [ "$status" -eq 0 ]
 
+  run grep -F "push:" "$ACTION_README"
+  [ "$status" -eq 0 ]
+
+  run grep -F "tags:" "$ACTION_README"
+  [ "$status" -eq 0 ]
+
+  run grep -F '`goreleaser_config`' "$ACTION_README"
+  [ "$status" -eq 0 ]
+
   run grep -F 'apt_repo: ${{ inputs.apt_repo }}' "$ACTION_README"
   [ "$status" -eq 0 ]
 
   run grep -F 'apt_repo_token: ${{ secrets.APT_REPO_TOKEN }}' "$ACTION_README"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'Windows archives: `*.zip`' "$ACTION_README"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'The same `.deb` files remain attached to the GitHub Release as downloadable assets.' "$ACTION_README"
   [ "$status" -eq 0 ]
 }
