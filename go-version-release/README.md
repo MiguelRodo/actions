@@ -27,6 +27,9 @@ on:
       apt_repo:
         description: 'Optional target GitHub repository in owner/name form for publishing generated .deb artifacts.'
         required: false
+      apt_repo_token:
+        description: 'Optional token for apt_repo access when publishing to a different repository.'
+        required: false
 
 jobs:
   release:
@@ -40,6 +43,7 @@ jobs:
       - uses: MiguelRodo/actions/go-version-release@v2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          apt_repo_token: ${{ secrets.APT_REPO_TOKEN }}
           version: ${{ inputs.version }}
           bump_type: ${{ inputs.bump_type }}
           version_check: ${{ inputs.version_check }}
@@ -60,6 +64,7 @@ jobs:
 | `version_check` | When `true` (default), enforce strict progression from latest semver tag. | No |
 | `go_version` | Go version for `actions/setup-go` (default `1.22`). | No |
 | `apt_repo` | Optional GitHub repository in `owner/name` form. When set, generated `.deb` artifacts from `dist/` are published to that repo's `main` branch using a structured apt layout (`pool/` and `dists/stable/main/binary-*`). | No |
+| `apt_repo_token` | Optional token used only for `apt_repo` clone/push operations. If omitted, the action falls back to `github_token`. | No |
 
 ## Outputs
 
@@ -103,6 +108,7 @@ When `apt_repo` is set, the action:
 
 Notes:
 
-- The same `github_token` is used for the release flow and for pushing to `apt_repo`, so it must have write access to the target repository.
+- `github_token` is used for tag/release/current-repository operations.
+- For `apt_repo` clone/push operations, the action uses `apt_repo_token` when provided; otherwise it falls back to `github_token`.
 - For the initial target repository described in this repo, set `apt_repo` to `MiguelRodo/apt-miguelrodo`.
 - This implementation publishes unsigned metadata (`Release`) and does not generate signed `InRelease` / `Release.gpg`.

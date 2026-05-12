@@ -9,8 +9,19 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   [ "$status" -eq 0 ]
 }
 
-@test "go-version-release inputs include github_token and go_version defaults" {
+@test "go-version-release inputs include github_token, apt_repo_token, and go_version defaults" {
   run grep -F 'github_token:' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'apt_repo_token:' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run awk '
+    /^  apt_repo_token:$/ { in_block=1; next }
+    in_block && /^    default: ""$/ { found=1; exit 0 }
+    in_block && /^  [^ ]/ { exit 1 }
+    END { exit found ? 0 : 1 }
+  ' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
   run grep -F 'go_version:' "$ACTION_FILE"
@@ -77,6 +88,15 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   run grep -F 'export GIT_ASKPASS="$ASKPASS_SCRIPT"' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
+  run grep -F 'APT_PUSH_TOKEN="${{ inputs.apt_repo_token }}"' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'APT_PUSH_TOKEN="${{ inputs.github_token }}"' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'export GIT_TOKEN_FOR_ASKPASS="$APT_PUSH_TOKEN"' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
   run grep -F '${{ github.server_url }}/${APT_REPO_INPUT}.git' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
@@ -122,6 +142,12 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   run grep -F '`apt_repo`' "$ACTION_README"
   [ "$status" -eq 0 ]
 
+  run grep -F '`apt_repo_token`' "$ACTION_README"
+  [ "$status" -eq 0 ]
+
   run grep -F 'apt_repo: ${{ inputs.apt_repo }}' "$ACTION_README"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'apt_repo_token: ${{ secrets.APT_REPO_TOKEN }}' "$ACTION_README"
   [ "$status" -eq 0 ]
 }

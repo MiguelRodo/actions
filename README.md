@@ -163,6 +163,9 @@ on:
       apt_repo:
         description: 'Optional target GitHub repository in owner/name form for publishing generated .deb artifacts.'
         required: false
+      apt_repo_token:
+        description: 'Optional token for apt_repo access when publishing to a different repository.'
+        required: false
 
 jobs:
   release:
@@ -176,6 +179,7 @@ jobs:
       - uses: MiguelRodo/actions/go-version-release@v2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          apt_repo_token: ${{ secrets.APT_REPO_TOKEN }}
           version: ${{ inputs.version }}
           bump_type: ${{ inputs.bump_type }}
           go_version: ${{ inputs.go_version }}

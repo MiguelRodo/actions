@@ -12,6 +12,10 @@ inputs:
   github_token:
     description: "GitHub token for pushing tags and publishing releases."
     required: true
+  apt_repo_token:
+    description: "Optional GitHub token used only for cloning/fetching/pushing apt_repo. Falls back to github_token when omitted."
+    required: false
+    default: ""
   version:
     description: "Exact version to apply (e.g. 1.2.3). Cannot be used with bump_type."
     required: false
@@ -177,6 +181,11 @@ runs:
           exit 1
         fi
 
+        APT_PUSH_TOKEN="${{ inputs.apt_repo_token }}"
+        if [ -z "$APT_PUSH_TOKEN" ]; then
+          APT_PUSH_TOKEN="${{ inputs.github_token }}"
+        fi
+
         for REQUIRED_COMMAND in dpkg-deb dpkg-scanpackages apt-ftparchive; do
           if ! command -v "$REQUIRED_COMMAND" >/dev/null 2>&1; then
             echo "Error: required command '$REQUIRED_COMMAND' is not available on the runner." >&2
@@ -215,7 +224,7 @@ runs:
         chmod u+x "$ASKPASS_SCRIPT"
         export GIT_TERMINAL_PROMPT=0
         export GIT_ASKPASS="$ASKPASS_SCRIPT"
-        export GIT_TOKEN_FOR_ASKPASS="${{ inputs.github_token }}"
+        export GIT_TOKEN_FOR_ASKPASS="$APT_PUSH_TOKEN"
 
         git clone \
           --branch main \
