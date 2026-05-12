@@ -51,7 +51,7 @@ runs:
       shell: bash
       run: |
         git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
     - name: Determine version
       id: get_version
@@ -309,6 +309,9 @@ runs:
 
           # Remove stale signed metadata because this action only publishes unsigned apt metadata.
           rm -f InRelease Release.gpg dists/stable/InRelease dists/stable/Release.gpg
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           git add -A
 
