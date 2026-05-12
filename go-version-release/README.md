@@ -36,6 +36,9 @@ on:
       apt_repo_token:
         description: 'Optional token for apt_repo access when publishing to a different repository.'
         required: false
+      apt_signing_key:
+        description: 'Optional ASCII-armored GPG private key for signing apt repository metadata.'
+        required: false
 
 jobs:
   release:
@@ -50,6 +53,8 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           apt_repo_token: ${{ secrets.APT_REPO_TOKEN }}
+          apt_signing_key: ${{ secrets.APT_SIGNING_KEY }}
+          apt_signing_key_passphrase: ${{ secrets.APT_SIGNING_KEY_PASSPHRASE }}
           version: ${{ inputs.version }}
           bump_type: ${{ inputs.bump_type }}
           version_check: ${{ inputs.version_check }}
@@ -75,6 +80,8 @@ jobs:
 | `goreleaser_config` | Path to the GoReleaser configuration file (default `.goreleaser.yml`). | No |
 | `apt_repo` | Optional GitHub repository in `owner/name` form. When set, generated `.deb` artifacts from `dist/` are published to that repo's `main` branch using a structured apt layout (`pool/` and `dists/stable/main/binary-*`). | No |
 | `apt_repo_token` | Optional token used only for `apt_repo` clone/push operations. If omitted, the action falls back to `github_token`. | No |
+| `apt_signing_key` | Optional ASCII-armored GPG private key for signing apt repository metadata. When set, the action imports the key and generates signed `InRelease` and `Release.gpg` files alongside `Release`. Store this as a GitHub secret (e.g. `APT_SIGNING_KEY`). | No |
+| `apt_signing_key_passphrase` | Optional passphrase for `apt_signing_key`. When set, GPG uses it via `--passphrase-file` (written to a secure temp file) so passphrase-protected private keys work. Store as a GitHub secret (e.g. `APT_SIGNING_KEY_PASSPHRASE`). | No |
 
 ## Outputs
 
@@ -154,7 +161,8 @@ When `apt_repo` is set, the action:
 3. Publishes `.deb` files under `pool/main/<bucket>/`
 4. Regenerates architecture-specific `Packages` / `Packages.gz` indexes in `dists/stable/main/binary-<arch>/`
 5. Regenerates `dists/stable/Release` with all detected architectures
-6. Commits and pushes the updated apt repository contents
+6. When `apt_signing_key` is provided, signs the `Release` file to produce `dists/stable/InRelease` (clearsigned) and `dists/stable/Release.gpg` (detached ASCII-armored signature)
+7. Commits and pushes the updated apt repository contents
 
 The same `.deb` files remain attached to the GitHub Release as downloadable assets.
 
@@ -163,4 +171,19 @@ Notes:
 - `github_token` is used for tag/release/current-repository operations.
 - For `apt_repo` clone/push operations, the action uses `apt_repo_token` when provided; otherwise it falls back to `github_token`.
 - For the initial target repository described in this repo, set `apt_repo` to `MiguelRodo/apt-miguelrodo`.
-- This implementation publishes unsigned metadata (`Release`) and does not generate signed `InRelease` / `Release.gpg`.
+- When `apt_signing_key` is omitted, the action publishes only the unsigned `Release` file and removes any stale `InRelease` / `Release.gpg`. Use this mode for repositories that do not require signature verification.
+- The public key published as `KEY.gpg` in the apt repository must match the private key supplied via `apt_signing_key`. To extract the public key from your private key and commit it to the apt repository, run:
+  ```sh
+  gpg --export --armor <FINGERPRINT> > KEY.gpg
+  ```
+  where `<FINGERPRINT>` is the fingerprint of your signing key. Users should install the key into a scoped keyring and reference it with `signed-by=` in their apt source entry:
+  ```sh
+  # Install the repository public key (scoped — only trusted for this repo)
+  sudo install -dm755 /etc/apt/keyrings
+  gpg --dearmor < KEY.gpg | sudo tee /etc/apt/keyrings/myrepo.gpg > /dev/null
+  ```
+  Then add the source with `signed-by=` in `/etc/apt/sources.list.d/myrepo.list`:
+  ```
+  deb [signed-by=/etc/apt/keyrings/myrepo.gpg] https://<apt-repo-url> stable main
+  ```
+  This limits trust to this specific repository and avoids adding the key as globally trusted (as would be the case with `/etc/apt/trusted.gpg.d/`).
