@@ -149,6 +149,43 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   [ "$status" -eq 0 ]
 }
 
+@test "apt publishing signs Release when apt_signing_key is provided, otherwise removes stale signed metadata" {
+  run grep -F 'APT_SIGNING_KEY="${{ inputs.apt_signing_key }}"' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'SIGNING_KEY_FINGERPRINT=""' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F "could not extract fingerprint from apt_signing_key" "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F "printf '%s\n' \"\$APT_SIGNING_KEY\" | gpg --batch --import" "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F -- '--default-key "$SIGNING_KEY_FINGERPRINT" --armor --detach-sign -o dists/stable/Release.gpg dists/stable/Release' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F -- '--default-key "$SIGNING_KEY_FINGERPRINT" --clearsign -o dists/stable/InRelease dists/stable/Release' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'rm -f InRelease Release.gpg dists/stable/InRelease dists/stable/Release.gpg' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+}
+
+@test "apt publishing README documents apt_signing_key input and signed metadata behavior" {
+  run grep -F '`apt_signing_key`' "$ACTION_README"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'InRelease' "$ACTION_README"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'Release.gpg' "$ACTION_README"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'APT_SIGNING_KEY' "$ACTION_README"
+  [ "$status" -eq 0 ]
+}
+
 @test "tag handling validates existing tag points to HEAD" {
   run grep -F 'git fetch --no-tags origin "refs/tags/${TAG}:refs/tags/${TAG}"' "$ACTION_FILE"
   [ "$status" -eq 0 ]

@@ -16,6 +16,10 @@ inputs:
     description: "Optional GitHub token used only for cloning/fetching/pushing apt_repo. Falls back to github_token when omitted."
     required: false
     default: ""
+  apt_signing_key:
+    description: "Optional ASCII-armored GPG private key for signing apt repository metadata. When set, the action imports the key and generates signed InRelease and Release.gpg files alongside the unsigned Release file."
+    required: false
+    default: ""
   version:
     description: "Exact version to apply (e.g. 1.2.3). Cannot be used with bump_type."
     required: false
@@ -224,6 +228,21 @@ runs:
           fi
         done
 
+        APT_SIGNING_KEY="${{ inputs.apt_signing_key }}"
+        SIGNING_KEY_FINGERPRINT=""
+        if [ -n "$APT_SIGNING_KEY" ]; then
+          if ! command -v gpg >/dev/null 2>&1; then
+            echo "Error: required command 'gpg' is not available on the runner." >&2
+            exit 1
+          fi
+          SIGNING_KEY_FINGERPRINT="$(printf '%s\n' "$APT_SIGNING_KEY" | gpg --batch --with-colons --import-options show-only --import 2>/dev/null | awk -F: '/^fpr:/ { print $10; exit }')"
+          if [ -z "$SIGNING_KEY_FINGERPRINT" ]; then
+            echo "Error: could not extract fingerprint from apt_signing_key; ensure it is a valid ASCII-armored GPG private key." >&2
+            exit 1
+          fi
+          printf '%s\n' "$APT_SIGNING_KEY" | gpg --batch --import
+        fi
+
         APT_REPO_OWNER="${APT_REPO_INPUT%%/*}"
         APT_REPO_NAME="${APT_REPO_INPUT##*/}"
 
@@ -347,8 +366,13 @@ runs:
 
           rm -f Packages Packages.gz Release
 
-          # Remove stale signed metadata because this action only publishes unsigned apt metadata.
-          rm -f InRelease Release.gpg dists/stable/InRelease dists/stable/Release.gpg
+          if [ -n "$SIGNING_KEY_FINGERPRINT" ]; then
+            gpg --batch --yes --pinentry-mode loopback --default-key "$SIGNING_KEY_FINGERPRINT" --armor --detach-sign -o dists/stable/Release.gpg dists/stable/Release
+            gpg --batch --yes --pinentry-mode loopback --default-key "$SIGNING_KEY_FINGERPRINT" --clearsign -o dists/stable/InRelease dists/stable/Release
+          else
+            # Remove stale signed metadata because no signing key was configured.
+            rm -f InRelease Release.gpg dists/stable/InRelease dists/stable/Release.gpg
+          fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
