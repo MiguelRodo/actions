@@ -235,12 +235,15 @@ runs:
             echo "Error: required command 'gpg' is not available on the runner." >&2
             exit 1
           fi
-          SIGNING_KEY_FINGERPRINT="$(printf '%s\n' "$APT_SIGNING_KEY" | gpg --batch --with-colons --import-options show-only --import 2>/dev/null | awk -F: '/^fpr:/ { print $10; exit }')"
+          SIGNING_KEY_FINGERPRINT="$(printf '%s\n' "$APT_SIGNING_KEY" | gpg --batch --with-colons --import-options show-only --import 2>&1 | awk -F: '/^fpr:/ { print $10; exit }')"
           if [ -z "$SIGNING_KEY_FINGERPRINT" ]; then
             echo "Error: could not extract fingerprint from apt_signing_key; ensure it is a valid ASCII-armored GPG private key." >&2
             exit 1
           fi
-          printf '%s\n' "$APT_SIGNING_KEY" | gpg --batch --import
+          if ! printf '%s\n' "$APT_SIGNING_KEY" | gpg --batch --import; then
+            echo "Error: failed to import apt_signing_key into the GPG keyring." >&2
+            exit 1
+          fi
         fi
 
         APT_REPO_OWNER="${APT_REPO_INPUT%%/*}"
