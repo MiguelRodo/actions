@@ -139,7 +139,7 @@ Example asset names typically look like:
 - `myapp_1.2.3_linux_amd64.deb`
 - `checksums.txt`
 
-One way to produce those artifacts is with a GoReleaser config that defines `builds`, `archives`, `nfpms`, and `checksum`.
+One way to produce those artifacts is with a GoReleaser config that defines `builds`, `archives`, `nfpms`, and `checksums`.
 
 ## Optional apt publishing
 

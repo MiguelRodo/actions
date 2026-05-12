@@ -168,7 +168,7 @@ runs:
       id: release_assets
       shell: bash
       run: |
-        mapfile -d '' RELEASE_FILES < <(find dist -type f \( -name '*.tar.gz' -o -name '*.zip' -o -name '*.deb' -o -iname '*checksums*' -o -iname '*sha256sum*' \) -print0 | sort -z)
+        mapfile -d '' RELEASE_FILES < <(find dist -type f \( -iname '*.tar.gz' -o -iname '*.zip' -o -iname '*.deb' -o -iname '*checksums*' -o -iname '*sha256sum*' \) -print0 | sort -z)
 
         if [ "${#RELEASE_FILES[@]}" -eq 0 ]; then
           echo "Error: no packaged release artifacts were found in dist/." >&2
