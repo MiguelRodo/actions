@@ -16,6 +16,38 @@ inputs:
     description: "Optional GitHub token used only for cloning/fetching/pushing apt_repo. Falls back to github_token when omitted."
     required: false
     default: ""
+  scoop_repo:
+    description: "Optional target GitHub repository in owner/name form for publishing a Scoop manifest file."
+    required: false
+    default: ""
+  scoop_repo_token:
+    description: "Optional GitHub token used only for cloning/fetching/pushing scoop_repo. Falls back to github_token when omitted."
+    required: false
+    default: ""
+  scoop_manifest_source:
+    description: "Optional path to the Scoop manifest source file. When omitted and scoop_repo is set, the action auto-detects exactly one *.json file in dist/."
+    required: false
+    default: ""
+  scoop_manifest_path:
+    description: "Optional destination path in scoop_repo for the Scoop manifest. Defaults to bucket/<manifest-filename>.json."
+    required: false
+    default: ""
+  homebrew_tap:
+    description: "Optional target GitHub repository in owner/name form for publishing a Homebrew formula file."
+    required: false
+    default: ""
+  homebrew_tap_token:
+    description: "Optional GitHub token used only for cloning/fetching/pushing homebrew_tap. Falls back to github_token when omitted."
+    required: false
+    default: ""
+  homebrew_formula_source:
+    description: "Optional path to the Homebrew formula source file. When omitted and homebrew_tap is set, the action auto-detects exactly one *.rb file in dist/."
+    required: false
+    default: ""
+  homebrew_formula_path:
+    description: "Optional destination path in homebrew_tap for the Homebrew formula. Defaults to Formula/<formula-filename>.rb."
+    required: false
+    default: ""
   apt_signing_key:
     description: "Optional ASCII-armored GPG private key for signing apt repository metadata. When set, the action imports the key and generates signed InRelease and Release.gpg files alongside the unsigned Release file."
     required: false
@@ -423,6 +455,214 @@ runs:
           fi
 
           git commit -m "Publish Debian packages for ${{ steps.get_version.outputs.tag }}"
+          git push origin HEAD:main
+        )
+
+    - name: Publish Scoop manifest to scoop repository
+      if: inputs.scoop_repo != ''
+      shell: bash
+      run: |
+        SCOOP_REPO_INPUT="${{ inputs.scoop_repo }}"
+        if [[ ! "$SCOOP_REPO_INPUT" =~ ^[^/]+/[^/]+$ ]]; then
+          echo "Error: scoop_repo must be in owner/name format." >&2
+          exit 1
+        fi
+
+        SCOOP_PUSH_TOKEN="${{ inputs.scoop_repo_token }}"
+        if [ -z "$SCOOP_PUSH_TOKEN" ]; then
+          SCOOP_PUSH_TOKEN="${{ inputs.github_token }}"
+        fi
+
+        SCOOP_MANIFEST_SOURCE_INPUT="${{ inputs.scoop_manifest_source }}"
+        SCOOP_MANIFEST_PATH_INPUT="${{ inputs.scoop_manifest_path }}"
+        SCOOP_MANIFEST_SOURCE=""
+        SCOOP_MANIFEST_SOURCE_RESOLVED=""
+        SCOOP_MANIFEST_DEST=""
+
+        if [ -n "$SCOOP_MANIFEST_SOURCE_INPUT" ]; then
+          SCOOP_MANIFEST_SOURCE="$SCOOP_MANIFEST_SOURCE_INPUT"
+        else
+          mapfile -t SCOOP_MANIFEST_CANDIDATES < <(find dist -maxdepth 1 -type f -name '*.json' | sort)
+          if [ "${#SCOOP_MANIFEST_CANDIDATES[@]}" -eq 0 ]; then
+            echo "Error: scoop_repo was provided, but no *.json manifest files were found in dist/. Set scoop_manifest_source explicitly." >&2
+            exit 1
+          fi
+          if [ "${#SCOOP_MANIFEST_CANDIDATES[@]}" -gt 1 ]; then
+            echo "Error: multiple *.json manifest files were found in dist/. Set scoop_manifest_source explicitly." >&2
+            exit 1
+          fi
+          SCOOP_MANIFEST_SOURCE="${SCOOP_MANIFEST_CANDIDATES[0]}"
+        fi
+
+        if [[ "$SCOOP_MANIFEST_SOURCE" = /* ]]; then
+          SCOOP_MANIFEST_SOURCE_RESOLVED="$SCOOP_MANIFEST_SOURCE"
+        else
+          SCOOP_MANIFEST_SOURCE_RESOLVED="$GITHUB_WORKSPACE/$SCOOP_MANIFEST_SOURCE"
+        fi
+
+        if [ ! -f "$SCOOP_MANIFEST_SOURCE_RESOLVED" ]; then
+          echo "Error: scoop manifest source file '$SCOOP_MANIFEST_SOURCE_RESOLVED' does not exist." >&2
+          exit 1
+        fi
+
+        if [ -n "$SCOOP_MANIFEST_PATH_INPUT" ]; then
+          SCOOP_MANIFEST_DEST="$SCOOP_MANIFEST_PATH_INPUT"
+        else
+          SCOOP_MANIFEST_DEST="bucket/$(basename "$SCOOP_MANIFEST_SOURCE")"
+        fi
+
+        SCOOP_REPO_DIR=""
+        ASKPASS_SCRIPT=""
+        cleanup() {
+          if [ -n "$SCOOP_REPO_DIR" ]; then
+            rm -rf "$SCOOP_REPO_DIR"
+          fi
+          if [ -n "$ASKPASS_SCRIPT" ]; then
+            rm -f "$ASKPASS_SCRIPT"
+          fi
+        }
+        trap cleanup EXIT
+
+        SCOOP_REPO_DIR="$(mktemp -d "${RUNNER_TEMP:-/tmp}/scoop-repo-XXXXXX")"
+        ASKPASS_SCRIPT="$(mktemp "${RUNNER_TEMP:-/tmp}/git-askpass-XXXXXX")"
+        cat >"$ASKPASS_SCRIPT" <<'EOF'
+        #!/usr/bin/env bash
+        case "$1" in
+          Username\ for\ *) printf '%s\n' "x-access-token" ;;
+          Password\ for\ *) printf '%s\n' "$GIT_TOKEN_FOR_ASKPASS" ;;
+          *) exit 1 ;;
+        esac
+        EOF
+        chmod u+x "$ASKPASS_SCRIPT"
+        export GIT_TERMINAL_PROMPT=0
+        export GIT_ASKPASS="$ASKPASS_SCRIPT"
+        export GIT_TOKEN_FOR_ASKPASS="$SCOOP_PUSH_TOKEN"
+
+        git clone \
+          --branch main \
+          --single-branch \
+          "${{ github.server_url }}/${SCOOP_REPO_INPUT}.git" \
+          "$SCOOP_REPO_DIR"
+
+        (
+          cd "$SCOOP_REPO_DIR"
+          mkdir -p "$(dirname "$SCOOP_MANIFEST_DEST")"
+          cp -f "$SCOOP_MANIFEST_SOURCE_RESOLVED" "$SCOOP_MANIFEST_DEST"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add "$SCOOP_MANIFEST_DEST"
+          if git diff --cached --quiet; then
+            echo "No Scoop repository changes to publish."
+            exit 0
+          fi
+
+          git commit -m "Publish Scoop manifest for ${{ steps.get_version.outputs.tag }}"
+          git push origin HEAD:main
+        )
+
+    - name: Publish Homebrew formula to tap repository
+      if: inputs.homebrew_tap != ''
+      shell: bash
+      run: |
+        HOMEBREW_TAP_INPUT="${{ inputs.homebrew_tap }}"
+        if [[ ! "$HOMEBREW_TAP_INPUT" =~ ^[^/]+/[^/]+$ ]]; then
+          echo "Error: homebrew_tap must be in owner/name format." >&2
+          exit 1
+        fi
+
+        HOMEBREW_PUSH_TOKEN="${{ inputs.homebrew_tap_token }}"
+        if [ -z "$HOMEBREW_PUSH_TOKEN" ]; then
+          HOMEBREW_PUSH_TOKEN="${{ inputs.github_token }}"
+        fi
+
+        HOMEBREW_FORMULA_SOURCE_INPUT="${{ inputs.homebrew_formula_source }}"
+        HOMEBREW_FORMULA_PATH_INPUT="${{ inputs.homebrew_formula_path }}"
+        HOMEBREW_FORMULA_SOURCE=""
+        HOMEBREW_FORMULA_SOURCE_RESOLVED=""
+        HOMEBREW_FORMULA_DEST=""
+
+        if [ -n "$HOMEBREW_FORMULA_SOURCE_INPUT" ]; then
+          HOMEBREW_FORMULA_SOURCE="$HOMEBREW_FORMULA_SOURCE_INPUT"
+        else
+          mapfile -t HOMEBREW_FORMULA_CANDIDATES < <(find dist -maxdepth 1 -type f -name '*.rb' | sort)
+          if [ "${#HOMEBREW_FORMULA_CANDIDATES[@]}" -eq 0 ]; then
+            echo "Error: homebrew_tap was provided, but no *.rb formula files were found in dist/. Set homebrew_formula_source explicitly." >&2
+            exit 1
+          fi
+          if [ "${#HOMEBREW_FORMULA_CANDIDATES[@]}" -gt 1 ]; then
+            echo "Error: multiple *.rb formula files were found in dist/. Set homebrew_formula_source explicitly." >&2
+            exit 1
+          fi
+          HOMEBREW_FORMULA_SOURCE="${HOMEBREW_FORMULA_CANDIDATES[0]}"
+        fi
+
+        if [[ "$HOMEBREW_FORMULA_SOURCE" = /* ]]; then
+          HOMEBREW_FORMULA_SOURCE_RESOLVED="$HOMEBREW_FORMULA_SOURCE"
+        else
+          HOMEBREW_FORMULA_SOURCE_RESOLVED="$GITHUB_WORKSPACE/$HOMEBREW_FORMULA_SOURCE"
+        fi
+
+        if [ ! -f "$HOMEBREW_FORMULA_SOURCE_RESOLVED" ]; then
+          echo "Error: Homebrew formula source file '$HOMEBREW_FORMULA_SOURCE_RESOLVED' does not exist." >&2
+          exit 1
+        fi
+
+        if [ -n "$HOMEBREW_FORMULA_PATH_INPUT" ]; then
+          HOMEBREW_FORMULA_DEST="$HOMEBREW_FORMULA_PATH_INPUT"
+        else
+          HOMEBREW_FORMULA_DEST="Formula/$(basename "$HOMEBREW_FORMULA_SOURCE")"
+        fi
+
+        HOMEBREW_REPO_DIR=""
+        ASKPASS_SCRIPT=""
+        cleanup() {
+          if [ -n "$HOMEBREW_REPO_DIR" ]; then
+            rm -rf "$HOMEBREW_REPO_DIR"
+          fi
+          if [ -n "$ASKPASS_SCRIPT" ]; then
+            rm -f "$ASKPASS_SCRIPT"
+          fi
+        }
+        trap cleanup EXIT
+
+        HOMEBREW_REPO_DIR="$(mktemp -d "${RUNNER_TEMP:-/tmp}/homebrew-tap-XXXXXX")"
+        ASKPASS_SCRIPT="$(mktemp "${RUNNER_TEMP:-/tmp}/git-askpass-XXXXXX")"
+        cat >"$ASKPASS_SCRIPT" <<'EOF'
+        #!/usr/bin/env bash
+        case "$1" in
+          Username\ for\ *) printf '%s\n' "x-access-token" ;;
+          Password\ for\ *) printf '%s\n' "$GIT_TOKEN_FOR_ASKPASS" ;;
+          *) exit 1 ;;
+        esac
+        EOF
+        chmod u+x "$ASKPASS_SCRIPT"
+        export GIT_TERMINAL_PROMPT=0
+        export GIT_ASKPASS="$ASKPASS_SCRIPT"
+        export GIT_TOKEN_FOR_ASKPASS="$HOMEBREW_PUSH_TOKEN"
+
+        git clone \
+          --branch main \
+          --single-branch \
+          "${{ github.server_url }}/${HOMEBREW_TAP_INPUT}.git" \
+          "$HOMEBREW_REPO_DIR"
+
+        (
+          cd "$HOMEBREW_REPO_DIR"
+          mkdir -p "$(dirname "$HOMEBREW_FORMULA_DEST")"
+          cp -f "$HOMEBREW_FORMULA_SOURCE_RESOLVED" "$HOMEBREW_FORMULA_DEST"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add "$HOMEBREW_FORMULA_DEST"
+          if git diff --cached --quiet; then
+            echo "No Homebrew tap changes to publish."
+            exit 0
+          fi
+
+          git commit -m "Publish Homebrew formula for ${{ steps.get_version.outputs.tag }}"
           git push origin HEAD:main
         )
 

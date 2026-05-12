@@ -15,7 +15,7 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   [ "$status" -eq 0 ]
 }
 
-@test "go-version-release inputs include github_token, apt_repo_token, and go_version defaults" {
+@test "go-version-release inputs include github_token, apt/scoop/homebrew tokens, and go_version defaults" {
   run grep -F 'github_token:' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
@@ -41,6 +41,28 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
 
   run awk '
     /^  apt_repo:$/ { in_block=1; next }
+    in_block && /^    default: ""$/ { found=1; exit 0 }
+    in_block && /^  [^ ]/ { exit 1 }
+    END { exit found ? 0 : 1 }
+  ' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'scoop_repo_token:' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run awk '
+    /^  scoop_repo_token:$/ { in_block=1; next }
+    in_block && /^    default: ""$/ { found=1; exit 0 }
+    in_block && /^  [^ ]/ { exit 1 }
+    END { exit found ? 0 : 1 }
+  ' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'homebrew_tap_token:' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run awk '
+    /^  homebrew_tap_token:$/ { in_block=1; next }
     in_block && /^    default: ""$/ { found=1; exit 0 }
     in_block && /^  [^ ]/ { exit 1 }
     END { exit found ? 0 : 1 }
@@ -196,6 +218,62 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   [ "$status" -eq 0 ]
 }
 
+@test "scoop and homebrew publishing are optional and support token fallback plus destination defaults" {
+  run grep -F "if: inputs.scoop_repo != ''" "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'scoop_repo must be in owner/name format' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'SCOOP_PUSH_TOKEN="${{ inputs.scoop_repo_token }}"' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'SCOOP_PUSH_TOKEN="${{ inputs.github_token }}"' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F "find dist -maxdepth 1 -type f -name '*.json'" "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'SCOOP_MANIFEST_DEST="bucket/$(basename "$SCOOP_MANIFEST_SOURCE")"' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'SCOOP_MANIFEST_SOURCE_RESOLVED="$GITHUB_WORKSPACE/$SCOOP_MANIFEST_SOURCE"' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'cp -f "$SCOOP_MANIFEST_SOURCE_RESOLVED" "$SCOOP_MANIFEST_DEST"' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F '${{ github.server_url }}/${SCOOP_REPO_INPUT}.git' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F "if: inputs.homebrew_tap != ''" "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'homebrew_tap must be in owner/name format' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'HOMEBREW_PUSH_TOKEN="${{ inputs.homebrew_tap_token }}"' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'HOMEBREW_PUSH_TOKEN="${{ inputs.github_token }}"' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F "find dist -maxdepth 1 -type f -name '*.rb'" "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'HOMEBREW_FORMULA_DEST="Formula/$(basename "$HOMEBREW_FORMULA_SOURCE")"' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'HOMEBREW_FORMULA_SOURCE_RESOLVED="$GITHUB_WORKSPACE/$HOMEBREW_FORMULA_SOURCE"' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'cp -f "$HOMEBREW_FORMULA_SOURCE_RESOLVED" "$HOMEBREW_FORMULA_DEST"' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F '${{ github.server_url }}/${HOMEBREW_TAP_INPUT}.git' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+}
+
 @test "apt publishing README documents apt_signing_key input and signed metadata behavior" {
   run grep -F '`apt_signing_key`' "$ACTION_README"
   [ "$status" -eq 0 ]
@@ -255,6 +333,18 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   [ "$status" -eq 0 ]
 
   run grep -F 'apt_repo_token: ${{ secrets.APT_REPO_TOKEN }}' "$ACTION_README"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'scoop_repo_token: ${{ secrets.SCOOP_REPO_TOKEN }}' "$ACTION_README"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'homebrew_tap_token: ${{ secrets.HOMEBREW_TAP_TOKEN }}' "$ACTION_README"
+  [ "$status" -eq 0 ]
+
+  run grep -F '`scoop_repo`' "$ACTION_README"
+  [ "$status" -eq 0 ]
+
+  run grep -F '`homebrew_tap`' "$ACTION_README"
   [ "$status" -eq 0 ]
 
   run grep -F 'Windows archives: `*.zip`' "$ACTION_README"
