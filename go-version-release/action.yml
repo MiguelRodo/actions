@@ -476,6 +476,7 @@ runs:
         SCOOP_MANIFEST_SOURCE_INPUT="${{ inputs.scoop_manifest_source }}"
         SCOOP_MANIFEST_PATH_INPUT="${{ inputs.scoop_manifest_path }}"
         SCOOP_MANIFEST_SOURCE=""
+        SCOOP_MANIFEST_SOURCE_RESOLVED=""
         SCOOP_MANIFEST_DEST=""
 
         if [ -n "$SCOOP_MANIFEST_SOURCE_INPUT" ]; then
@@ -493,8 +494,14 @@ runs:
           SCOOP_MANIFEST_SOURCE="${SCOOP_MANIFEST_CANDIDATES[0]}"
         fi
 
-        if [ ! -f "$SCOOP_MANIFEST_SOURCE" ]; then
-          echo "Error: scoop manifest source file '$SCOOP_MANIFEST_SOURCE' does not exist." >&2
+        if [[ "$SCOOP_MANIFEST_SOURCE" = /* ]]; then
+          SCOOP_MANIFEST_SOURCE_RESOLVED="$SCOOP_MANIFEST_SOURCE"
+        else
+          SCOOP_MANIFEST_SOURCE_RESOLVED="$GITHUB_WORKSPACE/$SCOOP_MANIFEST_SOURCE"
+        fi
+
+        if [ ! -f "$SCOOP_MANIFEST_SOURCE_RESOLVED" ]; then
+          echo "Error: scoop manifest source file '$SCOOP_MANIFEST_SOURCE_RESOLVED' does not exist." >&2
           exit 1
         fi
 
@@ -540,7 +547,7 @@ runs:
         (
           cd "$SCOOP_REPO_DIR"
           mkdir -p "$(dirname "$SCOOP_MANIFEST_DEST")"
-          cp -f "$GITHUB_WORKSPACE/$SCOOP_MANIFEST_SOURCE" "$SCOOP_MANIFEST_DEST"
+          cp -f "$SCOOP_MANIFEST_SOURCE_RESOLVED" "$SCOOP_MANIFEST_DEST"
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -573,6 +580,7 @@ runs:
         HOMEBREW_FORMULA_SOURCE_INPUT="${{ inputs.homebrew_formula_source }}"
         HOMEBREW_FORMULA_PATH_INPUT="${{ inputs.homebrew_formula_path }}"
         HOMEBREW_FORMULA_SOURCE=""
+        HOMEBREW_FORMULA_SOURCE_RESOLVED=""
         HOMEBREW_FORMULA_DEST=""
 
         if [ -n "$HOMEBREW_FORMULA_SOURCE_INPUT" ]; then
@@ -590,8 +598,14 @@ runs:
           HOMEBREW_FORMULA_SOURCE="${HOMEBREW_FORMULA_CANDIDATES[0]}"
         fi
 
-        if [ ! -f "$HOMEBREW_FORMULA_SOURCE" ]; then
-          echo "Error: Homebrew formula source file '$HOMEBREW_FORMULA_SOURCE' does not exist." >&2
+        if [[ "$HOMEBREW_FORMULA_SOURCE" = /* ]]; then
+          HOMEBREW_FORMULA_SOURCE_RESOLVED="$HOMEBREW_FORMULA_SOURCE"
+        else
+          HOMEBREW_FORMULA_SOURCE_RESOLVED="$GITHUB_WORKSPACE/$HOMEBREW_FORMULA_SOURCE"
+        fi
+
+        if [ ! -f "$HOMEBREW_FORMULA_SOURCE_RESOLVED" ]; then
+          echo "Error: Homebrew formula source file '$HOMEBREW_FORMULA_SOURCE_RESOLVED' does not exist." >&2
           exit 1
         fi
 
@@ -637,7 +651,7 @@ runs:
         (
           cd "$HOMEBREW_REPO_DIR"
           mkdir -p "$(dirname "$HOMEBREW_FORMULA_DEST")"
-          cp -f "$GITHUB_WORKSPACE/$HOMEBREW_FORMULA_SOURCE" "$HOMEBREW_FORMULA_DEST"
+          cp -f "$HOMEBREW_FORMULA_SOURCE_RESOLVED" "$HOMEBREW_FORMULA_DEST"
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

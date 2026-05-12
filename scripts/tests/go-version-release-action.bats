@@ -237,6 +237,12 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   run grep -F 'SCOOP_MANIFEST_DEST="bucket/$(basename "$SCOOP_MANIFEST_SOURCE")"' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
+  run grep -F 'SCOOP_MANIFEST_SOURCE_RESOLVED="$GITHUB_WORKSPACE/$SCOOP_MANIFEST_SOURCE"' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'cp -f "$SCOOP_MANIFEST_SOURCE_RESOLVED" "$SCOOP_MANIFEST_DEST"' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
   run grep -F '${{ github.server_url }}/${SCOOP_REPO_INPUT}.git' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
@@ -256,6 +262,12 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   [ "$status" -eq 0 ]
 
   run grep -F 'HOMEBREW_FORMULA_DEST="Formula/$(basename "$HOMEBREW_FORMULA_SOURCE")"' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'HOMEBREW_FORMULA_SOURCE_RESOLVED="$GITHUB_WORKSPACE/$HOMEBREW_FORMULA_SOURCE"' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'cp -f "$HOMEBREW_FORMULA_SOURCE_RESOLVED" "$HOMEBREW_FORMULA_DEST"' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
   run grep -F '${{ github.server_url }}/${HOMEBREW_TAP_INPUT}.git' "$ACTION_FILE"
@@ -321,6 +333,12 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   [ "$status" -eq 0 ]
 
   run grep -F 'apt_repo_token: ${{ secrets.APT_REPO_TOKEN }}' "$ACTION_README"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'scoop_repo_token: ${{ secrets.SCOOP_REPO_TOKEN }}' "$ACTION_README"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'homebrew_tap_token: ${{ secrets.HOMEBREW_TAP_TOKEN }}' "$ACTION_README"
   [ "$status" -eq 0 ]
 
   run grep -F '`scoop_repo`' "$ACTION_README"

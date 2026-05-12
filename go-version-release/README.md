@@ -39,6 +39,9 @@ on:
       scoop_repo:
         description: 'Optional target GitHub repository in owner/name form for publishing a Scoop manifest file.'
         required: false
+      scoop_repo_token:
+        description: 'Optional token for scoop_repo access when publishing to a different repository.'
+        required: false
       scoop_manifest_source:
         description: 'Optional path to the Scoop manifest source file.'
         required: false
@@ -47,6 +50,9 @@ on:
         required: false
       homebrew_tap:
         description: 'Optional target GitHub repository in owner/name form for publishing a Homebrew formula file.'
+        required: false
+      homebrew_tap_token:
+        description: 'Optional token for homebrew_tap access when publishing to a different repository.'
         required: false
       homebrew_formula_source:
         description: 'Optional path to the Homebrew formula source file.'
@@ -80,9 +86,11 @@ jobs:
           goreleaser_config: ${{ inputs.goreleaser_config }}
           apt_repo: ${{ inputs.apt_repo }}
           scoop_repo: ${{ inputs.scoop_repo }}
+          scoop_repo_token: ${{ secrets.SCOOP_REPO_TOKEN }}
           scoop_manifest_source: ${{ inputs.scoop_manifest_source }}
           scoop_manifest_path: ${{ inputs.scoop_manifest_path }}
           homebrew_tap: ${{ inputs.homebrew_tap }}
+          homebrew_tap_token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
           homebrew_formula_source: ${{ inputs.homebrew_formula_source }}
           homebrew_formula_path: ${{ inputs.homebrew_formula_path }}
 ```
