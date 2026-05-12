@@ -168,24 +168,15 @@ runs:
       id: release_assets
       shell: bash
       run: |
-        mapfile -d '' RELEASE_FILES < <(find dist -type f \( -iname '*.tar.gz' -o -iname '*.zip' -o -iname '*.deb' -o -iname '*checksums*' -o -iname '*sha256sum*' \) -print0 | sort -z)
+        mapfile -d '' RELEASE_FILES < <(find dist -type f \( -name '*.tar.gz' -o -name '*.zip' -o -name '*.deb' -o -iname '*checksums*' -o -iname '*sha256sum*' \) -print0 | sort -z)
+        mapfile -d '' CHECKSUM_FILES < <(find dist -type f \( -iname '*checksums*' -o -iname '*sha256sum*' \) -print0 | sort -z)
 
         if [ "${#RELEASE_FILES[@]}" -eq 0 ]; then
           echo "Error: no packaged release artifacts were found in dist/." >&2
           exit 1
         fi
 
-        HAS_CHECKSUM=0
-        for RELEASE_FILE in "${RELEASE_FILES[@]}"; do
-          RELEASE_BASENAME="$(basename "$RELEASE_FILE" | tr '[:upper:]' '[:lower:]')"
-          case "$RELEASE_BASENAME" in
-            *checksums*|*sha256sum*)
-              HAS_CHECKSUM=1
-              ;;
-          esac
-        done
-
-        if [ "$HAS_CHECKSUM" -ne 1 ]; then
+        if [ "${#CHECKSUM_FILES[@]}" -eq 0 ]; then
           echo "Error: no checksum file was found in dist/. Ensure your GoReleaser config defines a checksum artifact." >&2
           exit 1
         fi

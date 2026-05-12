@@ -71,7 +71,10 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   run grep -F 'args: release --clean --skip=publish --skip=announce' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
-  run grep -F "find dist -type f \\( -iname '*.tar.gz' -o -iname '*.zip' -o -iname '*.deb'" "$ACTION_FILE"
+  run grep -F "find dist -type f \\( -name '*.tar.gz' -o -name '*.zip' -o -name '*.deb'" "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F "find dist -type f \\( -iname '*checksums*' -o -iname '*sha256sum*' \\)" "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
   run grep -F 'no checksum file was found in dist/' "$ACTION_FILE"
