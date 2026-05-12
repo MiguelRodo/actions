@@ -174,7 +174,10 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   run grep -F "printf '%s\n' \"\$APT_SIGNING_KEY\" | gpg --batch --import" "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
-  run grep -F -- '--passphrase-fd 0' "$ACTION_FILE"
+  run grep -F -- '--passphrase-file "$GPG_PASSPHRASE_FILE"' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'rm -f "$GPG_PASSPHRASE_FILE"' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
   run grep -F -- '--armor --detach-sign -o dists/stable/Release.gpg dists/stable/Release' "$ACTION_FILE"

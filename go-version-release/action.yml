@@ -243,6 +243,7 @@ runs:
           fi
           # Use an isolated, ephemeral keyring so the key material never touches the
           # default ~/.gnupg and cannot interact with pre-existing keyring state.
+          # RUNNER_TEMP is always set on GitHub Actions runners; /tmp is the fallback for local runs.
           GNUPGHOME="$(mktemp -d "${RUNNER_TEMP:-/tmp}/gnupg-XXXXXX")"
           chmod 700 "$GNUPGHOME"
           export GNUPGHOME
@@ -265,6 +266,7 @@ runs:
 
         APT_REPO_DIR=""
         ASKPASS_SCRIPT=""
+        GPG_PASSPHRASE_FILE=""
         cleanup() {
           if [ -n "$APT_REPO_DIR" ]; then
             rm -rf "$APT_REPO_DIR"
@@ -276,6 +278,10 @@ runs:
 
           if [ -n "$GNUPGHOME" ]; then
             rm -rf "$GNUPGHOME"
+          fi
+
+          if [ -n "$GPG_PASSPHRASE_FILE" ]; then
+            rm -f "$GPG_PASSPHRASE_FILE"
           fi
         }
         trap cleanup EXIT
@@ -390,13 +396,17 @@ runs:
           if [ -n "$SIGNING_KEY_FINGERPRINT" ]; then
             GPG_SIGN_OPTS=(--batch --yes --pinentry-mode loopback --default-key "$SIGNING_KEY_FINGERPRINT")
             if [ -n "$APT_SIGNING_KEY_PASSPHRASE" ]; then
-              GPG_SIGN_OPTS+=(--passphrase-fd 0)
-              printf '%s\n' "$APT_SIGNING_KEY_PASSPHRASE" | gpg "${GPG_SIGN_OPTS[@]}" --armor --detach-sign -o dists/stable/Release.gpg dists/stable/Release
-              printf '%s\n' "$APT_SIGNING_KEY_PASSPHRASE" | gpg "${GPG_SIGN_OPTS[@]}" --clearsign -o dists/stable/InRelease dists/stable/Release
-            else
-              gpg "${GPG_SIGN_OPTS[@]}" --armor --detach-sign -o dists/stable/Release.gpg dists/stable/Release
-              gpg "${GPG_SIGN_OPTS[@]}" --clearsign -o dists/stable/InRelease dists/stable/Release
+              # Write the passphrase to a mode-600 temp file so GPG can read it via
+              # --passphrase-file without exposing it on the command line or via stdin,
+              # which can mis-handle passphrases containing special characters.
+              # RUNNER_TEMP is set by GitHub Actions; /tmp is the fallback for local runs.
+              GPG_PASSPHRASE_FILE="$(mktemp "${RUNNER_TEMP:-/tmp}/gpg-passphrase-XXXXXX")"
+              chmod 600 "$GPG_PASSPHRASE_FILE"
+              printf '%s' "$APT_SIGNING_KEY_PASSPHRASE" > "$GPG_PASSPHRASE_FILE"
+              GPG_SIGN_OPTS+=(--passphrase-file "$GPG_PASSPHRASE_FILE")
             fi
+            gpg "${GPG_SIGN_OPTS[@]}" --armor --detach-sign -o dists/stable/Release.gpg dists/stable/Release
+            gpg "${GPG_SIGN_OPTS[@]}" --clearsign -o dists/stable/InRelease dists/stable/Release
           else
             # Remove stale signed metadata because no signing key was configured.
             rm -f InRelease Release.gpg dists/stable/InRelease dists/stable/Release.gpg
