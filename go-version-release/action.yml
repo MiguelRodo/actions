@@ -20,6 +20,10 @@ inputs:
     description: "Optional ASCII-armored GPG private key for signing apt repository metadata. When set, the action imports the key and generates signed InRelease and Release.gpg files alongside the unsigned Release file."
     required: false
     default: ""
+  apt_signing_key_passphrase:
+    description: "Optional passphrase for the apt_signing_key. When set, it is passed to GPG via --passphrase-fd so passphrase-protected private keys can be used for signing."
+    required: false
+    default: ""
   version:
     description: "Exact version to apply (e.g. 1.2.3). Cannot be used with bump_type."
     required: false
@@ -229,12 +233,19 @@ runs:
         done
 
         APT_SIGNING_KEY="${{ inputs.apt_signing_key }}"
+        APT_SIGNING_KEY_PASSPHRASE="${{ inputs.apt_signing_key_passphrase }}"
         SIGNING_KEY_FINGERPRINT=""
+        GNUPGHOME=""
         if [ -n "$APT_SIGNING_KEY" ]; then
           if ! command -v gpg >/dev/null 2>&1; then
             echo "Error: required command 'gpg' is not available on the runner." >&2
             exit 1
           fi
+          # Use an isolated, ephemeral keyring so the key material never touches the
+          # default ~/.gnupg and cannot interact with pre-existing keyring state.
+          GNUPGHOME="$(mktemp -d "${RUNNER_TEMP:-/tmp}/gnupg-XXXXXX")"
+          chmod 700 "$GNUPGHOME"
+          export GNUPGHOME
           # Extract the fingerprint using a dry-run import (--import-options show-only).
           # The `{ ... } 3>&2` pattern routes GPG's stderr to the terminal (fd 2) while
           # command substitution only captures stdout for fingerprint parsing.
@@ -261,6 +272,10 @@ runs:
 
           if [ -n "$ASKPASS_SCRIPT" ]; then
             rm -f "$ASKPASS_SCRIPT"
+          fi
+
+          if [ -n "$GNUPGHOME" ]; then
+            rm -rf "$GNUPGHOME"
           fi
         }
         trap cleanup EXIT
@@ -373,8 +388,15 @@ runs:
           rm -f Packages Packages.gz Release
 
           if [ -n "$SIGNING_KEY_FINGERPRINT" ]; then
-            gpg --batch --yes --pinentry-mode loopback --default-key "$SIGNING_KEY_FINGERPRINT" --armor --detach-sign -o dists/stable/Release.gpg dists/stable/Release
-            gpg --batch --yes --pinentry-mode loopback --default-key "$SIGNING_KEY_FINGERPRINT" --clearsign -o dists/stable/InRelease dists/stable/Release
+            GPG_SIGN_OPTS=(--batch --yes --pinentry-mode loopback --default-key "$SIGNING_KEY_FINGERPRINT")
+            if [ -n "$APT_SIGNING_KEY_PASSPHRASE" ]; then
+              GPG_SIGN_OPTS+=(--passphrase-fd 0)
+              printf '%s\n' "$APT_SIGNING_KEY_PASSPHRASE" | gpg "${GPG_SIGN_OPTS[@]}" --armor --detach-sign -o dists/stable/Release.gpg dists/stable/Release
+              printf '%s\n' "$APT_SIGNING_KEY_PASSPHRASE" | gpg "${GPG_SIGN_OPTS[@]}" --clearsign -o dists/stable/InRelease dists/stable/Release
+            else
+              gpg "${GPG_SIGN_OPTS[@]}" --armor --detach-sign -o dists/stable/Release.gpg dists/stable/Release
+              gpg "${GPG_SIGN_OPTS[@]}" --clearsign -o dists/stable/InRelease dists/stable/Release
+            fi
           else
             # Remove stale signed metadata because no signing key was configured.
             rm -f InRelease Release.gpg dists/stable/InRelease dists/stable/Release.gpg

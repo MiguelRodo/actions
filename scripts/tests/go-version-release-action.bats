@@ -153,7 +153,19 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   run grep -F 'APT_SIGNING_KEY="${{ inputs.apt_signing_key }}"' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
+  run grep -F 'APT_SIGNING_KEY_PASSPHRASE="${{ inputs.apt_signing_key_passphrase }}"' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
   run grep -F 'SIGNING_KEY_FINGERPRINT=""' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'GNUPGHOME=""' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'chmod 700 "$GNUPGHOME"' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'export GNUPGHOME' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
   run grep -F "could not extract fingerprint from apt_signing_key" "$ACTION_FILE"
@@ -162,18 +174,27 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   run grep -F "printf '%s\n' \"\$APT_SIGNING_KEY\" | gpg --batch --import" "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
-  run grep -F -- '--default-key "$SIGNING_KEY_FINGERPRINT" --armor --detach-sign -o dists/stable/Release.gpg dists/stable/Release' "$ACTION_FILE"
+  run grep -F -- '--passphrase-fd 0' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
-  run grep -F -- '--default-key "$SIGNING_KEY_FINGERPRINT" --clearsign -o dists/stable/InRelease dists/stable/Release' "$ACTION_FILE"
+  run grep -F -- '--armor --detach-sign -o dists/stable/Release.gpg dists/stable/Release' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F -- '--clearsign -o dists/stable/InRelease dists/stable/Release' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
   run grep -F 'rm -f InRelease Release.gpg dists/stable/InRelease dists/stable/Release.gpg' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'rm -rf "$GNUPGHOME"' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 }
 
 @test "apt publishing README documents apt_signing_key input and signed metadata behavior" {
   run grep -F '`apt_signing_key`' "$ACTION_README"
+  [ "$status" -eq 0 ]
+
+  run grep -F '`apt_signing_key_passphrase`' "$ACTION_README"
   [ "$status" -eq 0 ]
 
   run grep -F 'InRelease' "$ACTION_README"
@@ -183,6 +204,12 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   [ "$status" -eq 0 ]
 
   run grep -F 'APT_SIGNING_KEY' "$ACTION_README"
+  [ "$status" -eq 0 ]
+
+  run grep -F '/etc/apt/keyrings/' "$ACTION_README"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'signed-by=' "$ACTION_README"
   [ "$status" -eq 0 ]
 }
 
