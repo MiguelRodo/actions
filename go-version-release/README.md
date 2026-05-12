@@ -81,7 +81,7 @@ jobs:
 | `apt_repo` | Optional GitHub repository in `owner/name` form. When set, generated `.deb` artifacts from `dist/` are published to that repo's `main` branch using a structured apt layout (`pool/` and `dists/stable/main/binary-*`). | No |
 | `apt_repo_token` | Optional token used only for `apt_repo` clone/push operations. If omitted, the action falls back to `github_token`. | No |
 | `apt_signing_key` | Optional ASCII-armored GPG private key for signing apt repository metadata. When set, the action imports the key and generates signed `InRelease` and `Release.gpg` files alongside `Release`. Store this as a GitHub secret (e.g. `APT_SIGNING_KEY`). | No |
-| `apt_signing_key_passphrase` | Optional passphrase for `apt_signing_key`. When set, GPG uses it via `--passphrase-fd` so passphrase-protected private keys work. Store as a GitHub secret (e.g. `APT_SIGNING_KEY_PASSPHRASE`). | No |
+| `apt_signing_key_passphrase` | Optional passphrase for `apt_signing_key`. When set, GPG uses it via `--passphrase-file` (written to a secure temp file) so passphrase-protected private keys work. Store as a GitHub secret (e.g. `APT_SIGNING_KEY_PASSPHRASE`). | No |
 
 ## Outputs
 

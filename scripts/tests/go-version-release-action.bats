@@ -180,6 +180,9 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   run grep -F 'rm -f "$GPG_PASSPHRASE_FILE"' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
+  run grep -F -- '--default-key "$SIGNING_KEY_FINGERPRINT"' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
   run grep -F -- '--armor --detach-sign -o dists/stable/Release.gpg dists/stable/Release' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 

@@ -21,7 +21,7 @@ inputs:
     required: false
     default: ""
   apt_signing_key_passphrase:
-    description: "Optional passphrase for the apt_signing_key. When set, it is passed to GPG via --passphrase-fd so passphrase-protected private keys can be used for signing."
+    description: "Optional passphrase for the apt_signing_key. When set, it is written to a secure temporary file and passed to GPG via --passphrase-file so passphrase-protected private keys can be used for signing."
     required: false
     default: ""
   version:
