@@ -1,7 +1,7 @@
 name: "Go Version and Release"
 description: >
   Determines a Go project release version, validates semver progression, creates
-  and pushes a git tag, then runs GoReleaser.
+  and pushes a git tag, then builds and publishes packaged release artifacts.
 author: "MiguelRodo"
 
 branding:
@@ -51,6 +51,14 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - name: Validate Linux runner
+      shell: bash
+      run: |
+        if [ "${{ runner.os }}" != "Linux" ]; then
+          echo "Error: go-version-release currently supports Linux runners only. Use a Linux runner such as ubuntu-latest." >&2
+          exit 1
+        fi
+
     - name: Configure Git
       shell: bash
       run: |
@@ -160,9 +168,32 @@ runs:
     - name: Run GoReleaser
       uses: goreleaser/goreleaser-action@v5
       with:
-        args: release --clean --config "${{ inputs.goreleaser_config }}"  
+        args: release --clean --skip=publish --skip=announce --config "${{ inputs.goreleaser_config }}"
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
+
+    - name: Collect packaged release assets
+      id: release_assets
+      shell: bash
+      run: |
+        mapfile -d '' RELEASE_FILES < <(find dist -type f \( -name '*.tar.gz' -o -name '*.zip' -o -name '*.deb' -o -iname '*checksums*' -o -iname '*sha256sum*' \) -print0 | sort -z)
+        mapfile -d '' CHECKSUM_FILES < <(find dist -type f \( -iname '*checksums*' -o -iname '*sha256sum*' \) -print0 | sort -z)
+
+        if [ "${#RELEASE_FILES[@]}" -eq 0 ]; then
+          echo "Error: no packaged release artifacts were found in dist/." >&2
+          exit 1
+        fi
+
+        if [ "${#CHECKSUM_FILES[@]}" -eq 0 ]; then
+          echo "Error: no checksum file was found in dist/. Ensure your GoReleaser config defines a checksum artifact." >&2
+          exit 1
+        fi
+
+        {
+          echo 'files<<EOF'
+          printf '%s\n' "${RELEASE_FILES[@]}"
+          echo 'EOF'
+        } >> "$GITHUB_OUTPUT"
 
     - name: Publish Debian packages to apt repository
       if: inputs.apt_repo != ''
@@ -332,3 +363,13 @@ runs:
           git commit -m "Publish Debian packages for ${{ steps.get_version.outputs.tag }}"
           git push origin HEAD:main
         )
+
+    - name: Create GitHub Release and upload packaged assets
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ steps.get_version.outputs.tag }}
+        files: ${{ steps.release_assets.outputs.files }}
+        fail_on_unmatched_files: true
+        generate_release_notes: true
+        make_latest: true
+        token: ${{ inputs.github_token }}
