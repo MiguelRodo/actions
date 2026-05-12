@@ -170,4 +170,8 @@ Notes:
 - For `apt_repo` clone/push operations, the action uses `apt_repo_token` when provided; otherwise it falls back to `github_token`.
 - For the initial target repository described in this repo, set `apt_repo` to `MiguelRodo/apt-miguelrodo`.
 - When `apt_signing_key` is omitted, the action publishes only the unsigned `Release` file and removes any stale `InRelease` / `Release.gpg`. Use this mode for repositories that do not require signature verification.
-- The public key published as `KEY.gpg` in the apt repository must match the private key supplied via `apt_signing_key`.
+- The public key published as `KEY.gpg` in the apt repository must match the private key supplied via `apt_signing_key`. To extract the public key from your private key and commit it to the apt repository, run:
+  ```sh
+  gpg --export --armor <FINGERPRINT> > KEY.gpg
+  ```
+  where `<FINGERPRINT>` is the fingerprint of your signing key. Users must add this public key to their APT trusted keys (e.g. with `gpg --dearmor KEY.gpg | sudo tee /etc/apt/trusted.gpg.d/myrepo.gpg`) before they can install packages from the signed repository.

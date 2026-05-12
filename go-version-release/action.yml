@@ -235,7 +235,7 @@ runs:
             echo "Error: required command 'gpg' is not available on the runner." >&2
             exit 1
           fi
-          SIGNING_KEY_FINGERPRINT="$(printf '%s\n' "$APT_SIGNING_KEY" | gpg --batch --with-colons --import-options show-only --import 2>&1 | awk -F: '/^fpr:/ { print $10; exit }')"
+          { SIGNING_KEY_FINGERPRINT="$(printf '%s\n' "$APT_SIGNING_KEY" | gpg --batch --with-colons --import-options show-only --import 2>&3 | awk -F: '/^fpr:/ { print $10; exit }')"; } 3>&2
           if [ -z "$SIGNING_KEY_FINGERPRINT" ]; then
             echo "Error: could not extract fingerprint from apt_signing_key; ensure it is a valid ASCII-armored GPG private key." >&2
             exit 1
