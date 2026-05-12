@@ -174,4 +174,4 @@ Notes:
   ```sh
   gpg --export --armor <FINGERPRINT> > KEY.gpg
   ```
-  where `<FINGERPRINT>` is the fingerprint of your signing key. Users must add this public key to their APT trusted keys (e.g. with `gpg --dearmor KEY.gpg | sudo tee /etc/apt/trusted.gpg.d/myrepo.gpg`) before they can install packages from the signed repository.
+  where `<FINGERPRINT>` is the fingerprint of your signing key. Users must add this public key to their APT trusted keys (e.g. with `gpg --dearmor < KEY.gpg | sudo tee /etc/apt/trusted.gpg.d/myrepo.gpg`) before they can install packages from the signed repository.
