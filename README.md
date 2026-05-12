@@ -172,6 +172,12 @@ on:
       apt_repo_token:
         description: 'Optional token for apt_repo access when publishing to a different repository.'
         required: false
+      scoop_repo:
+        description: 'Optional target GitHub repository in owner/name form for publishing a Scoop manifest file.'
+        required: false
+      homebrew_tap:
+        description: 'Optional target GitHub repository in owner/name form for publishing a Homebrew formula file.'
+        required: false
 
 jobs:
   release:
@@ -191,11 +197,13 @@ jobs:
           go_version: ${{ inputs.go_version }}
           goreleaser_config: ${{ inputs.goreleaser_config }}
           apt_repo: ${{ inputs.apt_repo }}
+          scoop_repo: ${{ inputs.scoop_repo }}
+          homebrew_tap: ${{ inputs.homebrew_tap }}
 ```
 
 </details>
 
-See the [action README](./go-version-release/README.md) for all inputs, outputs, and behavior details.
+See the [action README](./go-version-release/README.md) for all inputs, outputs, and behavior details, including optional publishing to apt, Scoop, and Homebrew tap repositories.
 
 ---
 

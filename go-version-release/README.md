@@ -36,6 +36,24 @@ on:
       apt_repo_token:
         description: 'Optional token for apt_repo access when publishing to a different repository.'
         required: false
+      scoop_repo:
+        description: 'Optional target GitHub repository in owner/name form for publishing a Scoop manifest file.'
+        required: false
+      scoop_manifest_source:
+        description: 'Optional path to the Scoop manifest source file.'
+        required: false
+      scoop_manifest_path:
+        description: 'Optional destination path in scoop_repo (defaults to bucket/<manifest>.json).'
+        required: false
+      homebrew_tap:
+        description: 'Optional target GitHub repository in owner/name form for publishing a Homebrew formula file.'
+        required: false
+      homebrew_formula_source:
+        description: 'Optional path to the Homebrew formula source file.'
+        required: false
+      homebrew_formula_path:
+        description: 'Optional destination path in homebrew_tap (defaults to Formula/<formula>.rb).'
+        required: false
       apt_signing_key:
         description: 'Optional ASCII-armored GPG private key for signing apt repository metadata.'
         required: false
@@ -61,6 +79,12 @@ jobs:
           go_version: ${{ inputs.go_version }}
           goreleaser_config: ${{ inputs.goreleaser_config }}
           apt_repo: ${{ inputs.apt_repo }}
+          scoop_repo: ${{ inputs.scoop_repo }}
+          scoop_manifest_source: ${{ inputs.scoop_manifest_source }}
+          scoop_manifest_path: ${{ inputs.scoop_manifest_path }}
+          homebrew_tap: ${{ inputs.homebrew_tap }}
+          homebrew_formula_source: ${{ inputs.homebrew_formula_source }}
+          homebrew_formula_path: ${{ inputs.homebrew_formula_path }}
 ```
 
 > [!IMPORTANT]
@@ -80,6 +104,14 @@ jobs:
 | `goreleaser_config` | Path to the GoReleaser configuration file (default `.goreleaser.yml`). | No |
 | `apt_repo` | Optional GitHub repository in `owner/name` form. When set, generated `.deb` artifacts from `dist/` are published to that repo's `main` branch using a structured apt layout (`pool/` and `dists/stable/main/binary-*`). | No |
 | `apt_repo_token` | Optional token used only for `apt_repo` clone/push operations. If omitted, the action falls back to `github_token`. | No |
+| `scoop_repo` | Optional GitHub repository in `owner/name` form. When set, the action publishes a Scoop manifest file from the current workflow workspace into that repository's `main` branch. | No |
+| `scoop_repo_token` | Optional token used only for `scoop_repo` clone/push operations. If omitted, the action falls back to `github_token`. | No |
+| `scoop_manifest_source` | Optional source path to the Scoop manifest file (relative to workspace or absolute). If omitted and `scoop_repo` is set, the action auto-detects exactly one `*.json` file in `dist/`. | No |
+| `scoop_manifest_path` | Optional destination path inside `scoop_repo`. Defaults to `bucket/<manifest-filename>.json`. | No |
+| `homebrew_tap` | Optional GitHub repository in `owner/name` form. When set, the action publishes a Homebrew formula file from the current workflow workspace into that repository's `main` branch. | No |
+| `homebrew_tap_token` | Optional token used only for `homebrew_tap` clone/push operations. If omitted, the action falls back to `github_token`. | No |
+| `homebrew_formula_source` | Optional source path to the Homebrew formula file (relative to workspace or absolute). If omitted and `homebrew_tap` is set, the action auto-detects exactly one `*.rb` file in `dist/`. | No |
+| `homebrew_formula_path` | Optional destination path inside `homebrew_tap`. Defaults to `Formula/<formula-filename>.rb`. | No |
 | `apt_signing_key` | Optional ASCII-armored GPG private key for signing apt repository metadata. When set, the action imports the key and generates signed `InRelease` and `Release.gpg` files alongside `Release`. Store this as a GitHub secret (e.g. `APT_SIGNING_KEY`). | No |
 | `apt_signing_key_passphrase` | Optional passphrase for `apt_signing_key`. When set, GPG uses it via `--passphrase-file` (written to a secure temp file) so passphrase-protected private keys work. Store as a GitHub secret (e.g. `APT_SIGNING_KEY_PASSPHRASE`). | No |
 
@@ -187,3 +219,29 @@ Notes:
   deb [signed-by=/etc/apt/keyrings/myrepo.gpg] https://<apt-repo-url> stable main
   ```
   This limits trust to this specific repository and avoids adding the key as globally trusted (as would be the case with `/etc/apt/trusted.gpg.d/`).
+
+## Optional Scoop publishing
+
+When `scoop_repo` is set, the action:
+
+1. Resolves the Scoop manifest source file:
+   - `scoop_manifest_source` when provided, otherwise
+   - exactly one `*.json` found in `dist/`
+2. Clones the target `scoop_repo` repository `main` branch
+3. Copies the manifest to:
+   - `scoop_manifest_path` when provided, otherwise
+   - `bucket/<manifest-filename>.json`
+4. Commits and pushes the change (if any)
+
+## Optional Homebrew tap publishing
+
+When `homebrew_tap` is set, the action:
+
+1. Resolves the Homebrew formula source file:
+   - `homebrew_formula_source` when provided, otherwise
+   - exactly one `*.rb` found in `dist/`
+2. Clones the target `homebrew_tap` repository `main` branch
+3. Copies the formula to:
+   - `homebrew_formula_path` when provided, otherwise
+   - `Formula/<formula-filename>.rb`
+4. Commits and pushes the change (if any)
