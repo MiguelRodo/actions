@@ -7,6 +7,9 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   [ -f "$ACTION_FILE" ]
   run grep -F 'using: "composite"' "$ACTION_FILE"
   [ "$status" -eq 0 ]
+
+  run grep -F 'go-version-release currently supports Linux runners only' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
 }
 
 @test "go-version-release inputs include github_token, apt_repo_token, and go_version defaults" {
@@ -155,6 +158,9 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   [ -f "$ACTION_README" ]
 
   run grep -F 'fetch-depth: 0' "$ACTION_README"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'supports Linux runners only' "$ACTION_README"
   [ "$status" -eq 0 ]
 
   run grep -F '`apt_repo`' "$ACTION_README"

@@ -60,6 +60,8 @@ jobs:
 
 > [!IMPORTANT]
 > Use `fetch-depth: 0` on checkout so the action can inspect existing tags.
+>
+> This action currently supports Linux runners only. Use a Linux runner such as `ubuntu-latest`.
 
 ## Inputs
 
@@ -107,6 +109,8 @@ The action works for both:
 
 - tag-driven workflows (`push.tags`, where the tag name becomes the release version)
 - manual `workflow_dispatch` runs (where you provide `version` or `bump_type`)
+
+The composite action is intended to run on Linux GitHub Actions runners. It validates `runner.os == Linux` before continuing because its release asset collection and APT publishing steps rely on Linux/GNU tooling.
 
 ## Release assets
 

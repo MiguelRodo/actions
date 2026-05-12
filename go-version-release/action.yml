@@ -51,6 +51,14 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - name: Validate Linux runner
+      shell: bash
+      run: |
+        if [ "${{ runner.os }}" != "Linux" ]; then
+          echo "Error: go-version-release currently supports Linux runners only. Use a Linux runner such as ubuntu-latest." >&2
+          exit 1
+        fi
+
     - name: Configure Git
       shell: bash
       run: |

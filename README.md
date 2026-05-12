@@ -175,7 +175,7 @@ on:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest # Linux runner required
     permissions:
       contents: write
     steps:
