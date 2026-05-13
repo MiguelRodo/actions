@@ -65,6 +65,17 @@ run_select() {
   [[ "$output" == *"retention must be one of"* ]]
 }
 
+@test "accepts policy name case-insensitively" {
+  mk_deb myapp 1.0.0 amd64
+  mk_deb myapp 2.0.0 amd64
+
+  run bash "$SCRIPT" "LATEST" "$REPO_DIR"
+  [ "$status" -eq 0 ]
+
+  run bash "$SCRIPT" "Latest-Per-Major" "$REPO_DIR"
+  [ "$status" -eq 0 ]
+}
+
 @test "exits 0 with no output when pool is empty" {
   run_select latest
   [ "$status" -eq 0 ]
@@ -110,17 +121,17 @@ run_select() {
 }
 
 # ---------------------------------------------------------------------------
-# latest-patch-per-minor – keep the highest patch for each major.minor
+# latest-per-minor – keep the highest patch for each major.minor
 # ---------------------------------------------------------------------------
 
-@test "latest-patch-per-minor: keeps newest patch per minor series" {
+@test "latest-per-minor: keeps newest patch per minor series" {
   mk_deb myapp 1.0.0 amd64
   mk_deb myapp 1.0.1 amd64
   mk_deb myapp 1.0.2 amd64
   mk_deb myapp 1.1.0 amd64
   mk_deb myapp 1.1.3 amd64
 
-  run_select latest-patch-per-minor
+  run_select latest-per-minor
   [ "$status" -eq 0 ]
   # Old 1.0.x patches removed
   [[ "$output" == *"myapp_1.0.0_amd64.deb"* ]]
@@ -132,22 +143,22 @@ run_select() {
   [[ "$output" == *"myapp_1.1.0_amd64.deb"* ]]
 }
 
-@test "latest-patch-per-minor: keeps single version per minor without removing anything" {
+@test "latest-per-minor: keeps single version per minor without removing anything" {
   mk_deb myapp 1.0.0 amd64
   mk_deb myapp 2.0.0 amd64
 
-  run_select latest-patch-per-minor
+  run_select latest-per-minor
   [ "$status" -eq 0 ]
   [ -z "$output" ]
 }
 
-@test "latest-patch-per-minor: handles multiple majors" {
+@test "latest-per-minor: handles multiple majors" {
   mk_deb myapp 1.0.0 amd64
   mk_deb myapp 1.0.1 amd64
   mk_deb myapp 2.0.0 amd64
   mk_deb myapp 2.0.1 amd64
 
-  run_select latest-patch-per-minor
+  run_select latest-per-minor
   [ "$status" -eq 0 ]
   [[ "$output" == *"myapp_1.0.0_amd64.deb"* ]]
   [[ "$output" == *"myapp_2.0.0_amd64.deb"* ]]
@@ -156,17 +167,17 @@ run_select() {
 }
 
 # ---------------------------------------------------------------------------
-# latest-minor-per-major – keep the highest minor.patch for each major
+# latest-per-major – keep the highest minor.patch for each major
 # ---------------------------------------------------------------------------
 
-@test "latest-minor-per-major: keeps only the newest minor series per major" {
+@test "latest-per-major: keeps only the newest minor series per major" {
   mk_deb myapp 1.0.0 amd64
   mk_deb myapp 1.1.0 amd64
   mk_deb myapp 1.2.0 amd64
   mk_deb myapp 2.0.0 amd64
   mk_deb myapp 2.1.0 amd64
 
-  run_select latest-minor-per-major
+  run_select latest-per-major
   [ "$status" -eq 0 ]
   [[ "$output" == *"myapp_1.0.0_amd64.deb"* ]]
   [[ "$output" == *"myapp_1.1.0_amd64.deb"* ]]
@@ -175,21 +186,21 @@ run_select() {
   [[ "$output" != *"myapp_2.1.0_amd64.deb"* ]]
 }
 
-@test "latest-minor-per-major: keeps single major version without removing anything" {
+@test "latest-per-major: keeps single major version without removing anything" {
   mk_deb myapp 1.5.3 amd64
 
-  run_select latest-minor-per-major
+  run_select latest-per-major
   [ "$status" -eq 0 ]
   [ -z "$output" ]
 }
 
-@test "latest-minor-per-major: handles patches within the kept minor series" {
+@test "latest-per-major: handles patches within the kept minor series" {
   mk_deb myapp 1.0.0 amd64
   mk_deb myapp 1.0.1 amd64
   mk_deb myapp 1.1.0 amd64
   mk_deb myapp 1.1.2 amd64
 
-  run_select latest-minor-per-major
+  run_select latest-per-major
   [ "$status" -eq 0 ]
   # Old minor series removed entirely
   [[ "$output" == *"myapp_1.0.0_amd64.deb"* ]]

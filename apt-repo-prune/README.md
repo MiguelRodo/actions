@@ -18,9 +18,9 @@ on:
   workflow_dispatch:
     inputs:
       retention:
-        description: 'Retention policy: latest | latest-patch-per-minor | latest-minor-per-major'
+        description: 'Retention policy: latest | latest-per-minor | latest-per-major'
         required: false
-        default: latest-minor-per-major
+        default: latest-per-major
   schedule:
     - cron: '0 3 * * 0'   # weekly on Sunday at 03:00 UTC
 
@@ -34,7 +34,7 @@ jobs:
         with:
           repo: myorg/my-apt-repo
           token: ${{ secrets.APT_REPO_TOKEN }}
-          retention: ${{ inputs.retention || 'latest-minor-per-major' }}
+          retention: ${{ inputs.retention || 'latest-per-major' }}
           apt_signing_key: ${{ secrets.APT_SIGNING_KEY }}
           apt_signing_key_passphrase: ${{ secrets.APT_SIGNING_KEY_PASSPHRASE }}
 ```
@@ -45,7 +45,7 @@ jobs:
 |---|---|---|---|
 | `repo` | Target apt repository in `owner/name` form. | **Yes** | — |
 | `token` | GitHub token with `contents:write` permission on the target repository. | **Yes** | — |
-| `retention` | Version retention policy (see below). | No | `latest-minor-per-major` |
+| `retention` | Version retention policy (case-insensitive, see below). | No | `latest-per-major` |
 | `apt_signing_key` | ASCII-armored GPG private key for signing regenerated apt metadata. When omitted, only the unsigned `Release` file is written and any stale `InRelease` / `Release.gpg` files are removed. | No | `""` |
 | `apt_signing_key_passphrase` | Passphrase for `apt_signing_key`. | No | `""` |
 
@@ -53,18 +53,18 @@ jobs:
 
 | Policy | What is kept |
 |---|---|
-| `latest` | The single most-recent version across all packages and series. |
-| `latest-patch-per-minor` | The highest patch release for each `MAJOR.MINOR` series (e.g. keeps `1.0.5`, `1.1.3`, `2.0.1` but removes `1.0.4`, `1.1.2`). |
-| `latest-minor-per-major` | The highest `MINOR.PATCH` release for each `MAJOR` series (e.g. keeps `1.2.3` and `2.1.0` but removes `1.1.5`, `1.2.2`). **This is the default.** |
+| `latest` | The newest version per `(package, arch)` pair. |
+| `latest-per-minor` | The highest patch release for each `MAJOR.MINOR` series (e.g. keeps `1.0.5`, `1.1.3`, `2.0.1` but removes `1.0.4`, `1.1.2`). |
+| `latest-per-major` | The highest `MINOR.PATCH` release for each `MAJOR` series (e.g. keeps `1.2.3` and `2.1.0` but removes `1.1.5`, `1.2.2`). **This is the default.** |
 
-The policy is applied independently per `(package-name, architecture)` pair so that each arch is pruned consistently.
+The policy is applied independently per `(package-name, architecture)` pair so that each arch is pruned consistently.  All policy names are case-insensitive.
 
 ## How it works
 
 1. **Clone** – The target repository is cloned with its full history.
 2. **Validate structure** – The action checks that `pool/main/` and `dists/stable/` exist (the layout produced by `go-version-release`).
 3. **Select files to remove** – `scripts/apt-prune-select-versions.sh` reads every `.deb` file via `dpkg-deb`, groups versions by `(package, arch)`, and outputs the relative paths of files that fall outside the retention window.
-4. **Rewrite history** – [`git filter-repo`](https://github.com/newren/git-filter-repo) removes the selected files from every commit.  The root commit is only rewritten when it contains one of the target files; otherwise its SHA is preserved.
+4. **Rewrite history** – [`git filter-repo`](https://github.com/newren/git-filter-repo) removes the selected files from every commit, including the root commit when it contains target files (which will change the root commit SHA).
 5. **Regenerate metadata** – `Packages`, `Packages.gz`, and `Release` are rebuilt from the remaining `.deb` files.  When `apt_signing_key` is supplied, `InRelease` (clearsigned) and `Release.gpg` (detached signature) are also regenerated.
 6. **Force-push** – The rewritten history is pushed to `origin/main` with `--force`.
 

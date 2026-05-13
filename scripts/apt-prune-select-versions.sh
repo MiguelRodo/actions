@@ -7,10 +7,10 @@
 #
 # Usage: apt-prune-select-versions.sh <retention> <repo-dir>
 #
-#   retention  One of:
-#              latest               – keep only the single most-recent version
-#              latest-patch-per-minor – keep the highest patch for each major.minor
-#              latest-minor-per-major – keep the highest minor.patch for each major
+#   retention  One of (case-insensitive):
+#              latest            – keep only the newest version per (package, arch) pair
+#              latest-per-minor  – keep the highest patch for each major.minor per (package, arch)
+#              latest-per-major  – keep the highest minor.patch for each major per (package, arch)
 #   repo-dir   Root of the apt repository (the pool/ subdirectory is searched).
 #
 # The script exits 0 in all normal cases and prints nothing when there is
@@ -21,10 +21,13 @@ set -euo pipefail
 RETENTION="${1:?Usage: apt-prune-select-versions.sh <retention> <repo-dir>}"
 REPO_DIR="${2:?Usage: apt-prune-select-versions.sh <retention> <repo-dir>}"
 
+# Normalize to lowercase so the argument is case-agnostic.
+RETENTION="${RETENTION,,}"
+
 case "$RETENTION" in
-  latest | latest-patch-per-minor | latest-minor-per-major) ;;
+  latest | latest-per-minor | latest-per-major) ;;
   *)
-    echo "Error: retention must be one of: latest, latest-patch-per-minor, latest-minor-per-major." >&2
+    echo "Error: retention must be one of: latest, latest-per-minor, latest-per-major." >&2
     exit 1
     ;;
 esac
@@ -82,7 +85,7 @@ while IFS=$'\t' read -r COMBO_PKG COMBO_ARCH; do
       _KEEP=("${SORTED_VERS[-1]}")
       ;;
 
-    latest-patch-per-minor)
+    latest-per-minor)
       # For each MAJOR.MINOR keep the highest PATCH.
       # Iterating in ascending version order means the last assignment wins.
       declare -A _MINOR_BEST=()
@@ -93,7 +96,7 @@ while IFS=$'\t' read -r COMBO_PKG COMBO_ARCH; do
       unset _MINOR_BEST
       ;;
 
-    latest-minor-per-major)
+    latest-per-major)
       # For each MAJOR keep the highest MINOR.PATCH.
       declare -A _MAJOR_BEST=()
       for V in "${SORTED_VERS[@]}"; do

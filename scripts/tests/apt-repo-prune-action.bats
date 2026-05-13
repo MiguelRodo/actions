@@ -43,12 +43,12 @@ SELECT_SCRIPT="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)/apt-prune-sele
   [ "$status" -eq 0 ]
 }
 
-@test "apt-repo-prune has optional input: retention with default latest-minor-per-major" {
+@test "apt-repo-prune has optional input: retention with default latest-per-major" {
   run grep -F 'retention:' "$ACTION_FILE"
   [ "$status" -eq 0 ]
   run awk '
     /^  retention:$/ { in_block=1; next }
-    in_block && /default: "latest-minor-per-major"/ { found=1; exit 0 }
+    in_block && /default: "latest-per-major"/ { found=1; exit 0 }
     in_block && /^  [^ ]/ { exit 1 }
     END { exit found ? 0 : 1 }
   ' "$ACTION_FILE"
