@@ -147,3 +147,42 @@ SELECT_SCRIPT="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)/apt-prune-sele
   run grep -E '\[ -n "\$GPG_PASSPHRASE_FILE" \][[:space:]]+&&[[:space:]]+rm -f' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 }
+
+@test "apt-repo-prune plan step has id: plan" {
+  run awk '
+    /^    - name:/ { in_step=1; next }
+    in_step && /^      id: plan$/ { found=1; exit 0 }
+    in_step && /^    - name:/ { in_step=0 }
+    END { exit found ? 0 : 1 }
+  ' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+}
+
+@test "apt-repo-prune plan step writes should_prune to GITHUB_OUTPUT" {
+  run grep -F 'should_prune' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+  run grep -F 'should_prune=true' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+  run grep -F 'should_prune=false' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+}
+
+@test "apt-repo-prune no-op step is conditional on should_prune != true" {
+  run grep -F "steps.plan.outputs.should_prune != 'true'" "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+}
+
+@test "apt-repo-prune execute step is conditional on should_prune == true" {
+  run grep -F "steps.plan.outputs.should_prune == 'true'" "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+}
+
+@test "apt-repo-prune execute step reads apt_repo_dir from plan outputs" {
+  run grep -F 'steps.plan.outputs.apt_repo_dir' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+}
+
+@test "apt-repo-prune execute step reads paths_to_remove_file from plan outputs" {
+  run grep -F 'steps.plan.outputs.paths_to_remove_file' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+}

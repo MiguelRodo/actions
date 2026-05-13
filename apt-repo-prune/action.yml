@@ -67,7 +67,8 @@ runs:
           fi
         done
 
-    - name: Prune apt repository
+    - name: Analyze prune plan
+      id: plan
       shell: bash
       run: |
         REPO_INPUT="${{ github.repository }}"
@@ -75,14 +76,85 @@ runs:
         # Normalize to lowercase so the argument is case-agnostic.
         RETENTION="${{ inputs.retention }}"
         RETENTION="${RETENTION,,}"
-        APT_SIGNING_KEY="${{ inputs.apt_signing_key }}"
-        APT_SIGNING_KEY_PASSPHRASE="${{ inputs.apt_signing_key_passphrase }}"
         PUSH_TOKEN="${{ inputs.token }}"
 
         # ── Install git-filter-repo if not already present ───────────────────
         if ! command -v git-filter-repo >/dev/null 2>&1; then
           pip install git-filter-repo --quiet
         fi
+
+        # ── Build the authenticated remote URL ────────────────────────────────
+        # Inject the token into the server URL so the action works on both
+        # GitHub.com and GitHub Enterprise Server.
+        SERVER_URL="${{ github.server_url }}"
+        AUTHENTICATED_REMOTE="${SERVER_URL/https:\/\//https:\/\/x-access-token:${PUSH_TOKEN}@}/${REPO_INPUT}.git"
+
+        # ── Clone the apt repository with its full history ────────────────────
+        APT_REPO_DIR="$(mktemp -d "${RUNNER_TEMP:-/tmp}/apt-repo-prune-XXXXXX")"
+        git clone \
+          --branch "$DEFAULT_BRANCH" \
+          --single-branch \
+          "$AUTHENTICATED_REMOTE" \
+          "$APT_REPO_DIR"
+
+        # ── Validate expected repository structure ────────────────────────────
+        # The go-version-release action publishes .deb files under pool/main/
+        # and apt metadata under dists/stable.  When pool/main/ is absent the
+        # repository has no packages and already satisfies any retention policy.
+        if [ ! -d "$APT_REPO_DIR/pool/main" ]; then
+          echo "Nothing to prune: pool/main/ not found in '$REPO_INPUT' — repository has no packages."
+          rm -rf "$APT_REPO_DIR"
+          echo "should_prune=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        if [ ! -d "$APT_REPO_DIR/dists/stable" ]; then
+          echo "Error: expected dists/stable/ directory not found in '$REPO_INPUT'." >&2
+          echo "  This action is designed for repositories managed by the go-version-release action." >&2
+          rm -rf "$APT_REPO_DIR"
+          exit 1
+        fi
+
+        # ── Determine which .deb files should be removed ──────────────────────
+        PATHS_TO_REMOVE_FILE="$(mktemp "${RUNNER_TEMP:-/tmp}/apt-prune-paths-XXXXXX")"
+        bash "$GITHUB_ACTION_PATH/../scripts/apt-prune-select-versions.sh" \
+          "$RETENTION" "$APT_REPO_DIR" > "$PATHS_TO_REMOVE_FILE"
+
+        if [ ! -s "$PATHS_TO_REMOVE_FILE" ]; then
+          echo "Nothing to prune: apt repository already satisfies the '$RETENTION' retention policy."
+          rm -f "$PATHS_TO_REMOVE_FILE"
+          rm -rf "$APT_REPO_DIR"
+          echo "should_prune=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        echo "Pruning the following files from history:"
+        cat "$PATHS_TO_REMOVE_FILE"
+
+        echo "should_prune=true" >> "$GITHUB_OUTPUT"
+        echo "apt_repo_dir=$APT_REPO_DIR" >> "$GITHUB_OUTPUT"
+        echo "paths_to_remove_file=$PATHS_TO_REMOVE_FILE" >> "$GITHUB_OUTPUT"
+        echo "default_branch=$DEFAULT_BRANCH" >> "$GITHUB_OUTPUT"
+
+    - name: Nothing to prune
+      if: steps.plan.outputs.should_prune != 'true'
+      shell: bash
+      run: |
+        echo "No history rewrite or push required."
+
+    - name: Rewrite history and regenerate metadata
+      if: steps.plan.outputs.should_prune == 'true'
+      shell: bash
+      run: |
+        APT_REPO_DIR="${{ steps.plan.outputs.apt_repo_dir }}"
+        PATHS_TO_REMOVE_FILE="${{ steps.plan.outputs.paths_to_remove_file }}"
+        DEFAULT_BRANCH="${{ steps.plan.outputs.default_branch }}"
+        REPO_INPUT="${{ github.repository }}"
+        RETENTION="${{ inputs.retention }}"
+        RETENTION="${RETENTION,,}"
+        APT_SIGNING_KEY="${{ inputs.apt_signing_key }}"
+        APT_SIGNING_KEY_PASSPHRASE="${{ inputs.apt_signing_key_passphrase }}"
+        PUSH_TOKEN="${{ inputs.token }}"
 
         # ── Set up GPG signing when a signing key is supplied ────────────────
         SIGNING_KEY_FINGERPRINT=""
@@ -116,10 +188,8 @@ runs:
         fi
 
         # ── Cleanup on exit ───────────────────────────────────────────────────
-        APT_REPO_DIR=""
-        PATHS_TO_REMOVE_FILE=""
         cleanup() {
-          [ -n "$APT_REPO_DIR" ]        && rm -rf "$APT_REPO_DIR"
+          [ -n "$APT_REPO_DIR" ]         && rm -rf "$APT_REPO_DIR"
           [ -n "$PATHS_TO_REMOVE_FILE" ] && rm -f  "$PATHS_TO_REMOVE_FILE"
           [ -n "$GNUPGHOME" ]            && rm -rf "$GNUPGHOME"
           [ -n "$GPG_PASSPHRASE_FILE" ]  && rm -f  "$GPG_PASSPHRASE_FILE"
@@ -131,43 +201,6 @@ runs:
         # GitHub.com and GitHub Enterprise Server.
         SERVER_URL="${{ github.server_url }}"
         AUTHENTICATED_REMOTE="${SERVER_URL/https:\/\//https:\/\/x-access-token:${PUSH_TOKEN}@}/${REPO_INPUT}.git"
-
-        # ── Clone the apt repository with its full history ────────────────────
-        APT_REPO_DIR="$(mktemp -d "${RUNNER_TEMP:-/tmp}/apt-repo-prune-XXXXXX")"
-        git clone \
-          --branch "$DEFAULT_BRANCH" \
-          --single-branch \
-          "$AUTHENTICATED_REMOTE" \
-          "$APT_REPO_DIR"
-
-        # ── Validate expected repository structure ────────────────────────────
-        # The go-version-release action publishes .deb files under pool/main/
-        # and apt metadata under dists/stable.  When pool/main/ is absent the
-        # repository has no packages and already satisfies any retention policy.
-        if [ ! -d "$APT_REPO_DIR/pool/main" ]; then
-          echo "Nothing to prune: pool/main/ not found in '$REPO_INPUT' — repository has no packages."
-          exit 0
-        fi
-
-        if [ ! -d "$APT_REPO_DIR/dists/stable" ]; then
-          echo "Error: expected dists/stable/ directory not found in '$REPO_INPUT'." >&2
-          echo "  This action is designed for repositories managed by the go-version-release action." >&2
-          exit 1
-        fi
-
-        # ── Determine which .deb files should be removed ──────────────────────
-        PATHS_TO_REMOVE_FILE="$(mktemp "${RUNNER_TEMP:-/tmp}/apt-prune-paths-XXXXXX")"
-        bash "$GITHUB_ACTION_PATH/../scripts/apt-prune-select-versions.sh" \
-          "$RETENTION" "$APT_REPO_DIR" > "$PATHS_TO_REMOVE_FILE"
-
-        if [ ! -s "$PATHS_TO_REMOVE_FILE" ]; then
-          echo "Nothing to prune: apt repository already satisfies the '$RETENTION' retention policy."
-          echo "Exiting without modifying history or metadata."
-          exit 0
-        fi
-
-        echo "Pruning the following files from history:"
-        cat "$PATHS_TO_REMOVE_FILE"
 
         # ── Warn when any file to remove exists in the root commit ────────────
         # git filter-repo rewrites every commit whose tree changes, including the
