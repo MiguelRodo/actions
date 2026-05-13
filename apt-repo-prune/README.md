@@ -44,7 +44,7 @@ jobs:
 
 | Input | Description | Required | Default |
 |---|---|---|---|
-| `token` | GitHub token with `contents:write` permission on the repository. | **Yes** | — |
+| `token` | GitHub token with `contents: write` permission on the current repository. | **Yes** | — |
 | `retention` | Version retention policy (case-insensitive, see below). | No | `latest-per-major` |
 | `apt_signing_key` | ASCII-armored GPG private key for signing regenerated apt metadata. When omitted, only the unsigned `Release` file is written and any stale `InRelease` / `Release.gpg` files are removed. | No | `""` |
 | `apt_signing_key_passphrase` | Passphrase for `apt_signing_key`. | No | `""` |
