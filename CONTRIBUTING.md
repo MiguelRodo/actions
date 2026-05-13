@@ -37,6 +37,21 @@ Inline `run:` blocks are linted by **actionlint** (which delegates to **shellche
 
 Releases are managed by the `.github/workflows/release.yml` workflow. Tags **must** originate from the `main` branch and follow the `vX.Y.Z` format.
 
+#### Tag vs. Release
+
+- **Specific tags** (`vX.Y.Z`) are annotated tags and have an associated GitHub Release entry with auto-generated notes.
+- **Floating tags** (`vX`, `vX.Y`) are lightweight tags that are force-updated on every release to point to the latest matching commit. They do **not** have their own GitHub Release entries — this is intentional. The GitHub Releases page only shows entries for specific `vX.Y.Z` tags.
+- Consumers of these actions should pin to a floating tag (e.g. `@v2` or `@v2.17`) or a specific tag (e.g. `@v2.17.0`), not to a Release object.
+
+To verify what commit a floating tag resolves to:
+
+```bash
+# Show the commit a tag points to
+git ls-remote --tags https://github.com/MiguelRodo/actions "refs/tags/v2"
+# or, in a local clone:
+git rev-list -n 1 refs/tags/v2
+```
+
 ## Code of conduct
 
 Please be respectful and constructive in all interactions. This project follows the [Contributor Covenant](https://www.contributor-covenant.org/) code of conduct.
