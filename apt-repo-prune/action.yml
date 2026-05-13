@@ -11,9 +11,6 @@ branding:
   color: "red"
 
 inputs:
-  repo:
-    description: "Target apt repository in owner/name form (e.g. myorg/my-apt-repo)."
-    required: true
   token:
     description: "GitHub token with contents:write permission on the target repository."
     required: true
@@ -51,15 +48,9 @@ runs:
     - name: Validate inputs and check required tools
       shell: bash
       run: |
-        REPO_INPUT="${{ inputs.repo }}"
         # Normalize to lowercase so the argument is case-agnostic.
         RETENTION_INPUT="${{ inputs.retention }}"
         RETENTION_INPUT="${RETENTION_INPUT,,}"
-
-        if [[ ! "$REPO_INPUT" =~ ^[^/]+/[^/]+$ ]]; then
-          echo "Error: repo must be in owner/name format, got '$REPO_INPUT'." >&2
-          exit 1
-        fi
 
         case "$RETENTION_INPUT" in
           latest | latest-per-minor | latest-per-major) ;;
@@ -79,7 +70,8 @@ runs:
     - name: Prune apt repository
       shell: bash
       run: |
-        REPO_INPUT="${{ inputs.repo }}"
+        REPO_INPUT="${{ github.repository }}"
+        DEFAULT_BRANCH="${{ github.ref_name }}"
         # Normalize to lowercase so the argument is case-agnostic.
         RETENTION="${{ inputs.retention }}"
         RETENTION="${RETENTION,,}"
@@ -125,38 +117,24 @@ runs:
 
         # ── Cleanup on exit ───────────────────────────────────────────────────
         APT_REPO_DIR=""
-        ASKPASS_SCRIPT=""
         PATHS_TO_REMOVE_FILE=""
         cleanup() {
           [ -n "$APT_REPO_DIR" ]        && rm -rf "$APT_REPO_DIR"
-          [ -n "$ASKPASS_SCRIPT" ]       && rm -f  "$ASKPASS_SCRIPT"
           [ -n "$PATHS_TO_REMOVE_FILE" ] && rm -f  "$PATHS_TO_REMOVE_FILE"
           [ -n "$GNUPGHOME" ]            && rm -rf "$GNUPGHOME"
           [ -n "$GPG_PASSPHRASE_FILE" ]  && rm -f  "$GPG_PASSPHRASE_FILE"
         }
         trap cleanup EXIT
 
-        # ── Authenticated git via GIT_ASKPASS ─────────────────────────────────
-        ASKPASS_SCRIPT="$(mktemp "${RUNNER_TEMP:-/tmp}/git-askpass-XXXXXX")"
-        cat >"$ASKPASS_SCRIPT" <<'ASKPASS_EOF'
-        #!/usr/bin/env bash
-        case "$1" in
-          Username\ for\ *) printf '%s\n' "x-access-token" ;;
-          Password\ for\ *) printf '%s\n' "$GIT_TOKEN_FOR_ASKPASS" ;;
-          *) exit 1 ;;
-        esac
-        ASKPASS_EOF
-        chmod u+x "$ASKPASS_SCRIPT"
-        export GIT_TERMINAL_PROMPT=0
-        export GIT_ASKPASS="$ASKPASS_SCRIPT"
-        export GIT_TOKEN_FOR_ASKPASS="$PUSH_TOKEN"
+        # ── Build the authenticated remote URL ────────────────────────────────
+        AUTHENTICATED_REMOTE="https://x-access-token:${PUSH_TOKEN}@github.com/${REPO_INPUT}.git"
 
         # ── Clone the apt repository with its full history ────────────────────
         APT_REPO_DIR="$(mktemp -d "${RUNNER_TEMP:-/tmp}/apt-repo-prune-XXXXXX")"
         git clone \
-          --branch main \
+          --branch "$DEFAULT_BRANCH" \
           --single-branch \
-          "${{ github.server_url }}/${REPO_INPUT}.git" \
+          "$AUTHENTICATED_REMOTE" \
           "$APT_REPO_DIR"
 
         # ── Validate expected repository structure ────────────────────────────
@@ -214,11 +192,12 @@ runs:
             --paths-from-file "$PATHS_TO_REMOVE_FILE" \
             --force
 
-          # git filter-repo removes remote tracking refs; restore the remote URL so
-          # we can push.  The remote section in .git/config is preserved by
-          # filter-repo but the origin may have been stripped on some versions.
-          if ! git remote get-url origin >/dev/null 2>&1; then
-            git remote add origin "${{ github.server_url }}/${REPO_INPUT}.git"
+          # git filter-repo removes remote tracking refs; restore the authenticated
+          # remote URL so we can push.
+          if git remote get-url origin >/dev/null 2>&1; then
+            git remote set-url origin "$AUTHENTICATED_REMOTE"
+          else
+            git remote add origin "$AUTHENTICATED_REMOTE"
           fi
         )
 
@@ -289,5 +268,5 @@ runs:
             git commit -m "Prune apt repository: apply '${RETENTION}' retention policy"
           fi
 
-          git push --force origin HEAD:main
+          git push --force origin "HEAD:${DEFAULT_BRANCH}"
         )
