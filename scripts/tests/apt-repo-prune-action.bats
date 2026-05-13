@@ -150,7 +150,7 @@ SELECT_SCRIPT="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)/apt-prune-sele
 
 @test "apt-repo-prune plan step has id: plan" {
   run awk '
-    /^    - name:/ { in_step=1; next }
+    /^    - name: Analyze prune plan$/ { in_step=1; next }
     in_step && /^      id: plan$/ { found=1; exit 0 }
     in_step && /^    - name:/ { in_step=0 }
     END { exit found ? 0 : 1 }
