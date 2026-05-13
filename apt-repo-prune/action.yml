@@ -189,7 +189,7 @@ runs:
 
         # ── Cleanup on exit ───────────────────────────────────────────────────
         cleanup() {
-          [ -n "$APT_REPO_DIR" ]         && rm -rf "$APT_REPO_DIR"
+          [ -n "$APT_REPO_DIR" ]        && rm -rf "$APT_REPO_DIR"
           [ -n "$PATHS_TO_REMOVE_FILE" ] && rm -f  "$PATHS_TO_REMOVE_FILE"
           [ -n "$GNUPGHOME" ]            && rm -rf "$GNUPGHOME"
           [ -n "$GPG_PASSPHRASE_FILE" ]  && rm -f  "$GPG_PASSPHRASE_FILE"
