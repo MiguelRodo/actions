@@ -19,16 +19,9 @@ SELECT_SCRIPT="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)/apt-prune-sele
   [ "$status" -eq 0 ]
 }
 
-@test "apt-repo-prune has required input: repo" {
+@test "apt-repo-prune does NOT have repo input" {
   run grep -F 'repo:' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-  run awk '
-    /^  repo:$/ { in_block=1; next }
-    in_block && /required: true/ { found=1; exit 0 }
-    in_block && /^  [^ ]/ { exit 1 }
-    END { exit found ? 0 : 1 }
-  ' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
+  [ "$status" -ne 0 ]
 }
 
 @test "apt-repo-prune has required input: token" {
@@ -101,4 +94,23 @@ SELECT_SCRIPT="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)/apt-prune-sele
 
 @test "apt-prune-select-versions.sh has valid bash syntax" {
   bash -n "$SELECT_SCRIPT"
+}
+
+@test "apt-repo-prune uses authenticated remote URL with x-access-token" {
+  run grep -F 'x-access-token' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+}
+
+@test "apt-repo-prune uses github.repository context instead of repo input" {
+  run grep -F 'github.repository' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+}
+
+@test "apt-repo-prune uses default_branch context for branch, not hardcoded main" {
+  run grep -F 'github.event.repository.default_branch' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+  run grep -F 'github.ref_name' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+  run grep -F -- '--branch main' "$ACTION_FILE"
+  [ "$status" -ne 0 ]
 }

@@ -5,7 +5,9 @@ Composite action for pruning superseded `.deb` package versions from a GitHub-ho
 The action is designed for repositories that are managed by the [go-version-release](../go-version-release) action in this repository; it validates the expected `pool/main/` and `dists/stable/` structure before proceeding.
 
 > [!IMPORTANT]
-> Because history is rewritten every run requires a **force-push**.  Ensure the target repository's `main` branch does **not** have force-push protection enabled (or that the token used has bypass permission).
+> Because history is rewritten every run requires a **force-push**.  Ensure the default branch does **not** have force-push protection enabled (or that the token used has bypass permission).
+>
+> The workflow must grant **`contents: write`** permission so the token can push the rewritten history.
 >
 > This action supports **Linux runners only**.  Use `ubuntu-latest` or another Linux runner.
 
@@ -28,12 +30,11 @@ jobs:
   prune:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     steps:
       - uses: MiguelRodo/actions/apt-repo-prune@v2
         with:
-          repo: myorg/my-apt-repo
-          token: ${{ secrets.APT_REPO_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           retention: ${{ inputs.retention || 'latest-per-major' }}
           apt_signing_key: ${{ secrets.APT_SIGNING_KEY }}
           apt_signing_key_passphrase: ${{ secrets.APT_SIGNING_KEY_PASSPHRASE }}
@@ -43,8 +44,7 @@ jobs:
 
 | Input | Description | Required | Default |
 |---|---|---|---|
-| `repo` | Target apt repository in `owner/name` form. | **Yes** | — |
-| `token` | GitHub token with `contents:write` permission on the target repository. | **Yes** | — |
+| `token` | GitHub token with `contents: write` permission on the current repository. | **Yes** | — |
 | `retention` | Version retention policy (case-insensitive, see below). | No | `latest-per-major` |
 | `apt_signing_key` | ASCII-armored GPG private key for signing regenerated apt metadata. When omitted, only the unsigned `Release` file is written and any stale `InRelease` / `Release.gpg` files are removed. | No | `""` |
 | `apt_signing_key_passphrase` | Passphrase for `apt_signing_key`. | No | `""` |
@@ -61,12 +61,12 @@ The policy is applied independently per `(package-name, architecture)` pair so t
 
 ## How it works
 
-1. **Clone** – The target repository is cloned with its full history.
+1. **Clone** – The current repository is cloned with its full history using the provided token for authentication.
 2. **Validate structure** – The action checks that `pool/main/` and `dists/stable/` exist (the layout produced by `go-version-release`).
 3. **Select files to remove** – `scripts/apt-prune-select-versions.sh` reads every `.deb` file via `dpkg-deb`, groups versions by `(package, arch)`, and outputs the relative paths of files that fall outside the retention window.
 4. **Rewrite history** – [`git filter-repo`](https://github.com/newren/git-filter-repo) removes the selected files from every commit, including the root commit when it contains target files (which will change the root commit SHA).
 5. **Regenerate metadata** – `Packages`, `Packages.gz`, and `Release` are rebuilt from the remaining `.deb` files.  When `apt_signing_key` is supplied, `InRelease` (clearsigned) and `Release.gpg` (detached signature) are also regenerated.
-6. **Force-push** – The rewritten history is pushed to `origin/main` with `--force`.
+6. **Force-push** – The rewritten history is pushed to the repository's default branch with `--force`.
 
 ## Notes
 
