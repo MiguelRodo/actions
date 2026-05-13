@@ -7,6 +7,8 @@ The action is designed for repositories that are managed by the [go-version-rele
 > [!IMPORTANT]
 > Because history is rewritten every run requires a **force-push**.  Ensure the default branch does **not** have force-push protection enabled (or that the token used has bypass permission).
 >
+> The workflow must grant **`contents: write`** permission so the token can push the rewritten history.
+>
 > This action supports **Linux runners only**.  Use `ubuntu-latest` or another Linux runner.
 
 ## Usage

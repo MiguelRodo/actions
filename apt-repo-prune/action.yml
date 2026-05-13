@@ -71,7 +71,7 @@ runs:
       shell: bash
       run: |
         REPO_INPUT="${{ github.repository }}"
-        DEFAULT_BRANCH="${{ github.ref_name }}"
+        DEFAULT_BRANCH="${{ github.event.repository.default_branch || github.ref_name }}"
         # Normalize to lowercase so the argument is case-agnostic.
         RETENTION="${{ inputs.retention }}"
         RETENTION="${RETENTION,,}"
