@@ -15,7 +15,7 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   [ "$status" -eq 0 ]
 }
 
-@test "go-version-release inputs include github_token, apt/scoop/homebrew tokens, and go_version defaults" {
+@test "go-version-release inputs include github_token, apt inputs, and go_version defaults" {
   run grep -F 'github_token:' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
@@ -47,27 +47,11 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   ' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
-  run grep -F 'scoop_repo_token:' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
+  run grep -F 'scoop_repo:' "$ACTION_FILE"
+  [ "$status" -ne 0 ]
 
-  run awk '
-    /^  scoop_repo_token:$/ { in_block=1; next }
-    in_block && /^    default: ""$/ { found=1; exit 0 }
-    in_block && /^  [^ ]/ { exit 1 }
-    END { exit found ? 0 : 1 }
-  ' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-
-  run grep -F 'homebrew_tap_token:' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-
-  run awk '
-    /^  homebrew_tap_token:$/ { in_block=1; next }
-    in_block && /^    default: ""$/ { found=1; exit 0 }
-    in_block && /^  [^ ]/ { exit 1 }
-    END { exit found ? 0 : 1 }
-  ' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
+  run grep -F 'homebrew_tap:' "$ACTION_FILE"
+  [ "$status" -ne 0 ]
 }
 
 @test "determine version logic enforces mutual exclusivity and uses apply-version-bump script" {
@@ -86,7 +70,7 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   [ "$status" -eq 0 ]
 }
 
-@test "action sets up Go, runs GoReleaser without publishing, and uploads packaged release assets" {
+@test "action sets up Go and runs GoReleaser native publishing" {
   run grep -F 'uses: actions/setup-go@v5' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
@@ -96,26 +80,17 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   run grep -F 'uses: goreleaser/goreleaser-action@v5' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
-  run grep -F 'args: release --clean --skip=publish --skip=announce' "$ACTION_FILE"
+  run grep -F 'args: release --clean --skip=announce' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
-  run grep -F "find dist -type f \\( -name '*.tar.gz' -o -name '*.zip' -o -name '*.deb'" "$ACTION_FILE"
-  [ "$status" -eq 0 ]
+  run grep -F '--skip=publish' "$ACTION_FILE"
+  [ "$status" -ne 0 ]
 
-  run grep -F "find dist -type f \\( -iname '*checksums*' -o -iname '*sha256sum*' \\)" "$ACTION_FILE"
-  [ "$status" -eq 0 ]
+  run grep -F 'Collect packaged release assets' "$ACTION_FILE"
+  [ "$status" -ne 0 ]
 
-  run grep -F 'no checksum file was found in dist/' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-
-  run grep -F 'uses: softprops/action-gh-release@v2' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-
-  run grep -F 'files: ${{ steps.release_assets.outputs.files }}' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-
-  run grep -F 'fail_on_unmatched_files: true' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
+  run grep -F 'softprops/action-gh-release@v2' "$ACTION_FILE"
+  [ "$status" -ne 0 ]
 }
 
 @test "apt publishing is optional and generates structured multi-arch apt metadata from dist debs" {
@@ -218,60 +193,18 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   [ "$status" -eq 0 ]
 }
 
-@test "scoop and homebrew publishing are optional and support token fallback plus destination defaults" {
-  run grep -F "if: inputs.scoop_repo != ''" "$ACTION_FILE"
-  [ "$status" -eq 0 ]
+@test "scoop and homebrew custom publishing steps are removed" {
+  run grep -F 'Publish Scoop manifest to scoop repository' "$ACTION_FILE"
+  [ "$status" -ne 0 ]
 
-  run grep -F 'scoop_repo must be in owner/name format' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
+  run grep -F 'Publish Homebrew formula to tap repository' "$ACTION_FILE"
+  [ "$status" -ne 0 ]
 
-  run grep -F 'SCOOP_PUSH_TOKEN="${{ inputs.scoop_repo_token }}"' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
+  run grep -F 'scoop_manifest_source' "$ACTION_FILE"
+  [ "$status" -ne 0 ]
 
-  run grep -F 'SCOOP_PUSH_TOKEN="${{ inputs.github_token }}"' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-
-  run grep -F "find dist -maxdepth 1 -type f -name '*.json'" "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-
-  run grep -F 'SCOOP_MANIFEST_DEST="bucket/$(basename "$SCOOP_MANIFEST_SOURCE")"' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-
-  run grep -F 'SCOOP_MANIFEST_SOURCE_RESOLVED="$GITHUB_WORKSPACE/$SCOOP_MANIFEST_SOURCE"' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-
-  run grep -F 'cp -f "$SCOOP_MANIFEST_SOURCE_RESOLVED" "$SCOOP_MANIFEST_DEST"' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-
-  run grep -F '${{ github.server_url }}/${SCOOP_REPO_INPUT}.git' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-
-  run grep -F "if: inputs.homebrew_tap != ''" "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-
-  run grep -F 'homebrew_tap must be in owner/name format' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-
-  run grep -F 'HOMEBREW_PUSH_TOKEN="${{ inputs.homebrew_tap_token }}"' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-
-  run grep -F 'HOMEBREW_PUSH_TOKEN="${{ inputs.github_token }}"' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-
-  run grep -F "find dist -maxdepth 1 -type f -name '*.rb'" "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-
-  run grep -F 'HOMEBREW_FORMULA_DEST="Formula/$(basename "$HOMEBREW_FORMULA_SOURCE")"' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-
-  run grep -F 'HOMEBREW_FORMULA_SOURCE_RESOLVED="$GITHUB_WORKSPACE/$HOMEBREW_FORMULA_SOURCE"' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-
-  run grep -F 'cp -f "$HOMEBREW_FORMULA_SOURCE_RESOLVED" "$HOMEBREW_FORMULA_DEST"' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-
-  run grep -F '${{ github.server_url }}/${HOMEBREW_TAP_INPUT}.git' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
+  run grep -F 'homebrew_formula_source' "$ACTION_FILE"
+  [ "$status" -ne 0 ]
 }
 
 @test "apt publishing README documents apt_signing_key input and signed metadata behavior" {
@@ -335,21 +268,12 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   run grep -F 'apt_repo_token: ${{ secrets.APT_REPO_TOKEN }}' "$ACTION_README"
   [ "$status" -eq 0 ]
 
-  run grep -F 'scoop_repo_token: ${{ secrets.SCOOP_REPO_TOKEN }}' "$ACTION_README"
+  run grep -F '`goreleaser/goreleaser-action`' "$ACTION_README"
   [ "$status" -eq 0 ]
 
-  run grep -F 'homebrew_tap_token: ${{ secrets.HOMEBREW_TAP_TOKEN }}' "$ACTION_README"
+  run grep -F '`vX` and `vX.Y`' "$ACTION_README"
   [ "$status" -eq 0 ]
 
-  run grep -F '`scoop_repo`' "$ACTION_README"
-  [ "$status" -eq 0 ]
-
-  run grep -F '`homebrew_tap`' "$ACTION_README"
-  [ "$status" -eq 0 ]
-
-  run grep -F 'Windows archives: `*.zip`' "$ACTION_README"
-  [ "$status" -eq 0 ]
-
-  run grep -F 'The same `.deb` files remain attached to the GitHub Release as downloadable assets.' "$ACTION_README"
+  run grep -F '`brews:` and `scoops:` blocks' "$ACTION_README"
   [ "$status" -eq 0 ]
 }

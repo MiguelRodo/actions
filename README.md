@@ -140,7 +140,7 @@ See the [action README](./version-release/README.md) for all inputs, outputs, an
 
 ### [Go Version and Release](./go-version-release)
 
-Creates a Go release by resolving a semantic version (explicit or bumped), optionally validating version progression, pushing the git tag, building multiplatform release assets with GoReleaser, uploading those assets to the GitHub Release, and optionally publishing generated `.deb` artifacts to a separate apt repository.
+Creates a Go release by resolving a semantic version (explicit or bumped), optionally validating version progression, pushing the git tag, updating floating tags (`vX`, `vX.Y`), running GoReleaser native publishing, and optionally publishing generated `.deb` artifacts to a separate apt repository.
 
 <details>
 <summary>Minimal workflow</summary>
@@ -172,18 +172,6 @@ on:
       apt_repo_token:
         description: 'Optional token for apt_repo access when publishing to a different repository.'
         required: false
-      scoop_repo:
-        description: 'Optional target GitHub repository in owner/name form for publishing a Scoop manifest file.'
-        required: false
-      scoop_repo_token:
-        description: 'Optional token for scoop_repo access when publishing to a different repository.'
-        required: false
-      homebrew_tap:
-        description: 'Optional target GitHub repository in owner/name form for publishing a Homebrew formula file.'
-        required: false
-      homebrew_tap_token:
-        description: 'Optional token for homebrew_tap access when publishing to a different repository.'
-        required: false
 
 jobs:
   release:
@@ -203,15 +191,11 @@ jobs:
           go_version: ${{ inputs.go_version }}
           goreleaser_config: ${{ inputs.goreleaser_config }}
           apt_repo: ${{ inputs.apt_repo }}
-          scoop_repo: ${{ inputs.scoop_repo }}
-          scoop_repo_token: ${{ secrets.SCOOP_REPO_TOKEN }}
-          homebrew_tap: ${{ inputs.homebrew_tap }}
-          homebrew_tap_token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
 ```
 
 </details>
 
-See the [action README](./go-version-release/README.md) for all inputs, outputs, and behavior details, including optional publishing to apt, Scoop, and Homebrew tap repositories.
+See the [action README](./go-version-release/README.md) for all inputs, outputs, and behavior details, including apt repository management/signing and how to configure Homebrew and Scoop publishing in `.goreleaser.yml`.
 
 ---
 
