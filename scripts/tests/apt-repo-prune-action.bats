@@ -58,8 +58,16 @@ SELECT_SCRIPT="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)/apt-prune-sele
   [ "$status" -eq 0 ]
 }
 
-@test "apt-repo-prune validates expected pool/main structure" {
+@test "apt-repo-prune checks pool/main and exits 0 (not 1) when absent" {
   run grep -F 'pool/main' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+  # When pool/main is absent the repo has no packages: exit 0, not exit 1.
+  run awk '
+    /pool\/main/ { in_block=1; next }
+    in_block && /exit 1/ { found=1; exit 0 }
+    in_block && /exit 0/ { in_block=0; next }
+    END { exit found ? 1 : 0 }
+  ' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 }
 
