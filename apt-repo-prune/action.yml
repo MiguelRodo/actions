@@ -162,6 +162,7 @@ runs:
 
         if [ ! -s "$PATHS_TO_REMOVE_FILE" ]; then
           echo "Nothing to prune: apt repository already satisfies the '$RETENTION' retention policy."
+          echo "Exiting without modifying history or metadata."
           exit 0
         fi
 
