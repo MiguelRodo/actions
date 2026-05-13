@@ -88,12 +88,12 @@ jobs:
           echo "Moving floating tags to point to $VERSION..."
 
           # Force create/update the floating tags on the current commit
-          git tag -fa "$MINOR" -m "Update $MINOR to point to $VERSION"
-          git tag -fa "$MAJOR" -m "Update $MAJOR to point to $VERSION"
+          git tag -f "$MINOR"
+          git tag -f "$MAJOR"
 
           # Force push the updated tags
-          git push origin "$MINOR" --force
-          git push origin "$MAJOR" --force
+          git push origin "refs/tags/$MINOR" --force
+          git push origin "refs/tags/$MAJOR" --force
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3

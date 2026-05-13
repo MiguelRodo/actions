@@ -35,14 +35,14 @@ echo "📝 Message: $MESSAGE"
 git tag -a "$VERSION" -m "$MESSAGE"
 
 echo "🔄 Updating floating minor tag: $MINOR_VERSION"
-git tag -fa "$MINOR_VERSION" -m "Update $MINOR_VERSION to point to $VERSION"
+git tag -f "$MINOR_VERSION"
 
 echo "🔄 Updating floating major tag: $MAJOR_VERSION"
-git tag -fa "$MAJOR_VERSION" -m "Update $MAJOR_VERSION to point to $VERSION"
+git tag -f "$MAJOR_VERSION"
 
 echo "🚀 Pushing tags to origin..."
 git push origin "$VERSION"
-git push origin "$MINOR_VERSION" --force
-git push origin "$MAJOR_VERSION" --force
+git push origin "refs/tags/$MINOR_VERSION" --force
+git push origin "refs/tags/$MAJOR_VERSION" --force
 
 echo "✅ Successfully bumped to $VERSION and updated $MINOR_VERSION and $MAJOR_VERSION!"
