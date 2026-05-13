@@ -142,12 +142,11 @@ runs:
 
         # ── Validate expected repository structure ────────────────────────────
         # The go-version-release action publishes .deb files under pool/main/
-        # and apt metadata under dists/stable.  Abort early with a clear message
-        # if either directory is missing so the user can diagnose mis-configuration.
+        # and apt metadata under dists/stable.  When pool/main/ is absent the
+        # repository has no packages and already satisfies any retention policy.
         if [ ! -d "$APT_REPO_DIR/pool/main" ]; then
-          echo "Error: expected pool/main/ directory not found in '$REPO_INPUT'." >&2
-          echo "  This action is designed for repositories managed by the go-version-release action." >&2
-          exit 1
+          echo "Nothing to prune: pool/main/ not found in '$REPO_INPUT' — repository has no packages."
+          exit 0
         fi
 
         if [ ! -d "$APT_REPO_DIR/dists/stable" ]; then
