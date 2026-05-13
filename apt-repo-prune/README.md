@@ -13,6 +13,8 @@ The action is designed for repositories that are managed by the [go-version-rele
 
 ## Usage
 
+### With an encrypted GPG signing key
+
 ```yaml
 name: Prune APT Repository
 
@@ -40,6 +42,35 @@ jobs:
           apt_signing_key_passphrase: ${{ secrets.APT_SIGNING_KEY_PASSPHRASE }}
 ```
 
+### With an unencrypted GPG signing key (no passphrase)
+
+```yaml
+name: Prune APT Repository
+
+on:
+  workflow_dispatch:
+    inputs:
+      retention:
+        description: 'Retention policy: latest | latest-per-minor | latest-per-major'
+        required: false
+        default: latest-per-major
+  schedule:
+    - cron: '0 3 * * 0'   # weekly on Sunday at 03:00 UTC
+
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: MiguelRodo/actions/apt-repo-prune@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          retention: ${{ inputs.retention || 'latest-per-major' }}
+          apt_signing_key: ${{ secrets.APT_SIGNING_KEY }}
+          # apt_signing_key_passphrase is omitted — unencrypted keys do not need it
+```
+
 ## Inputs
 
 | Input | Description | Required | Default |
@@ -47,7 +78,7 @@ jobs:
 | `token` | GitHub token with `contents: write` permission on the current repository. | **Yes** | — |
 | `retention` | Version retention policy (case-insensitive, see below). | No | `latest-per-major` |
 | `apt_signing_key` | ASCII-armored GPG private key for signing regenerated apt metadata. When omitted, only the unsigned `Release` file is written and any stale `InRelease` / `Release.gpg` files are removed. | No | `""` |
-| `apt_signing_key_passphrase` | Passphrase for `apt_signing_key`. | No | `""` |
+| `apt_signing_key_passphrase` | Passphrase for `apt_signing_key`. Only required when the GPG private key is encrypted. Leave blank (or omit) for unencrypted keys. | No | `""` |
 
 ### Retention policies
 

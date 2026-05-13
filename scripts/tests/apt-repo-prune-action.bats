@@ -114,3 +114,20 @@ SELECT_SCRIPT="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)/apt-prune-sele
   run grep -F -- '--branch main' "$ACTION_FILE"
   [ "$status" -ne 0 ]
 }
+
+@test "apt-repo-prune creates passphrase file only when passphrase is non-empty" {
+  run grep -F 'if [ -n "$APT_SIGNING_KEY_PASSPHRASE" ]' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+}
+
+@test "apt-repo-prune uses passphrase-file option only when GPG_PASSPHRASE_FILE is set" {
+  run grep -F 'if [ -n "$GPG_PASSPHRASE_FILE" ]' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+  run grep -F -- '--passphrase-file "$GPG_PASSPHRASE_FILE"' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+}
+
+@test "apt-repo-prune cleans up passphrase file only when it was created" {
+  run grep -F '[ -n "$GPG_PASSPHRASE_FILE" ]  && rm -f  "$GPG_PASSPHRASE_FILE"' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+}
