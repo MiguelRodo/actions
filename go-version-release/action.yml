@@ -265,15 +265,13 @@ runs:
 
         APT_REPO_DIR="$(mktemp -d "${RUNNER_TEMP:-/tmp}/apt-repo-XXXXXX")"
         ASKPASS_SCRIPT="$(mktemp "${RUNNER_TEMP:-/tmp}/git-askpass-XXXXXX")"
-        cat >"$ASKPASS_SCRIPT" <<'EOF'
-        #!/usr/bin/env bash
-        # Git over HTTPS prompts for "Username for ..." and then "Password for ..."; the cases below mirror that sequence.
-        case "$1" in
-          Username\ for\ *) printf '%s\n' "x-access-token" ;;
-          Password\ for\ *) printf '%s\n' "$GIT_TOKEN_FOR_ASKPASS" ;;
-          *) exit 1 ;;
-        esac
-        EOF
+        printf '%s\n' \
+          '#!/usr/bin/env bash' \
+          'case "$1" in' \
+          '  Username\ for\ *) printf '\''%s\n'\'' "x-access-token" ;;' \
+          '  Password\ for\ *) printf '\''%s\n'\'' "$GIT_TOKEN_FOR_ASKPASS" ;;' \
+          '  *) exit 1 ;;' \
+          'esac' > "$ASKPASS_SCRIPT"
         # mktemp creates the file with private permissions; add owner execute permission so Git can run it.
         chmod u+x "$ASKPASS_SCRIPT"
         export GIT_TERMINAL_PROMPT=0
