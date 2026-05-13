@@ -31,13 +31,11 @@ esac
 
 # ── Build package inventory ──────────────────────────────────────────────────
 # Each line: <pkg>\t<version>\t<arch>\t<relpath>
-TMP_DATA=""
+TMP_DATA="$(mktemp)"
 cleanup() {
-  [ -n "$TMP_DATA" ] && rm -f "$TMP_DATA"
+  rm -f "$TMP_DATA"
 }
 trap cleanup EXIT
-
-TMP_DATA="$(mktemp)"
 
 while IFS= read -r -d '' FILE; do
   # Make path relative to repo root

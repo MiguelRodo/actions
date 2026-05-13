@@ -95,7 +95,10 @@ SELECT_SCRIPT="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)/apt-prune-sele
   [ "$status" -eq 0 ]
 }
 
-@test "apt-prune-select-versions.sh script exists and is executable" {
+@test "apt-prune-select-versions.sh script exists" {
   [ -f "$SELECT_SCRIPT" ]
-  [ -x "$SELECT_SCRIPT" ] || bash -n "$SELECT_SCRIPT"
+}
+
+@test "apt-prune-select-versions.sh has valid bash syntax" {
+  bash -n "$SELECT_SCRIPT"
 }
