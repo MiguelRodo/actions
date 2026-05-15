@@ -249,6 +249,46 @@ See the [action README](./r-version-release/README.md) for all inputs, outputs, 
 
 ---
 
+### [APT Repository Prune](./apt-repo-prune)
+
+Prunes superseded `.deb` package versions from a GitHub-hosted apt repository by rewriting Git history, then regenerates the apt metadata and force-pushes the result.
+
+<details>
+<summary>Minimal workflow</summary>
+
+```yaml
+name: Prune APT Repository
+
+on:
+  workflow_dispatch:
+    inputs:
+      retention:
+        description: 'Retention policy: latest | latest-per-minor | latest-per-major'
+        required: false
+        default: latest-per-major
+  schedule:
+    - cron: '0 3 * * 0'   # weekly on Sunday at 03:00 UTC
+
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: MiguelRodo/actions/apt-repo-prune@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          retention: ${{ inputs.retention || 'latest-per-major' }}
+          apt_signing_key: ${{ secrets.APT_SIGNING_KEY }}
+          apt_signing_key_passphrase: ${{ secrets.APT_SIGNING_KEY_PASSPHRASE }}
+```
+
+</details>
+
+See the [action README](./apt-repo-prune/README.md) for all inputs, retention policies, and how the history rewrite works.
+
+---
+
 ### [Publish Quarto Site](./publish-quarto-site)
 
 Publishes a Quarto site to the `gh-pages` branch, creating the branch automatically if it does not already exist.
