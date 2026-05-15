@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Publish Quarto Site – MiguelRodo/actions</title>
+<title>APT Repository Prune – MiguelRodo/actions</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -151,11 +151,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">Go Version and Release</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./apt-repo-prune.html"> 
+    <a class="nav-link active" href="./apt-repo-prune.html" aria-current="page"> 
 <span class="menu-text">APT Repository Prune</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link active" href="./publish-quarto-site.html" aria-current="page"> 
+    <a class="nav-link" href="./publish-quarto-site.html"> 
 <span class="menu-text">Publish Quarto Site</span></a>
   </li>  
 </ul>
@@ -181,10 +181,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#quick-start" id="toc-quick-start" class="nav-link active" data-scroll-target="#quick-start">Quick Start</a></li>
-  <li><a href="#inputs" id="toc-inputs" class="nav-link" data-scroll-target="#inputs">Inputs</a></li>
-  <li><a href="#how-it-works" id="toc-how-it-works" class="nav-link" data-scroll-target="#how-it-works">How It Works</a></li>
-  <li><a href="#troubleshooting" id="toc-troubleshooting" class="nav-link" data-scroll-target="#troubleshooting">Troubleshooting</a></li>
+  <li><a href="#usage" id="toc-usage" class="nav-link active" data-scroll-target="#usage">Usage</a>
+  <ul class="collapse">
+  <li><a href="#with-an-encrypted-gpg-signing-key" id="toc-with-an-encrypted-gpg-signing-key" class="nav-link" data-scroll-target="#with-an-encrypted-gpg-signing-key">With an encrypted GPG signing key</a></li>
+  <li><a href="#with-an-unencrypted-gpg-signing-key-no-passphrase" id="toc-with-an-unencrypted-gpg-signing-key-no-passphrase" class="nav-link" data-scroll-target="#with-an-unencrypted-gpg-signing-key-no-passphrase">With an unencrypted GPG signing key (no passphrase)</a></li>
+  </ul></li>
+  <li><a href="#inputs" id="toc-inputs" class="nav-link" data-scroll-target="#inputs">Inputs</a>
+  <ul class="collapse">
+  <li><a href="#retention-policies" id="toc-retention-policies" class="nav-link" data-scroll-target="#retention-policies">Retention policies</a></li>
+  </ul></li>
+  <li><a href="#how-it-works" id="toc-how-it-works" class="nav-link" data-scroll-target="#how-it-works">How it works</a></li>
+  <li><a href="#notes" id="toc-notes" class="nav-link" data-scroll-target="#notes">Notes</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/MiguelRodo/actions/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></nav>
     </div>
@@ -193,7 +200,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Publish Quarto Site</h1>
+<h1 class="title">APT Repository Prune</h1>
 </div>
 
 
@@ -210,30 +217,69 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p><strong>Publish Quarto Site</strong> renders and publishes a Quarto website to the <code>gh-pages</code> branch of your repository. It automatically creates the branch if it does not already exist.</p>
-<section id="quick-start" class="level2">
-<h2 class="anchored" data-anchor-id="quick-start">Quick Start</h2>
-<p>Copy the following to <code>.github/workflows/publish-quarto-site.yml</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">name</span><span class="kw">:</span><span class="at"> Publish Quarto Site</span></span>
+<p>Composite action for pruning superseded <code>.deb</code> package versions from a GitHub-hosted apt repository. The action rewrites the full Git history of the target repository so that removed binaries are eliminated entirely—not just from the tip—then regenerates the apt metadata and force-pushes the result.</p>
+<p>The action is designed for repositories that are managed by the <a href="../go-version-release">go-version-release</a> action in this repository; it validates the expected <code>pool/main/</code> and <code>dists/stable/</code> structure before proceeding.</p>
+<blockquote class="blockquote">
+<p>[!IMPORTANT] Because history is rewritten every run requires a <strong>force-push</strong>. Ensure the default branch does <strong>not</strong> have force-push protection enabled (or that the token used has bypass permission).</p>
+<p>The workflow must grant <strong><code>contents: write</code></strong> permission so the token can push the rewritten history.</p>
+<p>This action supports <strong>Linux runners only</strong>. Use <code>ubuntu-latest</code> or another Linux runner.</p>
+</blockquote>
+<section id="usage" class="level2">
+<h2 class="anchored" data-anchor-id="usage">Usage</h2>
+<section id="with-an-encrypted-gpg-signing-key" class="level3">
+<h3 class="anchored" data-anchor-id="with-an-encrypted-gpg-signing-key">With an encrypted GPG signing key</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">name</span><span class="kw">:</span><span class="at"> Prune APT Repository</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">on</span><span class="kw">:</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">push</span><span class="kw">:</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">branches</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">main</span><span class="kw">]</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">permissions</span><span class="kw">:</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">contents</span><span class="kw">:</span><span class="at"> write</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">pages</span><span class="kw">:</span><span class="at"> write</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">jobs</span><span class="kw">:</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">build-and-publish</span><span class="kw">:</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">runs-on</span><span class="kw">:</span><span class="at"> ubuntu-latest</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">steps</span><span class="kw">:</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/checkout@v4</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">with</span><span class="kw">:</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">fetch-depth</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> MiguelRodo/actions/publish-quarto-site@v2</span></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">with</span><span class="kw">:</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">github_token</span><span class="kw">:</span><span class="at"> ${{ secrets.GITHUB_TOKEN }}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">workflow_dispatch</span><span class="kw">:</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">inputs</span><span class="kw">:</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">retention</span><span class="kw">:</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">description</span><span class="kw">:</span><span class="at"> </span><span class="st">'Retention policy: latest | latest-per-minor | latest-per-major'</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">required</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">default</span><span class="kw">:</span><span class="at"> latest-per-major</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">schedule</span><span class="kw">:</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">cron</span><span class="kw">:</span><span class="at"> </span><span class="st">'0 3 * * 0'</span><span class="co">   # weekly on Sunday at 03:00 UTC</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">jobs</span><span class="kw">:</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">prune</span><span class="kw">:</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">runs-on</span><span class="kw">:</span><span class="at"> ubuntu-latest</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">permissions</span><span class="kw">:</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">contents</span><span class="kw">:</span><span class="at"> write</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">steps</span><span class="kw">:</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> MiguelRodo/actions/apt-repo-prune@v2</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">with</span><span class="kw">:</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">token</span><span class="kw">:</span><span class="at"> ${{ secrets.GITHUB_TOKEN }}</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">retention</span><span class="kw">:</span><span class="at"> ${{ inputs.retention || 'latest-per-major' }}</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">apt_signing_key</span><span class="kw">:</span><span class="at"> ${{ secrets.APT_SIGNING_KEY }}</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">apt_signing_key_passphrase</span><span class="kw">:</span><span class="at"> ${{ secrets.APT_SIGNING_KEY_PASSPHRASE }}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="with-an-unencrypted-gpg-signing-key-no-passphrase" class="level3">
+<h3 class="anchored" data-anchor-id="with-an-unencrypted-gpg-signing-key-no-passphrase">With an unencrypted GPG signing key (no passphrase)</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">name</span><span class="kw">:</span><span class="at"> Prune APT Repository</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">on</span><span class="kw">:</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">workflow_dispatch</span><span class="kw">:</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">inputs</span><span class="kw">:</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">retention</span><span class="kw">:</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">description</span><span class="kw">:</span><span class="at"> </span><span class="st">'Retention policy: latest | latest-per-minor | latest-per-major'</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">required</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">default</span><span class="kw">:</span><span class="at"> latest-per-major</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">schedule</span><span class="kw">:</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">cron</span><span class="kw">:</span><span class="at"> </span><span class="st">'0 3 * * 0'</span><span class="co">   # weekly on Sunday at 03:00 UTC</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="fu">jobs</span><span class="kw">:</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">prune</span><span class="kw">:</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">runs-on</span><span class="kw">:</span><span class="at"> ubuntu-latest</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">permissions</span><span class="kw">:</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">contents</span><span class="kw">:</span><span class="at"> write</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">steps</span><span class="kw">:</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> MiguelRodo/actions/apt-repo-prune@v2</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">with</span><span class="kw">:</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">token</span><span class="kw">:</span><span class="at"> ${{ secrets.GITHUB_TOKEN }}</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">retention</span><span class="kw">:</span><span class="at"> ${{ inputs.retention || 'latest-per-major' }}</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">apt_signing_key</span><span class="kw">:</span><span class="at"> ${{ secrets.APT_SIGNING_KEY }}</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="co">          # apt_signing_key_passphrase is omitted — unencrypted keys do not need it</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
 </section>
 <section id="inputs" class="level2">
 <h2 class="anchored" data-anchor-id="inputs">Inputs</h2>
@@ -254,28 +300,80 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td><code>github_token</code></td>
-<td>Token used to push to the <code>gh-pages</code> branch. Use <code>${{ secrets.GITHUB_TOKEN }}</code>.</td>
+<td><code>token</code></td>
+<td>GitHub token with <code>contents: write</code> permission on the current repository.</td>
 <td><strong>Yes</strong></td>
 <td>—</td>
 </tr>
+<tr class="even">
+<td><code>retention</code></td>
+<td>Version retention policy (case-insensitive, see below).</td>
+<td>No</td>
+<td><code>latest-per-major</code></td>
+</tr>
+<tr class="odd">
+<td><code>apt_signing_key</code></td>
+<td>ASCII-armored GPG private key for signing regenerated apt metadata. When omitted, only the unsigned <code>Release</code> file is written and any stale <code>InRelease</code> / <code>Release.gpg</code> files are removed.</td>
+<td>No</td>
+<td><code>""</code></td>
+</tr>
+<tr class="even">
+<td><code>apt_signing_key_passphrase</code></td>
+<td>Passphrase for <code>apt_signing_key</code>. Only required when the GPG private key is encrypted. Leave blank (or omit) for unencrypted keys.</td>
+<td>No</td>
+<td><code>""</code></td>
+</tr>
 </tbody>
 </table>
+<section id="retention-policies" class="level3">
+<h3 class="anchored" data-anchor-id="retention-policies">Retention policies</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Policy</th>
+<th>What is kept</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>latest</code></td>
+<td>The newest version per <code>(package, arch)</code> pair.</td>
+</tr>
+<tr class="even">
+<td><code>latest-per-minor</code></td>
+<td>The highest patch release for each <code>MAJOR.MINOR</code> series (e.g.&nbsp;keeps <code>1.0.5</code>, <code>1.1.3</code>, <code>2.0.1</code> but removes <code>1.0.4</code>, <code>1.1.2</code>).</td>
+</tr>
+<tr class="odd">
+<td><code>latest-per-major</code></td>
+<td>The highest <code>MINOR.PATCH</code> release for each <code>MAJOR</code> series (e.g.&nbsp;keeps <code>1.2.3</code> and <code>2.1.0</code> but removes <code>1.1.5</code>, <code>1.2.2</code>). <strong>This is the default.</strong></td>
+</tr>
+</tbody>
+</table>
+<p>The policy is applied independently per <code>(package-name, architecture)</code> pair so that each arch is pruned consistently. All policy names are case-insensitive.</p>
+</section>
 </section>
 <section id="how-it-works" class="level2">
-<h2 class="anchored" data-anchor-id="how-it-works">How It Works</h2>
+<h2 class="anchored" data-anchor-id="how-it-works">How it works</h2>
 <ol type="1">
-<li>Configures git with the <code>github-actions[bot]</code> identity.</li>
-<li>Checks whether <code>gh-pages</code> exists on the remote. If not, creates an empty orphan branch and pushes it.</li>
-<li>Installs Quarto via <a href="https://github.com/quarto-dev/quarto-actions"><code>quarto-dev/quarto-actions/setup@v2</code></a>.</li>
-<li>Publishes the rendered site to <code>gh-pages</code> via <a href="https://github.com/quarto-dev/quarto-actions"><code>quarto-dev/quarto-actions/publish@v2</code></a>.</li>
+<li><strong>Clone</strong> – The current repository is cloned with its full history using the provided token for authentication.</li>
+<li><strong>Validate structure</strong> – The action checks that <code>pool/main/</code> and <code>dists/stable/</code> exist (the layout produced by <code>go-version-release</code>).</li>
+<li><strong>Select files to remove</strong> – <code>scripts/apt-prune-select-versions.sh</code> reads every <code>.deb</code> file via <code>dpkg-deb</code>, groups versions by <code>(package, arch)</code>, and outputs the relative paths of files that fall outside the retention window.</li>
+<li><strong>Rewrite history</strong> – <a href="https://github.com/newren/git-filter-repo"><code>git filter-repo</code></a> removes the selected files from every commit, including the root commit when it contains target files (which will change the root commit SHA).</li>
+<li><strong>Regenerate metadata</strong> – <code>Packages</code>, <code>Packages.gz</code>, and <code>Release</code> are rebuilt from the remaining <code>.deb</code> files. When <code>apt_signing_key</code> is supplied, <code>InRelease</code> (clearsigned) and <code>Release.gpg</code> (detached signature) are also regenerated.</li>
+<li><strong>Force-push</strong> – The rewritten history is pushed to the repository’s default branch with <code>--force</code>.</li>
 </ol>
 </section>
-<section id="troubleshooting" class="level2">
-<h2 class="anchored" data-anchor-id="troubleshooting">Troubleshooting</h2>
+<section id="notes" class="level2">
+<h2 class="anchored" data-anchor-id="notes">Notes</h2>
 <ul>
-<li><strong>Permission denied pushing to <code>gh-pages</code>:</strong> Ensure the calling workflow sets <code>permissions: contents: write</code> (and <code>pages: write</code> if using GitHub Pages deployments).</li>
-<li><strong>Quarto render errors:</strong> Rendering is delegated to <code>quarto-dev/quarto-actions/publish</code>. See the <a href="https://github.com/quarto-dev/quarto-actions">quarto-actions documentation</a> for render-related issues.</li>
+<li>The action requires <code>dpkg-deb</code>, <code>dpkg-scanpackages</code>, and <code>apt-ftparchive</code> to be available on the runner. These are pre-installed on <code>ubuntu-latest</code>.</li>
+<li><code>git-filter-repo</code> is installed automatically via <code>pip</code> if it is not already present.</li>
+<li>Only <code>.deb</code> files with plain <code>X.Y.Z</code> semver versions are considered; files with non-semver versions are left untouched.</li>
+<li>Each package architecture is evaluated independently, so you can have <code>amd64</code> at version <code>2.1.0</code> while <code>arm64</code> is still at <code>2.0.0</code> and both will be treated separately.</li>
 </ul>
 
 

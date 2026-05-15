@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Pre-build Dev Container – MiguelRodo/actions</title>
+<title>Go Version and Release – MiguelRodo/actions</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -131,7 +131,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">Home</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link active" href="./prebuild-devcontainer.html" aria-current="page"> 
+    <a class="nav-link" href="./prebuild-devcontainer.html"> 
 <span class="menu-text">Pre-build Dev Container</span></a>
   </li>  
   <li class="nav-item">
@@ -147,7 +147,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">R Version and Release</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./go-version-release.html"> 
+    <a class="nav-link active" href="./go-version-release.html" aria-current="page"> 
 <span class="menu-text">Go Version and Release</span></a>
   </li>  
   <li class="nav-item">
@@ -181,15 +181,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#quick-start" id="toc-quick-start" class="nav-link active" data-scroll-target="#quick-start">Quick Start</a></li>
+  <li><a href="#usage" id="toc-usage" class="nav-link active" data-scroll-target="#usage">Usage</a></li>
   <li><a href="#inputs" id="toc-inputs" class="nav-link" data-scroll-target="#inputs">Inputs</a></li>
-  <li><a href="#semver-alias-tags" id="toc-semver-alias-tags" class="nav-link" data-scroll-target="#semver-alias-tags">SemVer Alias Tags</a></li>
-  <li><a href="#examples" id="toc-examples" class="nav-link" data-scroll-target="#examples">Examples</a>
+  <li><a href="#outputs" id="toc-outputs" class="nav-link" data-scroll-target="#outputs">Outputs</a></li>
+  <li><a href="#version-resolution" id="toc-version-resolution" class="nav-link" data-scroll-target="#version-resolution">Version resolution</a></li>
+  <li><a href="#version-progression-guard" id="toc-version-progression-guard" class="nav-link" data-scroll-target="#version-progression-guard">Version progression guard</a></li>
+  <li><a href="#tag-behavior" id="toc-tag-behavior" class="nav-link" data-scroll-target="#tag-behavior">Tag behavior</a></li>
+  <li><a href="#release-assets" id="toc-release-assets" class="nav-link" data-scroll-target="#release-assets">Release assets</a>
   <ul class="collapse">
-  <li><a href="#custom-image-name" id="toc-custom-image-name" class="nav-link" data-scroll-target="#custom-image-name">Custom image name</a></li>
-  <li><a href="#non-default-devcontainer-path" id="toc-non-default-devcontainer-path" class="nav-link" data-scroll-target="#non-default-devcontainer-path">Non-default devcontainer path</a></li>
-  <li><a href="#non-github-container-registry" id="toc-non-github-container-registry" class="nav-link" data-scroll-target="#non-github-container-registry">Non-GitHub container registry</a></li>
+  <li><a href="#recommended-goreleaser-outputs" id="toc-recommended-goreleaser-outputs" class="nav-link" data-scroll-target="#recommended-goreleaser-outputs">Recommended GoReleaser outputs</a></li>
   </ul></li>
+  <li><a href="#optional-apt-publishing" id="toc-optional-apt-publishing" class="nav-link" data-scroll-target="#optional-apt-publishing">Optional apt publishing</a></li>
+  <li><a href="#why-use-this-action-vs-goreleasergoreleaser-action" id="toc-why-use-this-action-vs-goreleasergoreleaser-action" class="nav-link" data-scroll-target="#why-use-this-action-vs-goreleasergoreleaser-action">Why use this action vs <code>goreleaser/goreleaser-action</code>?</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/MiguelRodo/actions/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></nav>
     </div>
@@ -198,7 +201,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Pre-build Dev Container</h1>
+<h1 class="title">Go Version and Release</h1>
 </div>
 
 
@@ -215,171 +218,264 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p><strong>Pre-build Dev Container</strong> builds your <code>.devcontainer/Dockerfile</code>, pushes it to a container registry (GHCR by default), and optionally generates a <code>prebuild/devcontainer.json</code> so environments load instantly.</p>
-<section id="quick-start" class="level2">
-<h2 class="anchored" data-anchor-id="quick-start">Quick Start</h2>
-<p>Copy this to <code>.github/workflows/prebuild-devcontainer.yml</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">name</span><span class="kw">:</span><span class="at"> </span><span class="st">'Pre-build Dev Container'</span></span>
+<p>Standalone composite action for pure Go releases. It resolves a semantic version, optionally validates strict progression from the latest semver tag, creates/pushes the release tag, updates floating major/minor tags, runs GoReleaser for native publishing (GitHub Releases/Homebrew/Scoop via <code>.goreleaser.yml</code>), and can also publish generated <code>.deb</code> artifacts to a separate GitHub repository as a structured apt repository.</p>
+<section id="usage" class="level2">
+<h2 class="anchored" data-anchor-id="usage">Usage</h2>
+<p>Copy the following to <code>.github/workflows/go-version-release.yml</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">name</span><span class="kw">:</span><span class="at"> Go Version and Release</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">on</span><span class="kw">:</span></span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">push</span><span class="kw">:</span></span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">tags</span><span class="kw">:</span></span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">'v*'</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">'*-v*'</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">workflow_dispatch</span><span class="kw">:</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">inputs</span><span class="kw">:</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tag</span><span class="kw">:</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">description</span><span class="kw">:</span><span class="at"> </span><span class="st">'Tag to build (e.g. v1.2.3 or main-v1.2.3)'</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">required</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">jobs</span><span class="kw">:</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">build</span><span class="kw">:</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">runs-on</span><span class="kw">:</span><span class="at"> ubuntu-latest</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">concurrency</span><span class="kw">:</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">group</span><span class="kw">:</span><span class="at"> ${{ github.workflow }}-${{ github.ref }}</span></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">cancel-in-progress</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">permissions</span><span class="kw">:</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">contents</span><span class="kw">:</span><span class="at"> write</span></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">packages</span><span class="kw">:</span><span class="at"> write</span></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">steps</span><span class="kw">:</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/checkout@v4</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> MiguelRodo/actions/prebuild-devcontainer@v2</span></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">with</span><span class="kw">:</span></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">github_token</span><span class="kw">:</span><span class="at"> ${{ secrets.GITHUB_TOKEN }}</span></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">tag</span><span class="kw">:</span><span class="at"> ${{ github.event.inputs.tag }}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">workflow_dispatch</span><span class="kw">:</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">inputs</span><span class="kw">:</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">version</span><span class="kw">:</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">description</span><span class="kw">:</span><span class="at"> </span><span class="st">'Exact version (e.g. 1.2.3). Cannot be used with bump_type.'</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">required</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">bump_type</span><span class="kw">:</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">description</span><span class="kw">:</span><span class="at"> </span><span class="st">'Component to bump: major | minor | patch. Cannot be used with version.'</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">required</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">version_check</span><span class="kw">:</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">description</span><span class="kw">:</span><span class="at"> </span><span class="st">'Run strict version progression checks (true/false).'</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">required</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">go_version</span><span class="kw">:</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">description</span><span class="kw">:</span><span class="at"> </span><span class="st">'Go version to install.'</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">required</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">goreleaser_config</span><span class="kw">:</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">description</span><span class="kw">:</span><span class="at"> </span><span class="st">'Optional path to the GoReleaser config file.'</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">required</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">apt_repo</span><span class="kw">:</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">description</span><span class="kw">:</span><span class="at"> </span><span class="st">'Optional target GitHub repository in owner/name form for publishing generated .deb artifacts.'</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">required</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">apt_repo_token</span><span class="kw">:</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">description</span><span class="kw">:</span><span class="at"> </span><span class="st">'Optional token for apt_repo access when publishing to a different repository.'</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">required</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">apt_signing_key</span><span class="kw">:</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">description</span><span class="kw">:</span><span class="at"> </span><span class="st">'Optional ASCII-armored GPG private key for signing apt repository metadata.'</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">required</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="fu">jobs</span><span class="kw">:</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">release</span><span class="kw">:</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">runs-on</span><span class="kw">:</span><span class="at"> ubuntu-latest</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">permissions</span><span class="kw">:</span></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">contents</span><span class="kw">:</span><span class="at"> write</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">steps</span><span class="kw">:</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/checkout@v4</span></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">with</span><span class="kw">:</span></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">fetch-depth</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> MiguelRodo/actions/go-version-release@v2</span></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">with</span><span class="kw">:</span></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">github_token</span><span class="kw">:</span><span class="at"> ${{ secrets.GITHUB_TOKEN }}</span></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">apt_repo_token</span><span class="kw">:</span><span class="at"> ${{ secrets.APT_REPO_TOKEN }}</span></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">apt_signing_key</span><span class="kw">:</span><span class="at"> ${{ secrets.APT_SIGNING_KEY }}</span></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">apt_signing_key_passphrase</span><span class="kw">:</span><span class="at"> ${{ secrets.APT_SIGNING_KEY_PASSPHRASE }}</span></span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">version</span><span class="kw">:</span><span class="at"> ${{ inputs.version }}</span></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">bump_type</span><span class="kw">:</span><span class="at"> ${{ inputs.bump_type }}</span></span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">version_check</span><span class="kw">:</span><span class="at"> ${{ inputs.version_check }}</span></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">go_version</span><span class="kw">:</span><span class="at"> ${{ inputs.go_version }}</span></span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">goreleaser_config</span><span class="kw">:</span><span class="at"> ${{ inputs.goreleaser_config }}</span></span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">apt_repo</span><span class="kw">:</span><span class="at"> ${{ inputs.apt_repo }}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<blockquote class="blockquote">
+<p>[!IMPORTANT] Use <code>fetch-depth: 0</code> on checkout so the action can inspect existing tags.</p>
+<p>This action currently supports Linux runners only. Use a Linux runner such as <code>ubuntu-latest</code>.</p>
+</blockquote>
 </section>
 <section id="inputs" class="level2">
 <h2 class="anchored" data-anchor-id="inputs">Inputs</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 25%">
-<col style="width: 25%">
-<col style="width: 25%">
-<col style="width: 25%">
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
 </colgroup>
 <thead>
 <tr class="header">
 <th>Input</th>
 <th>Description</th>
 <th>Required</th>
-<th>Default</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td><code>github_token</code></td>
-<td>Token for logging into the container registry and pushing commits.</td>
+<td>GitHub token for pushing tags and publishing releases.</td>
 <td><strong>Yes</strong></td>
-<td>—</td>
 </tr>
 <tr class="even">
-<td><code>no_cache</code></td>
-<td>Disable Docker cache during build (<code>true</code>/<code>false</code>).</td>
+<td><code>version</code></td>
+<td>Exact version (e.g.&nbsp;<code>1.2.3</code>). Cannot be used with <code>bump_type</code>.</td>
 <td>No</td>
-<td><code>false</code></td>
 </tr>
 <tr class="odd">
-<td><code>create_prebuild_json</code></td>
-<td>Generate and commit a <code>prebuild/devcontainer.json</code> (<code>true</code>/<code>false</code>).</td>
+<td><code>bump_type</code></td>
+<td>Version component to bump: <code>major</code>, <code>minor</code>, or <code>patch</code>. Cannot be used with <code>version</code>.</td>
 <td>No</td>
-<td><code>true</code></td>
 </tr>
 <tr class="even">
-<td><code>devcontainer_path</code></td>
-<td>Path to the <code>.devcontainer</code> directory, relative to the repo root.</td>
+<td><code>version_check</code></td>
+<td>When <code>true</code> (default), enforce strict progression from latest semver tag.</td>
 <td>No</td>
-<td><code>.devcontainer</code></td>
 </tr>
 <tr class="odd">
-<td><code>image_name</code></td>
-<td>Full image name without tag (e.g.&nbsp;<code>ghcr.io/myorg/myimage</code>). Defaults to <code>{registry}/{repo}-{branch}</code>.</td>
+<td><code>go_version</code></td>
+<td>Go version for <code>actions/setup-go</code> (default <code>1.22</code>).</td>
 <td>No</td>
-<td><code>{registry}/{repo}-{branch}</code></td>
 </tr>
 <tr class="even">
-<td><code>tag</code></td>
-<td>Git tag used as the primary container image tag. Auto-detected from <code>GITHUB_REF</code> on tag push; falls back to <code>latest</code>.</td>
+<td><code>goreleaser_config</code></td>
+<td>Path to the GoReleaser configuration file (default <code>.goreleaser.yml</code>).</td>
 <td>No</td>
-<td><code>""</code></td>
 </tr>
 <tr class="odd">
-<td><code>registry</code></td>
-<td>Container registry URL.</td>
+<td><code>apt_repo</code></td>
+<td>Optional GitHub repository in <code>owner/name</code> form. When set, generated <code>.deb</code> artifacts from <code>dist/</code> are published to that repo’s <code>main</code> branch using a structured apt layout (<code>pool/</code> and <code>dists/stable/main/binary-*</code>).</td>
 <td>No</td>
-<td><code>ghcr.io</code></td>
 </tr>
 <tr class="even">
-<td><code>registry_username</code></td>
-<td>Username for registry login.</td>
+<td><code>apt_repo_token</code></td>
+<td>Optional token used only for <code>apt_repo</code> clone/push operations. If omitted, the action falls back to <code>github_token</code>.</td>
 <td>No</td>
-<td>Repository owner</td>
+</tr>
+<tr class="odd">
+<td><code>apt_signing_key</code></td>
+<td>Optional ASCII-armored GPG private key for signing apt repository metadata. When set, the action imports the key and generates signed <code>InRelease</code> and <code>Release.gpg</code> files alongside <code>Release</code>. Store this as a GitHub secret (e.g.&nbsp;<code>APT_SIGNING_KEY</code>).</td>
+<td>No</td>
+</tr>
+<tr class="even">
+<td><code>apt_signing_key_passphrase</code></td>
+<td>Optional passphrase for <code>apt_signing_key</code>. When set, GPG uses it via <code>--passphrase-file</code> (written to a secure temp file) so passphrase-protected private keys work. Store as a GitHub secret (e.g.&nbsp;<code>APT_SIGNING_KEY_PASSPHRASE</code>).</td>
+<td>No</td>
+</tr>
+<tr class="odd">
+<td><code>scoop_token</code></td>
+<td>Optional token for pushing Scoop manifests to an external tap repository.</td>
+<td>No</td>
+</tr>
+<tr class="even">
+<td><code>homebrew_token</code></td>
+<td>Optional token for pushing Homebrew formulas to an external tap repository.</td>
+<td>No</td>
 </tr>
 </tbody>
 </table>
 </section>
-<section id="semver-alias-tags" class="level2">
-<h2 class="anchored" data-anchor-id="semver-alias-tags">SemVer Alias Tags</h2>
-<p>When the tag matches a semantic versioning pattern, the action automatically creates additional alias tags:</p>
+<section id="outputs" class="level2">
+<h2 class="anchored" data-anchor-id="outputs">Outputs</h2>
 <table class="caption-top table">
-<colgroup>
-<col style="width: 33%">
-<col style="width: 33%">
-<col style="width: 33%">
-</colgroup>
 <thead>
 <tr class="header">
-<th>Tag format</th>
-<th>Primary tag</th>
-<th>Alias tags</th>
+<th>Output</th>
+<th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td><code>vX.Y.Z</code> (e.g.&nbsp;<code>v1.2.3</code>)</td>
-<td><code>v1.2.3</code></td>
-<td><code>v1.2</code>, <code>v1</code></td>
+<td><code>version</code></td>
+<td>Released version without leading <code>v</code> (e.g.&nbsp;<code>1.2.3</code>).</td>
 </tr>
 <tr class="even">
-<td><code>{prefix}-vX.Y.Z</code> (e.g.&nbsp;<code>main-v1.2.3</code>)</td>
-<td><code>main-v1.2.3</code></td>
-<td><code>main-v1.2</code>, <code>main-v1</code></td>
-</tr>
-<tr class="odd">
-<td>Any other format (e.g.&nbsp;<code>latest</code>)</td>
-<td>as-is</td>
-<td><em>(none)</em></td>
+<td><code>tag</code></td>
+<td>Released git tag with leading <code>v</code> (e.g.&nbsp;<code>v1.2.3</code>).</td>
 </tr>
 </tbody>
 </table>
 </section>
-<section id="examples" class="level2">
-<h2 class="anchored" data-anchor-id="examples">Examples</h2>
-<section id="custom-image-name" class="level3">
-<h3 class="anchored" data-anchor-id="custom-image-name">Custom image name</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> MiguelRodo/actions/prebuild-devcontainer@v2</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">with</span><span class="kw">:</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">github_token</span><span class="kw">:</span><span class="at"> ${{ secrets.GITHUB_TOKEN }}</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">image_name</span><span class="kw">:</span><span class="at"> </span><span class="st">'ghcr.io/myorg/my-devcontainer'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="version-resolution" class="level2">
+<h2 class="anchored" data-anchor-id="version-resolution">Version resolution</h2>
+<ul>
+<li>If <code>bump_type</code> is provided, the action computes the next version from the latest semver tag using <code>scripts/apply-version-bump.sh</code>.</li>
+<li>If <code>version</code> is provided, it is used directly (after stripping optional leading <code>v</code>).</li>
+<li>If neither is provided, tag-triggered workflows use <code>github.ref_name</code>.</li>
+<li>If both are provided, the action fails.</li>
+</ul>
 </section>
-<section id="non-default-devcontainer-path" class="level3">
-<h3 class="anchored" data-anchor-id="non-default-devcontainer-path">Non-default devcontainer path</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> MiguelRodo/actions/prebuild-devcontainer@v2</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">with</span><span class="kw">:</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">github_token</span><span class="kw">:</span><span class="at"> ${{ secrets.GITHUB_TOKEN }}</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">devcontainer_path</span><span class="kw">:</span><span class="at"> </span><span class="st">'src/.devcontainer'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="version-progression-guard" class="level2">
+<h2 class="anchored" data-anchor-id="version-progression-guard">Version progression guard</h2>
+<p>When <code>version_check: true</code>, the action validates the new version against the latest previous semver tag using <code>scripts/check-version-progression.sh</code>.</p>
 </section>
-<section id="non-github-container-registry" class="level3">
-<h3 class="anchored" data-anchor-id="non-github-container-registry">Non-GitHub container registry</h3>
-<p>When using a custom <code>image_name</code>, the <code>registry</code> input is used only for login — it is not prepended to the image name automatically.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> MiguelRodo/actions/prebuild-devcontainer@v2</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">with</span><span class="kw">:</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">github_token</span><span class="kw">:</span><span class="at"> ${{ secrets.REGISTRY_TOKEN }}</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">registry</span><span class="kw">:</span><span class="at"> </span><span class="st">'registry.example.com'</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">registry_username</span><span class="kw">:</span><span class="at"> </span><span class="st">'my-username'</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">image_name</span><span class="kw">:</span><span class="at"> </span><span class="st">'registry.example.com/myorg/my-devcontainer'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="tag-behavior" class="level2">
+<h2 class="anchored" data-anchor-id="tag-behavior">Tag behavior</h2>
+<p>The action creates or reuses the release tag <code>vX.Y.Z</code> and also updates floating tags:</p>
+<ul>
+<li><code>vX</code></li>
+<li><code>vX.Y</code></li>
+</ul>
+<p>For example, releasing <code>v1.2.3</code> updates <code>v1</code> and <code>v1.2</code> to point to the same commit.</p>
+<p>The action works for both:</p>
+<ul>
+<li>tag-driven workflows (<code>push.tags</code>, where the tag name becomes the release version)</li>
+<li>manual <code>workflow_dispatch</code> runs (where you provide <code>version</code> or <code>bump_type</code>)</li>
+</ul>
+<p>The composite action is intended to run on Linux GitHub Actions runners. It validates <code>runner.os == Linux</code> before continuing because its release asset collection and APT publishing steps rely on Linux/GNU tooling.</p>
+</section>
+<section id="release-assets" class="level2">
+<h2 class="anchored" data-anchor-id="release-assets">Release assets</h2>
+<p>GoReleaser is run with <code>release --clean --skip=announce</code>, so GoReleaser natively handles publishing GitHub Releases plus optional Homebrew and Scoop targets configured in your <code>.goreleaser.yml</code>.</p>
+<p>This action still relies on GoReleaser output in <code>dist/</code> for apt publishing, so you should continue generating <code>.deb</code> artifacts with GoReleaser <code>nfpms</code>.</p>
+<p>To publish Homebrew and Scoop, define native GoReleaser <code>brews:</code> and <code>scoops:</code> blocks in your <code>.goreleaser.yml</code>, and pass the required tokens.</p>
+<section id="recommended-goreleaser-outputs" class="level3">
+<h3 class="anchored" data-anchor-id="recommended-goreleaser-outputs">Recommended GoReleaser outputs</h3>
+<p>To satisfy downstream consumers and apt publication, configure GoReleaser to emit:</p>
+<ul>
+<li>Linux <code>tar.gz</code> archives for each supported architecture (for example <code>amd64</code>, <code>arm64</code>)</li>
+<li>macOS <code>tar.gz</code> archives</li>
+<li>Windows <code>zip</code> archives</li>
+<li><code>.deb</code> packages for each Debian target architecture you support</li>
+<li>a checksum manifest (for example <code>checksums.txt</code> or <code>SHA256SUMS</code>)</li>
+</ul>
+<p>Example asset names typically look like:</p>
+<ul>
+<li><code>myapp_1.2.3_linux_amd64.tar.gz</code></li>
+<li><code>myapp_1.2.3_darwin_arm64.tar.gz</code></li>
+<li><code>myapp_1.2.3_windows_amd64.zip</code></li>
+<li><code>myapp_1.2.3_linux_amd64.deb</code></li>
+<li><code>checksums.txt</code></li>
+</ul>
+<p>One way to produce those artifacts is with a GoReleaser config that defines <code>builds</code>, <code>archives</code>, <code>nfpms</code>, and <code>checksums</code>.</p>
+</section>
+</section>
+<section id="optional-apt-publishing" class="level2">
+<h2 class="anchored" data-anchor-id="optional-apt-publishing">Optional apt publishing</h2>
+<p>When <code>apt_repo</code> is set, the action:</p>
+<ol type="1">
+<li>Finds generated <code>.deb</code> artifacts in <code>dist/</code></li>
+<li>Clones the target repository’s <code>main</code> branch</li>
+<li>Publishes <code>.deb</code> files under <code>pool/main/&lt;bucket&gt;/</code></li>
+<li>Regenerates architecture-specific <code>Packages</code> / <code>Packages.gz</code> indexes in <code>dists/stable/main/binary-&lt;arch&gt;/</code></li>
+<li>Regenerates <code>dists/stable/Release</code> with all detected architectures</li>
+<li>When <code>apt_signing_key</code> is provided, signs the <code>Release</code> file to produce <code>dists/stable/InRelease</code> (clearsigned) and <code>dists/stable/Release.gpg</code> (detached ASCII-armored signature)</li>
+<li>Commits and pushes the updated apt repository contents</li>
+</ol>
+<p>The same <code>.deb</code> files remain attached to the GitHub Release as downloadable assets.</p>
+<p>Notes:</p>
+<ul>
+<li><p><code>github_token</code> is used for tag/release/current-repository operations.</p></li>
+<li><p>For <code>apt_repo</code> clone/push operations, the action uses <code>apt_repo_token</code> when provided; otherwise it falls back to <code>github_token</code>.</p></li>
+<li><p>For the initial target repository described in this repo, set <code>apt_repo</code> to <code>MiguelRodo/apt-miguelrodo</code>.</p></li>
+<li><p>When <code>apt_signing_key</code> is omitted, the action publishes only the unsigned <code>Release</code> file and removes any stale <code>InRelease</code> / <code>Release.gpg</code>. Use this mode for repositories that do not require signature verification.</p></li>
+<li><p>The public key published as <code>KEY.gpg</code> in the apt repository must match the private key supplied via <code>apt_signing_key</code>. To extract the public key from your private key and commit it to the apt repository, run:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode sh code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">gpg</span> <span class="at">--export</span> <span class="at">--armor</span> <span class="op">&lt;</span>FINGERPRINT<span class="op">&gt;</span> <span class="op">&gt;</span> KEY.gpg</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>where <code>&lt;FINGERPRINT&gt;</code> is the fingerprint of your signing key. Users should install the key into a scoped keyring and reference it with <code>signed-by=</code> in their apt source entry:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode sh code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Install the repository public key (scoped — only trusted for this repo)</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sudo</span> install <span class="at">-dm755</span> /etc/apt/keyrings</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="ex">gpg</span> <span class="at">--dearmor</span> <span class="op">&lt;</span> KEY.gpg <span class="kw">|</span> <span class="fu">sudo</span> tee /etc/apt/keyrings/myrepo.gpg <span class="op">&gt;</span> /dev/null</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Then add the source with <code>signed-by=</code> in <code>/etc/apt/sources.list.d/myrepo.list</code>:</p>
+<pre><code>deb [signed-by=/etc/apt/keyrings/myrepo.gpg] https://&lt;apt-repo-url&gt; stable main</code></pre>
+<p>This limits trust to this specific repository and avoids adding the key as globally trusted (as would be the case with <code>/etc/apt/trusted.gpg.d/</code>).</p></li>
+</ul>
+</section>
+<section id="why-use-this-action-vs-goreleasergoreleaser-action" class="level2">
+<h2 class="anchored" data-anchor-id="why-use-this-action-vs-goreleasergoreleaser-action">Why use this action vs <code>goreleaser/goreleaser-action</code>?</h2>
+<p>This action adds release workflow capabilities around GoReleaser:</p>
+<ul>
+<li><strong>Version management:</strong> resolves explicit or bumped semver versions and can enforce strict progression.</li>
+<li><strong>Floating tags:</strong> automatically updates <code>vX</code> and <code>vX.Y</code> aliases alongside <code>vX.Y.Z</code>.</li>
+<li><strong>APT repository management:</strong> publishes <code>.deb</code> artifacts to a full apt repository layout and can sign metadata (<code>Release</code>, <code>InRelease</code>, <code>Release.gpg</code>) with GPG.</li>
+</ul>
+<p>Use GoReleaser config (<code>.goreleaser.yml</code>) for native publishers such as GitHub Releases, Homebrew, and Scoop.</p>
 
 
-</section>
 </section>
 
 </main> <!-- /main -->
