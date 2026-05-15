@@ -82,6 +82,8 @@ jobs:
 | `apt_repo_token` | Optional token used only for `apt_repo` clone/push operations. If omitted, the action falls back to `github_token`. | No |
 | `apt_signing_key` | Optional ASCII-armored GPG private key for signing apt repository metadata. When set, the action imports the key and generates signed `InRelease` and `Release.gpg` files alongside `Release`. Store this as a GitHub secret (e.g. `APT_SIGNING_KEY`). | No |
 | `apt_signing_key_passphrase` | Optional passphrase for `apt_signing_key`. When set, GPG uses it via `--passphrase-file` (written to a secure temp file) so passphrase-protected private keys work. Store as a GitHub secret (e.g. `APT_SIGNING_KEY_PASSPHRASE`). | No |
+| `scoop_token` | Optional token for pushing Scoop manifests to an external tap repository. | No |
+| `homebrew_token` | Optional token for pushing Homebrew formulas to an external tap repository. | No |
 
 ## Outputs
 
@@ -125,7 +127,7 @@ GoReleaser is run with `release --clean --skip=announce`, so GoReleaser natively
 
 This action still relies on GoReleaser output in `dist/` for apt publishing, so you should continue generating `.deb` artifacts with GoReleaser `nfpms`.
 
-To publish Homebrew and Scoop, define native GoReleaser `brews:` and `scoops:` blocks in your `.goreleaser.yml`.
+To publish Homebrew and Scoop, define native GoReleaser `brews:` and `scoops:` blocks in your `.goreleaser.yml`, and pass the required tokens.
 
 ### Recommended GoReleaser outputs
 
