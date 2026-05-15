@@ -6,8 +6,9 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="description" content="Bumps the version in an R DESCRIPTION file, builds the R package as a tarball, creates a versioned git tag with floating major/minor aliases, and publishes a GitHub Release containing the .tar.gz package artifact.">
 
-<title>Custom GitHub Actions – MiguelRodo/actions</title>
+<title>R Version and Release – MiguelRodo/actions</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -127,7 +128,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link active" href="./index.html" aria-current="page"> 
+    <a class="nav-link" href="./index.html"> 
 <span class="menu-text">Home</span></a>
   </li>  
   <li class="nav-item">
@@ -143,7 +144,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">Version and Release</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./r-version-release.html"> 
+    <a class="nav-link active" href="./r-version-release.html" aria-current="page"> 
 <span class="menu-text">R Version and Release</span></a>
   </li>  
   <li class="nav-item">
@@ -173,9 +174,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#available-actions" id="toc-available-actions" class="nav-link active" data-scroll-target="#available-actions">Available Actions</a></li>
-  <li><a href="#usage" id="toc-usage" class="nav-link" data-scroll-target="#usage">Usage</a></li>
-  <li><a href="#releasing" id="toc-releasing" class="nav-link" data-scroll-target="#releasing">Releasing</a></li>
+  <li><a href="#usage" id="toc-usage" class="nav-link active" data-scroll-target="#usage">Usage</a></li>
+  <li><a href="#inputs" id="toc-inputs" class="nav-link" data-scroll-target="#inputs">Inputs</a></li>
+  <li><a href="#outputs" id="toc-outputs" class="nav-link" data-scroll-target="#outputs">Outputs</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/MiguelRodo/actions/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></nav>
     </div>
@@ -184,9 +185,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Custom GitHub Actions</h1>
+<h1 class="title">R Version and Release</h1>
 </div>
 
+<div>
+  <div class="description">
+    Bumps the version in an R DESCRIPTION file, builds the R package as a tarball, creates a versioned git tag with floating major/minor aliases, and publishes a GitHub Release containing the <code>.tar.gz</code> package artifact.
+  </div>
+</div>
 
 
 <div class="quarto-title-meta">
@@ -201,44 +207,111 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>Reusable composite GitHub Actions for common CI/CD tasks.</p>
-<section id="available-actions" class="level2">
-<h2 class="anchored" data-anchor-id="available-actions">Available Actions</h2>
+<p>Bumps the version in an R <code>DESCRIPTION</code> file, builds the R package as a tarball, creates a versioned git tag with floating major/minor aliases, and publishes a GitHub Release containing the <code>.tar.gz</code> package artifact.</p>
+<p>This makes it convenient for users to install that specific version (e.g.&nbsp;using <code>remotes::install_github()</code> or similar).</p>
+<section id="usage" class="level2">
+<h2 class="anchored" data-anchor-id="usage">Usage</h2>
+<p>You must provide exactly one of <code>version</code> or <code>bump_type</code>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">name</span><span class="kw">:</span><span class="at"> R Version and Release</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">on</span><span class="kw">:</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">push</span><span class="kw">:</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">tags</span><span class="kw">:</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">'v[0-9]+.[0-9]+.[0-9]+'</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">workflow_dispatch</span><span class="kw">:</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">inputs</span><span class="kw">:</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">version</span><span class="kw">:</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">description</span><span class="kw">:</span><span class="at"> </span><span class="st">'Exact version (e.g. v1.2.3). Cannot be used with bump_type.'</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">required</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">bump_type</span><span class="kw">:</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">description</span><span class="kw">:</span><span class="at"> </span><span class="st">'Component to bump: major | minor | patch. Cannot be used with version.'</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">required</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">version_force</span><span class="kw">:</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">description</span><span class="kw">:</span><span class="at"> </span><span class="st">'When true, skip strict version progression checks.'</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">required</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">type</span><span class="kw">:</span><span class="at"> boolean</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="fu">jobs</span><span class="kw">:</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">release</span><span class="kw">:</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">runs-on</span><span class="kw">:</span><span class="at"> ubuntu-latest</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">permissions</span><span class="kw">:</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">contents</span><span class="kw">:</span><span class="at"> write</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">steps</span><span class="kw">:</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/checkout@v4</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">with</span><span class="kw">:</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">fetch-depth</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> MiguelRodo/actions/r-version-release@v2</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">with</span><span class="kw">:</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">github_token</span><span class="kw">:</span><span class="at"> ${{ secrets.GITHUB_TOKEN }}</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">version</span><span class="kw">:</span><span class="at"> ${{ inputs.version }}</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">bump_type</span><span class="kw">:</span><span class="at"> ${{ inputs.bump_type }}</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">version_force</span><span class="kw">:</span><span class="at"> ${{ inputs.version_force }}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="inputs" class="level2">
+<h2 class="anchored" data-anchor-id="inputs">Inputs</h2>
 <table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
 <thead>
 <tr class="header">
-<th>Action</th>
-<th>Description</th>
+<th style="text-align: left;">Input</th>
+<th style="text-align: left;">Required</th>
+<th style="text-align: left;">Default</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td><a href="./prebuild-devcontainer.html">Pre-build Dev Container</a></td>
-<td>Build and push a Dev Container image to GHCR, with optional SemVer alias tags and a <code>prebuild/devcontainer.json</code>.</td>
+<td style="text-align: left;"><code>github_token</code></td>
+<td style="text-align: left;"><strong>Yes</strong></td>
+<td style="text-align: left;">N/A</td>
+<td style="text-align: left;">GitHub token (<code>${{ secrets.GITHUB_TOKEN }}</code>) for pushing tags and creating releases.</td>
 </tr>
 <tr class="even">
-<td><a href="./add-issues-to-project.html">Add Issues to Project</a></td>
-<td>Sync issues to a GitHub Project V2 board with duplicate detection.</td>
+<td style="text-align: left;"><code>version</code></td>
+<td style="text-align: left;">No</td>
+<td style="text-align: left;"><code>""</code></td>
+<td style="text-align: left;">Exact version to set (e.g.&nbsp;<code>v1.2.3</code>). Cannot be set together with <code>bump_type</code>. Whitespace is ignored and case is insensitive.</td>
 </tr>
 <tr class="odd">
-<td><a href="./version-release.html">Version and Release</a></td>
-<td>Bump versions in Python/R packages, create versioned git tags, and publish a GitHub Release.</td>
+<td style="text-align: left;"><code>bump_type</code></td>
+<td style="text-align: left;">No</td>
+<td style="text-align: left;"><code>""</code></td>
+<td style="text-align: left;">Version component to bump (<code>major</code> | <code>minor</code> | <code>patch</code>). Cannot be set together with <code>version</code>. Whitespace is ignored and case is insensitive.</td>
 </tr>
 <tr class="even">
-<td><a href="./publish-quarto-site.html">Publish Quarto Site</a></td>
-<td>Render and publish a Quarto website to <code>gh-pages</code>, creating the branch automatically if needed.</td>
+<td style="text-align: left;"><code>version_force</code></td>
+<td style="text-align: left;">No</td>
+<td style="text-align: left;"><code>"false"</code></td>
+<td style="text-align: left;">When <code>"true"</code>, skip strict version progression checks (e.g., allowing downgrades or large version jumps).</td>
 </tr>
 </tbody>
 </table>
 </section>
-<section id="usage" class="level2">
-<h2 class="anchored" data-anchor-id="usage">Usage</h2>
-<p>Reference any action directly in a workflow — no cloning required:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">uses</span><span class="kw">:</span><span class="at"> MiguelRodo/actions/&lt;action-folder-name&gt;@v2</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</section>
-<section id="releasing" class="level2">
-<h2 class="anchored" data-anchor-id="releasing">Releasing</h2>
-<p>This repository manages its own versions with an automated workflow. Push a <code>vX.Y.Z</code> tag or run <strong>Actions → Publish Release and Bump Floating Tags</strong> manually to create a release and update floating major/minor tags.</p>
+<section id="outputs" class="level2">
+<h2 class="anchored" data-anchor-id="outputs">Outputs</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Output</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>version</code></td>
+<td style="text-align: left;">Released version without a leading v (e.g.&nbsp;<code>1.2.3</code>).</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>tag</code></td>
+<td style="text-align: left;">Git tag that was created (e.g.&nbsp;<code>v1.2.3</code>).</td>
+</tr>
+</tbody>
+</table>
 
 
 </section>

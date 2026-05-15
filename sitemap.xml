@@ -1,31 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://MiguelRodo.github.io/actions/CONTRIBUTING.html</loc>
-    <lastmod>2026-05-15T11:46:33.921Z</lastmod>
-  </url>
-  <url>
-    <loc>https://MiguelRodo.github.io/actions/index.html</loc>
-    <lastmod>2026-05-15T11:46:33.923Z</lastmod>
-  </url>
-  <url>
-    <loc>https://MiguelRodo.github.io/actions/SECURITY.html</loc>
-    <lastmod>2026-05-15T11:46:33.921Z</lastmod>
-  </url>
-  <url>
     <loc>https://MiguelRodo.github.io/actions/publish-quarto-site.html</loc>
-    <lastmod>2026-05-15T11:46:33.923Z</lastmod>
-  </url>
-  <url>
-    <loc>https://MiguelRodo.github.io/actions/prebuild-devcontainer.html</loc>
-    <lastmod>2026-05-15T11:46:33.923Z</lastmod>
+    <lastmod>2026-05-15T12:01:09.545Z</lastmod>
   </url>
   <url>
     <loc>https://MiguelRodo.github.io/actions/version-release.html</loc>
-    <lastmod>2026-05-15T11:46:33.924Z</lastmod>
+    <lastmod>2026-05-15T12:01:09.546Z</lastmod>
+  </url>
+  <url>
+    <loc>https://MiguelRodo.github.io/actions/prebuild-devcontainer.html</loc>
+    <lastmod>2026-05-15T12:01:09.545Z</lastmod>
+  </url>
+  <url>
+    <loc>https://MiguelRodo.github.io/actions/SECURITY.html</loc>
+    <lastmod>2026-05-15T12:01:09.544Z</lastmod>
+  </url>
+  <url>
+    <loc>https://MiguelRodo.github.io/actions/r-version-release.html</loc>
+    <lastmod>2026-05-15T12:01:09.546Z</lastmod>
+  </url>
+  <url>
+    <loc>https://MiguelRodo.github.io/actions/index.html</loc>
+    <lastmod>2026-05-15T12:01:09.545Z</lastmod>
   </url>
   <url>
     <loc>https://MiguelRodo.github.io/actions/add-issues-to-project.html</loc>
-    <lastmod>2026-05-15T11:46:33.922Z</lastmod>
+    <lastmod>2026-05-15T12:01:09.544Z</lastmod>
+  </url>
+  <url>
+    <loc>https://MiguelRodo.github.io/actions/CONTRIBUTING.html</loc>
+    <lastmod>2026-05-15T12:01:09.544Z</lastmod>
   </url>
 </urlset>

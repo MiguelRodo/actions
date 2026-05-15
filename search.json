@@ -1,89 +1,5 @@
 [
   {
-    "objectID": "CONTRIBUTING.html",
-    "href": "CONTRIBUTING.html",
-    "title": "Contributing",
-    "section": "",
-    "text": "Thank you for considering a contribution to this repository! All improvements — bug fixes, documentation, new features, and tests — are welcome.\n\n\n\nFork the repository and create a feature branch from main.\nMake your changes following the guidelines below.\nOpen a pull request against main with a clear description of what changed and why.\n\n\n\n\n\n\nEach action lives in its own subdirectory (e.g. prebuild-devcontainer/). The entry point is always action.yml.\n\nKeep all logic inside action.yml. Avoid adding separate shell scripts unless the complexity makes inline scripts unreadable.\nUse $GITHUB_OUTPUT (not ::set-output) for outputs and $GITHUB_ENV for inter-step environment variables.\nEvery new input must have a description and a required field. Provide a default for optional inputs.\nEvery new output must be declared in the outputs: block of action.yml and documented in the action’s README.md.\n\n\n\n\nInline run: blocks are linted by actionlint (which delegates to shellcheck). Before submitting:\n\nEnsure your scripts pass shellcheck --shell=bash.\nPrefer [[ ... ]] over [ ... ] for conditionals in bash.\nQuote all variable expansions (e.g. \"$VAR\") unless word-splitting is intentional.\n\n\n\n\n\nEach action has its own README.md. Keep the Inputs, Outputs, Permissions, and example workflow sections up to date.\nThe root README.md provides a concise overview and quick-start snippet for each action. Update it when adding or removing an action.\nComplete, copy-paste-ready workflow files live in the examples/ directory.\n\n\n\n\nReleases are managed by the .github/workflows/release.yml workflow. Tags must originate from the main branch and follow the vX.Y.Z format.\n\n\n\nSpecific tags (vX.Y.Z) are annotated tags and have an associated GitHub Release entry with auto-generated notes.\nFloating tags (vX, vX.Y) are lightweight tags that are force-updated on every release to point to the latest matching commit. They do not have their own GitHub Release entries — this is intentional. The GitHub Releases page only shows entries for specific vX.Y.Z tags.\nConsumers of these actions should pin to a floating tag (e.g. @v2 or @v2.17) or a specific tag (e.g. @v2.17.0), not to a Release object.\n\nTo verify what commit a floating tag resolves to:\n# Show the commit a tag points to\ngit ls-remote --tags https://github.com/MiguelRodo/actions \"refs/tags/v2\"\n# or, in a local clone:\ngit rev-list -n 1 refs/tags/v2\n\n\n\n\n\nPlease be respectful and constructive in all interactions. This project follows the Contributor Covenant code of conduct."
-  },
-  {
-    "objectID": "CONTRIBUTING.html#getting-started",
-    "href": "CONTRIBUTING.html#getting-started",
-    "title": "Contributing",
-    "section": "",
-    "text": "Fork the repository and create a feature branch from main.\nMake your changes following the guidelines below.\nOpen a pull request against main with a clear description of what changed and why."
-  },
-  {
-    "objectID": "CONTRIBUTING.html#development-guidelines",
-    "href": "CONTRIBUTING.html#development-guidelines",
-    "title": "Contributing",
-    "section": "",
-    "text": "Each action lives in its own subdirectory (e.g. prebuild-devcontainer/). The entry point is always action.yml.\n\nKeep all logic inside action.yml. Avoid adding separate shell scripts unless the complexity makes inline scripts unreadable.\nUse $GITHUB_OUTPUT (not ::set-output) for outputs and $GITHUB_ENV for inter-step environment variables.\nEvery new input must have a description and a required field. Provide a default for optional inputs.\nEvery new output must be declared in the outputs: block of action.yml and documented in the action’s README.md.\n\n\n\n\nInline run: blocks are linted by actionlint (which delegates to shellcheck). Before submitting:\n\nEnsure your scripts pass shellcheck --shell=bash.\nPrefer [[ ... ]] over [ ... ] for conditionals in bash.\nQuote all variable expansions (e.g. \"$VAR\") unless word-splitting is intentional.\n\n\n\n\n\nEach action has its own README.md. Keep the Inputs, Outputs, Permissions, and example workflow sections up to date.\nThe root README.md provides a concise overview and quick-start snippet for each action. Update it when adding or removing an action.\nComplete, copy-paste-ready workflow files live in the examples/ directory.\n\n\n\n\nReleases are managed by the .github/workflows/release.yml workflow. Tags must originate from the main branch and follow the vX.Y.Z format.\n\n\n\nSpecific tags (vX.Y.Z) are annotated tags and have an associated GitHub Release entry with auto-generated notes.\nFloating tags (vX, vX.Y) are lightweight tags that are force-updated on every release to point to the latest matching commit. They do not have their own GitHub Release entries — this is intentional. The GitHub Releases page only shows entries for specific vX.Y.Z tags.\nConsumers of these actions should pin to a floating tag (e.g. @v2 or @v2.17) or a specific tag (e.g. @v2.17.0), not to a Release object.\n\nTo verify what commit a floating tag resolves to:\n# Show the commit a tag points to\ngit ls-remote --tags https://github.com/MiguelRodo/actions \"refs/tags/v2\"\n# or, in a local clone:\ngit rev-list -n 1 refs/tags/v2"
-  },
-  {
-    "objectID": "CONTRIBUTING.html#code-of-conduct",
-    "href": "CONTRIBUTING.html#code-of-conduct",
-    "title": "Contributing",
-    "section": "",
-    "text": "Please be respectful and constructive in all interactions. This project follows the Contributor Covenant code of conduct."
-  },
-  {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "Custom GitHub Actions",
-    "section": "",
-    "text": "Reusable composite GitHub Actions for common CI/CD tasks."
-  },
-  {
-    "objectID": "index.html#available-actions",
-    "href": "index.html#available-actions",
-    "title": "Custom GitHub Actions",
-    "section": "Available Actions",
-    "text": "Available Actions\n\n\n\nAction\nDescription\n\n\n\n\nPre-build Dev Container\nBuild and push a Dev Container image to GHCR, with optional SemVer alias tags and a prebuild/devcontainer.json.\n\n\nAdd Issues to Project\nSync issues to a GitHub Project V2 board with duplicate detection.\n\n\nVersion and Release\nBump versions in Python/R packages, create versioned git tags, and publish a GitHub Release.\n\n\nPublish Quarto Site\nRender and publish a Quarto website to gh-pages, creating the branch automatically if needed."
-  },
-  {
-    "objectID": "index.html#usage",
-    "href": "index.html#usage",
-    "title": "Custom GitHub Actions",
-    "section": "Usage",
-    "text": "Usage\nReference any action directly in a workflow — no cloning required:\nuses: MiguelRodo/actions/&lt;action-folder-name&gt;@v2"
-  },
-  {
-    "objectID": "index.html#releasing",
-    "href": "index.html#releasing",
-    "title": "Custom GitHub Actions",
-    "section": "Releasing",
-    "text": "Releasing\nThis repository manages its own versions with an automated workflow. Push a vX.Y.Z tag or run Actions → Publish Release and Bump Floating Tags manually to create a release and update floating major/minor tags."
-  },
-  {
-    "objectID": "SECURITY.html",
-    "href": "SECURITY.html",
-    "title": "Security Policy",
-    "section": "",
-    "text": "Security fixes are applied to the latest release only. We recommend always using the most recent tag.\n\n\n\nVersion\nSupported\n\n\n\n\nLatest (v2)\n✅\n\n\nOlder major versions\n❌\n\n\n\n\n\n\nPlease do not open a public GitHub issue for security vulnerabilities.\nReport vulnerabilities by using GitHub’s private vulnerability reporting:\n\nGo to the Security tab of this repository.\nClick Report a vulnerability.\nFill in the details and submit.\n\nYou can expect an initial response within 72 hours. If a fix is warranted, a patched release will be published and you will be credited in the release notes (unless you prefer to remain anonymous).\n\n\n\n\n\nEach action documents the minimum token scopes it requires. Never grant broader scopes than necessary:\n\nprebuild-devcontainer — contents: write, packages: write\nadd-issues-to-project — PAT with repo, project, read:org (org projects only)\nversion-release — contents: write\npublish-quarto-site — contents: write, pages: write\n\n\n\n\nFloating tags (e.g. @v2) are convenient but can be updated at any time. For environments with strict supply-chain requirements, pin to a specific commit SHA:\nuses: MiguelRodo/actions/prebuild-devcontainer@&lt;full-commit-sha&gt;\nFind the SHA for any release on the Releases page or by running:\ngit ls-remote https://github.com/MiguelRodo/actions refs/tags/v2"
-  },
-  {
-    "objectID": "SECURITY.html#supported-versions",
-    "href": "SECURITY.html#supported-versions",
-    "title": "Security Policy",
-    "section": "",
-    "text": "Security fixes are applied to the latest release only. We recommend always using the most recent tag.\n\n\n\nVersion\nSupported\n\n\n\n\nLatest (v2)\n✅\n\n\nOlder major versions\n❌"
-  },
-  {
-    "objectID": "SECURITY.html#reporting-a-vulnerability",
-    "href": "SECURITY.html#reporting-a-vulnerability",
-    "title": "Security Policy",
-    "section": "",
-    "text": "Please do not open a public GitHub issue for security vulnerabilities.\nReport vulnerabilities by using GitHub’s private vulnerability reporting:\n\nGo to the Security tab of this repository.\nClick Report a vulnerability.\nFill in the details and submit.\n\nYou can expect an initial response within 72 hours. If a fix is warranted, a patched release will be published and you will be credited in the release notes (unless you prefer to remain anonymous)."
-  },
-  {
-    "objectID": "SECURITY.html#security-considerations-for-users",
-    "href": "SECURITY.html#security-considerations-for-users",
-    "title": "Security Policy",
-    "section": "",
-    "text": "Each action documents the minimum token scopes it requires. Never grant broader scopes than necessary:\n\nprebuild-devcontainer — contents: write, packages: write\nadd-issues-to-project — PAT with repo, project, read:org (org projects only)\nversion-release — contents: write\npublish-quarto-site — contents: write, pages: write\n\n\n\n\nFloating tags (e.g. @v2) are convenient but can be updated at any time. For environments with strict supply-chain requirements, pin to a specific commit SHA:\nuses: MiguelRodo/actions/prebuild-devcontainer@&lt;full-commit-sha&gt;\nFind the SHA for any release on the Releases page or by running:\ngit ls-remote https://github.com/MiguelRodo/actions refs/tags/v2"
-  },
-  {
     "objectID": "publish-quarto-site.html",
     "href": "publish-quarto-site.html",
     "title": "Publish Quarto Site",
@@ -117,41 +33,6 @@
     "title": "Publish Quarto Site",
     "section": "Troubleshooting",
     "text": "Troubleshooting\n\nPermission denied pushing to gh-pages: Ensure the calling workflow sets permissions: contents: write (and pages: write if using GitHub Pages deployments).\nQuarto render errors: Rendering is delegated to quarto-dev/quarto-actions/publish. See the quarto-actions documentation for render-related issues."
-  },
-  {
-    "objectID": "prebuild-devcontainer.html",
-    "href": "prebuild-devcontainer.html",
-    "title": "Pre-build Dev Container",
-    "section": "",
-    "text": "Pre-build Dev Container builds your .devcontainer/Dockerfile, pushes it to a container registry (GHCR by default), and optionally generates a prebuild/devcontainer.json so environments load instantly."
-  },
-  {
-    "objectID": "prebuild-devcontainer.html#quick-start",
-    "href": "prebuild-devcontainer.html#quick-start",
-    "title": "Pre-build Dev Container",
-    "section": "Quick Start",
-    "text": "Quick Start\nCopy this to .github/workflows/prebuild-devcontainer.yml:\nname: 'Pre-build Dev Container'\n\non:\n  push:\n    tags:\n      - 'v*'\n      - '*-v*'\n  workflow_dispatch:\n    inputs:\n      tag:\n        description: 'Tag to build (e.g. v1.2.3 or main-v1.2.3)'\n        required: true\n\njobs:\n  build:\n    runs-on: ubuntu-latest\n    concurrency:\n      group: ${{ github.workflow }}-${{ github.ref }}\n      cancel-in-progress: true\n    permissions:\n      contents: write\n      packages: write\n    steps:\n      - uses: actions/checkout@v4\n      - uses: MiguelRodo/actions/prebuild-devcontainer@v2\n        with:\n          github_token: ${{ secrets.GITHUB_TOKEN }}\n          tag: ${{ github.event.inputs.tag }}"
-  },
-  {
-    "objectID": "prebuild-devcontainer.html#inputs",
-    "href": "prebuild-devcontainer.html#inputs",
-    "title": "Pre-build Dev Container",
-    "section": "Inputs",
-    "text": "Inputs\n\n\n\n\n\n\n\n\n\nInput\nDescription\nRequired\nDefault\n\n\n\n\ngithub_token\nToken for logging into the container registry and pushing commits.\nYes\n—\n\n\nno_cache\nDisable Docker cache during build (true/false).\nNo\nfalse\n\n\ncreate_prebuild_json\nGenerate and commit a prebuild/devcontainer.json (true/false).\nNo\ntrue\n\n\ndevcontainer_path\nPath to the .devcontainer directory, relative to the repo root.\nNo\n.devcontainer\n\n\nimage_name\nFull image name without tag (e.g. ghcr.io/myorg/myimage). Defaults to {registry}/{repo}-{branch}.\nNo\n{registry}/{repo}-{branch}\n\n\ntag\nGit tag used as the primary container image tag. Auto-detected from GITHUB_REF on tag push; falls back to latest.\nNo\n\"\"\n\n\nregistry\nContainer registry URL.\nNo\nghcr.io\n\n\nregistry_username\nUsername for registry login.\nNo\nRepository owner"
-  },
-  {
-    "objectID": "prebuild-devcontainer.html#semver-alias-tags",
-    "href": "prebuild-devcontainer.html#semver-alias-tags",
-    "title": "Pre-build Dev Container",
-    "section": "SemVer Alias Tags",
-    "text": "SemVer Alias Tags\nWhen the tag matches a semantic versioning pattern, the action automatically creates additional alias tags:\n\n\n\n\n\n\n\n\nTag format\nPrimary tag\nAlias tags\n\n\n\n\nvX.Y.Z (e.g. v1.2.3)\nv1.2.3\nv1.2, v1\n\n\n{prefix}-vX.Y.Z (e.g. main-v1.2.3)\nmain-v1.2.3\nmain-v1.2, main-v1\n\n\nAny other format (e.g. latest)\nas-is\n(none)"
-  },
-  {
-    "objectID": "prebuild-devcontainer.html#examples",
-    "href": "prebuild-devcontainer.html#examples",
-    "title": "Pre-build Dev Container",
-    "section": "Examples",
-    "text": "Examples\n\nCustom image name\n- uses: MiguelRodo/actions/prebuild-devcontainer@v2\n  with:\n    github_token: ${{ secrets.GITHUB_TOKEN }}\n    image_name: 'ghcr.io/myorg/my-devcontainer'\n\n\nNon-default devcontainer path\n- uses: MiguelRodo/actions/prebuild-devcontainer@v2\n  with:\n    github_token: ${{ secrets.GITHUB_TOKEN }}\n    devcontainer_path: 'src/.devcontainer'\n\n\nNon-GitHub container registry\nWhen using a custom image_name, the registry input is used only for login — it is not prepended to the image name automatically.\n- uses: MiguelRodo/actions/prebuild-devcontainer@v2\n  with:\n    github_token: ${{ secrets.REGISTRY_TOKEN }}\n    registry: 'registry.example.com'\n    registry_username: 'my-username'\n    image_name: 'registry.example.com/myorg/my-devcontainer'"
   },
   {
     "objectID": "version-release.html",
@@ -196,6 +77,125 @@
     "text": "Version Precedence\n\n\n\nPriority\nSource\n\n\n\n\n1 (highest)\npython_version / r_version input\n\n\n2\nGlobal version input\n\n\n3\nBump the current file version using bump_type\n\n\n4\nVersion from the pushed tag"
   },
   {
+    "objectID": "prebuild-devcontainer.html",
+    "href": "prebuild-devcontainer.html",
+    "title": "Pre-build Dev Container",
+    "section": "",
+    "text": "Pre-build Dev Container builds your .devcontainer/Dockerfile, pushes it to a container registry (GHCR by default), and optionally generates a prebuild/devcontainer.json so environments load instantly."
+  },
+  {
+    "objectID": "prebuild-devcontainer.html#quick-start",
+    "href": "prebuild-devcontainer.html#quick-start",
+    "title": "Pre-build Dev Container",
+    "section": "Quick Start",
+    "text": "Quick Start\nCopy this to .github/workflows/prebuild-devcontainer.yml:\nname: 'Pre-build Dev Container'\n\non:\n  push:\n    tags:\n      - 'v*'\n      - '*-v*'\n  workflow_dispatch:\n    inputs:\n      tag:\n        description: 'Tag to build (e.g. v1.2.3 or main-v1.2.3)'\n        required: true\n\njobs:\n  build:\n    runs-on: ubuntu-latest\n    concurrency:\n      group: ${{ github.workflow }}-${{ github.ref }}\n      cancel-in-progress: true\n    permissions:\n      contents: write\n      packages: write\n    steps:\n      - uses: actions/checkout@v4\n      - uses: MiguelRodo/actions/prebuild-devcontainer@v2\n        with:\n          github_token: ${{ secrets.GITHUB_TOKEN }}\n          tag: ${{ github.event.inputs.tag }}"
+  },
+  {
+    "objectID": "prebuild-devcontainer.html#inputs",
+    "href": "prebuild-devcontainer.html#inputs",
+    "title": "Pre-build Dev Container",
+    "section": "Inputs",
+    "text": "Inputs\n\n\n\n\n\n\n\n\n\nInput\nDescription\nRequired\nDefault\n\n\n\n\ngithub_token\nToken for logging into the container registry and pushing commits.\nYes\n—\n\n\nno_cache\nDisable Docker cache during build (true/false).\nNo\nfalse\n\n\ncreate_prebuild_json\nGenerate and commit a prebuild/devcontainer.json (true/false).\nNo\ntrue\n\n\ndevcontainer_path\nPath to the .devcontainer directory, relative to the repo root.\nNo\n.devcontainer\n\n\nimage_name\nFull image name without tag (e.g. ghcr.io/myorg/myimage). Defaults to {registry}/{repo}-{branch}.\nNo\n{registry}/{repo}-{branch}\n\n\ntag\nGit tag used as the primary container image tag. Auto-detected from GITHUB_REF on tag push; falls back to latest.\nNo\n\"\"\n\n\nregistry\nContainer registry URL.\nNo\nghcr.io\n\n\nregistry_username\nUsername for registry login.\nNo\nRepository owner"
+  },
+  {
+    "objectID": "prebuild-devcontainer.html#semver-alias-tags",
+    "href": "prebuild-devcontainer.html#semver-alias-tags",
+    "title": "Pre-build Dev Container",
+    "section": "SemVer Alias Tags",
+    "text": "SemVer Alias Tags\nWhen the tag matches a semantic versioning pattern, the action automatically creates additional alias tags:\n\n\n\n\n\n\n\n\nTag format\nPrimary tag\nAlias tags\n\n\n\n\nvX.Y.Z (e.g. v1.2.3)\nv1.2.3\nv1.2, v1\n\n\n{prefix}-vX.Y.Z (e.g. main-v1.2.3)\nmain-v1.2.3\nmain-v1.2, main-v1\n\n\nAny other format (e.g. latest)\nas-is\n(none)"
+  },
+  {
+    "objectID": "prebuild-devcontainer.html#examples",
+    "href": "prebuild-devcontainer.html#examples",
+    "title": "Pre-build Dev Container",
+    "section": "Examples",
+    "text": "Examples\n\nCustom image name\n- uses: MiguelRodo/actions/prebuild-devcontainer@v2\n  with:\n    github_token: ${{ secrets.GITHUB_TOKEN }}\n    image_name: 'ghcr.io/myorg/my-devcontainer'\n\n\nNon-default devcontainer path\n- uses: MiguelRodo/actions/prebuild-devcontainer@v2\n  with:\n    github_token: ${{ secrets.GITHUB_TOKEN }}\n    devcontainer_path: 'src/.devcontainer'\n\n\nNon-GitHub container registry\nWhen using a custom image_name, the registry input is used only for login — it is not prepended to the image name automatically.\n- uses: MiguelRodo/actions/prebuild-devcontainer@v2\n  with:\n    github_token: ${{ secrets.REGISTRY_TOKEN }}\n    registry: 'registry.example.com'\n    registry_username: 'my-username'\n    image_name: 'registry.example.com/myorg/my-devcontainer'"
+  },
+  {
+    "objectID": "SECURITY.html",
+    "href": "SECURITY.html",
+    "title": "Security Policy",
+    "section": "",
+    "text": "Security fixes are applied to the latest release only. We recommend always using the most recent tag.\n\n\n\nVersion\nSupported\n\n\n\n\nLatest (v2)\n✅\n\n\nOlder major versions\n❌\n\n\n\n\n\n\nPlease do not open a public GitHub issue for security vulnerabilities.\nReport vulnerabilities by using GitHub’s private vulnerability reporting:\n\nGo to the Security tab of this repository.\nClick Report a vulnerability.\nFill in the details and submit.\n\nYou can expect an initial response within 72 hours. If a fix is warranted, a patched release will be published and you will be credited in the release notes (unless you prefer to remain anonymous).\n\n\n\n\n\nEach action documents the minimum token scopes it requires. Never grant broader scopes than necessary:\n\nprebuild-devcontainer — contents: write, packages: write\nadd-issues-to-project — PAT with repo, project, read:org (org projects only)\nversion-release — contents: write\npublish-quarto-site — contents: write, pages: write\n\n\n\n\nFloating tags (e.g. @v2) are convenient but can be updated at any time. For environments with strict supply-chain requirements, pin to a specific commit SHA:\nuses: MiguelRodo/actions/prebuild-devcontainer@&lt;full-commit-sha&gt;\nFind the SHA for any release on the Releases page or by running:\ngit ls-remote https://github.com/MiguelRodo/actions refs/tags/v2"
+  },
+  {
+    "objectID": "SECURITY.html#supported-versions",
+    "href": "SECURITY.html#supported-versions",
+    "title": "Security Policy",
+    "section": "",
+    "text": "Security fixes are applied to the latest release only. We recommend always using the most recent tag.\n\n\n\nVersion\nSupported\n\n\n\n\nLatest (v2)\n✅\n\n\nOlder major versions\n❌"
+  },
+  {
+    "objectID": "SECURITY.html#reporting-a-vulnerability",
+    "href": "SECURITY.html#reporting-a-vulnerability",
+    "title": "Security Policy",
+    "section": "",
+    "text": "Please do not open a public GitHub issue for security vulnerabilities.\nReport vulnerabilities by using GitHub’s private vulnerability reporting:\n\nGo to the Security tab of this repository.\nClick Report a vulnerability.\nFill in the details and submit.\n\nYou can expect an initial response within 72 hours. If a fix is warranted, a patched release will be published and you will be credited in the release notes (unless you prefer to remain anonymous)."
+  },
+  {
+    "objectID": "SECURITY.html#security-considerations-for-users",
+    "href": "SECURITY.html#security-considerations-for-users",
+    "title": "Security Policy",
+    "section": "",
+    "text": "Each action documents the minimum token scopes it requires. Never grant broader scopes than necessary:\n\nprebuild-devcontainer — contents: write, packages: write\nadd-issues-to-project — PAT with repo, project, read:org (org projects only)\nversion-release — contents: write\npublish-quarto-site — contents: write, pages: write\n\n\n\n\nFloating tags (e.g. @v2) are convenient but can be updated at any time. For environments with strict supply-chain requirements, pin to a specific commit SHA:\nuses: MiguelRodo/actions/prebuild-devcontainer@&lt;full-commit-sha&gt;\nFind the SHA for any release on the Releases page or by running:\ngit ls-remote https://github.com/MiguelRodo/actions refs/tags/v2"
+  },
+  {
+    "objectID": "r-version-release.html",
+    "href": "r-version-release.html",
+    "title": "R Version and Release",
+    "section": "",
+    "text": "Bumps the version in an R DESCRIPTION file, builds the R package as a tarball, creates a versioned git tag with floating major/minor aliases, and publishes a GitHub Release containing the .tar.gz package artifact.\nThis makes it convenient for users to install that specific version (e.g. using remotes::install_github() or similar)."
+  },
+  {
+    "objectID": "r-version-release.html#usage",
+    "href": "r-version-release.html#usage",
+    "title": "R Version and Release",
+    "section": "Usage",
+    "text": "Usage\nYou must provide exactly one of version or bump_type.\nname: R Version and Release\n\non:\n  push:\n    tags:\n      - 'v[0-9]+.[0-9]+.[0-9]+'\n  workflow_dispatch:\n    inputs:\n      version:\n        description: 'Exact version (e.g. v1.2.3). Cannot be used with bump_type.'\n        required: false\n      bump_type:\n        description: 'Component to bump: major | minor | patch. Cannot be used with version.'\n        required: false\n      version_force:\n        description: 'When true, skip strict version progression checks.'\n        required: false\n        type: boolean\n\njobs:\n  release:\n    runs-on: ubuntu-latest\n    permissions:\n      contents: write\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          fetch-depth: 0\n      - uses: MiguelRodo/actions/r-version-release@v2\n        with:\n          github_token: ${{ secrets.GITHUB_TOKEN }}\n          version: ${{ inputs.version }}\n          bump_type: ${{ inputs.bump_type }}\n          version_force: ${{ inputs.version_force }}"
+  },
+  {
+    "objectID": "r-version-release.html#inputs",
+    "href": "r-version-release.html#inputs",
+    "title": "R Version and Release",
+    "section": "Inputs",
+    "text": "Inputs\n\n\n\n\n\n\n\n\n\nInput\nRequired\nDefault\nDescription\n\n\n\n\ngithub_token\nYes\nN/A\nGitHub token (${{ secrets.GITHUB_TOKEN }}) for pushing tags and creating releases.\n\n\nversion\nNo\n\"\"\nExact version to set (e.g. v1.2.3). Cannot be set together with bump_type. Whitespace is ignored and case is insensitive.\n\n\nbump_type\nNo\n\"\"\nVersion component to bump (major | minor | patch). Cannot be set together with version. Whitespace is ignored and case is insensitive.\n\n\nversion_force\nNo\n\"false\"\nWhen \"true\", skip strict version progression checks (e.g., allowing downgrades or large version jumps)."
+  },
+  {
+    "objectID": "r-version-release.html#outputs",
+    "href": "r-version-release.html#outputs",
+    "title": "R Version and Release",
+    "section": "Outputs",
+    "text": "Outputs\n\n\n\nOutput\nDescription\n\n\n\n\nversion\nReleased version without a leading v (e.g. 1.2.3).\n\n\ntag\nGit tag that was created (e.g. v1.2.3)."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Custom GitHub Actions",
+    "section": "",
+    "text": "Reusable composite GitHub Actions for common CI/CD tasks."
+  },
+  {
+    "objectID": "index.html#available-actions",
+    "href": "index.html#available-actions",
+    "title": "Custom GitHub Actions",
+    "section": "Available Actions",
+    "text": "Available Actions\n\n\n\nAction\nDescription\n\n\n\n\nPre-build Dev Container\nBuild and push a Dev Container image to GHCR, with optional SemVer alias tags and a prebuild/devcontainer.json.\n\n\nAdd Issues to Project\nSync issues to a GitHub Project V2 board with duplicate detection.\n\n\nVersion and Release\nBump versions in Python/R packages, create versioned git tags, and publish a GitHub Release.\n\n\nPublish Quarto Site\nRender and publish a Quarto website to gh-pages, creating the branch automatically if needed."
+  },
+  {
+    "objectID": "index.html#usage",
+    "href": "index.html#usage",
+    "title": "Custom GitHub Actions",
+    "section": "Usage",
+    "text": "Usage\nReference any action directly in a workflow — no cloning required:\nuses: MiguelRodo/actions/&lt;action-folder-name&gt;@v2"
+  },
+  {
+    "objectID": "index.html#releasing",
+    "href": "index.html#releasing",
+    "title": "Custom GitHub Actions",
+    "section": "Releasing",
+    "text": "Releasing\nThis repository manages its own versions with an automated workflow. Push a vX.Y.Z tag or run Actions → Publish Release and Bump Floating Tags manually to create a release and update floating major/minor tags."
+  },
+  {
     "objectID": "add-issues-to-project.html",
     "href": "add-issues-to-project.html",
     "title": "Add Issues to Project",
@@ -236,5 +236,33 @@
     "title": "Add Issues to Project",
     "section": "Troubleshooting",
     "text": "Troubleshooting\n\nAuthentication fails: Ensure the PAT is active, unexpired, and has the project scope. Classic PATs are generally easier to configure for organization-wide boards than fine-grained tokens.\nProject not found: Check the spelling of project_name. If the project belongs to an organization, you must set is_project_owner_org: \"true\"."
+  },
+  {
+    "objectID": "CONTRIBUTING.html",
+    "href": "CONTRIBUTING.html",
+    "title": "Contributing",
+    "section": "",
+    "text": "Thank you for considering a contribution to this repository! All improvements — bug fixes, documentation, new features, and tests — are welcome.\n\n\n\nFork the repository and create a feature branch from main.\nMake your changes following the guidelines below.\nOpen a pull request against main with a clear description of what changed and why.\n\n\n\n\n\n\nEach action lives in its own subdirectory (e.g. prebuild-devcontainer/). The entry point is always action.yml.\n\nKeep all logic inside action.yml. Avoid adding separate shell scripts unless the complexity makes inline scripts unreadable.\nUse $GITHUB_OUTPUT (not ::set-output) for outputs and $GITHUB_ENV for inter-step environment variables.\nEvery new input must have a description and a required field. Provide a default for optional inputs.\nEvery new output must be declared in the outputs: block of action.yml and documented in the action’s README.md.\n\n\n\n\nInline run: blocks are linted by actionlint (which delegates to shellcheck). Before submitting:\n\nEnsure your scripts pass shellcheck --shell=bash.\nPrefer [[ ... ]] over [ ... ] for conditionals in bash.\nQuote all variable expansions (e.g. \"$VAR\") unless word-splitting is intentional.\n\n\n\n\n\nEach action has its own README.md. Keep the Inputs, Outputs, Permissions, and example workflow sections up to date.\nThe root README.md provides a concise overview and quick-start snippet for each action. Update it when adding or removing an action.\nComplete, copy-paste-ready workflow files live in the examples/ directory.\n\n\n\n\nReleases are managed by the .github/workflows/release.yml workflow. Tags must originate from the main branch and follow the vX.Y.Z format.\n\n\n\nSpecific tags (vX.Y.Z) are annotated tags and have an associated GitHub Release entry with auto-generated notes.\nFloating tags (vX, vX.Y) are lightweight tags that are force-updated on every release to point to the latest matching commit. They do not have their own GitHub Release entries — this is intentional. The GitHub Releases page only shows entries for specific vX.Y.Z tags.\nConsumers of these actions should pin to a floating tag (e.g. @v2 or @v2.17) or a specific tag (e.g. @v2.17.0), not to a Release object.\n\nTo verify what commit a floating tag resolves to:\n# Show the commit a tag points to\ngit ls-remote --tags https://github.com/MiguelRodo/actions \"refs/tags/v2\"\n# or, in a local clone:\ngit rev-list -n 1 refs/tags/v2\n\n\n\n\n\nPlease be respectful and constructive in all interactions. This project follows the Contributor Covenant code of conduct."
+  },
+  {
+    "objectID": "CONTRIBUTING.html#getting-started",
+    "href": "CONTRIBUTING.html#getting-started",
+    "title": "Contributing",
+    "section": "",
+    "text": "Fork the repository and create a feature branch from main.\nMake your changes following the guidelines below.\nOpen a pull request against main with a clear description of what changed and why."
+  },
+  {
+    "objectID": "CONTRIBUTING.html#development-guidelines",
+    "href": "CONTRIBUTING.html#development-guidelines",
+    "title": "Contributing",
+    "section": "",
+    "text": "Each action lives in its own subdirectory (e.g. prebuild-devcontainer/). The entry point is always action.yml.\n\nKeep all logic inside action.yml. Avoid adding separate shell scripts unless the complexity makes inline scripts unreadable.\nUse $GITHUB_OUTPUT (not ::set-output) for outputs and $GITHUB_ENV for inter-step environment variables.\nEvery new input must have a description and a required field. Provide a default for optional inputs.\nEvery new output must be declared in the outputs: block of action.yml and documented in the action’s README.md.\n\n\n\n\nInline run: blocks are linted by actionlint (which delegates to shellcheck). Before submitting:\n\nEnsure your scripts pass shellcheck --shell=bash.\nPrefer [[ ... ]] over [ ... ] for conditionals in bash.\nQuote all variable expansions (e.g. \"$VAR\") unless word-splitting is intentional.\n\n\n\n\n\nEach action has its own README.md. Keep the Inputs, Outputs, Permissions, and example workflow sections up to date.\nThe root README.md provides a concise overview and quick-start snippet for each action. Update it when adding or removing an action.\nComplete, copy-paste-ready workflow files live in the examples/ directory.\n\n\n\n\nReleases are managed by the .github/workflows/release.yml workflow. Tags must originate from the main branch and follow the vX.Y.Z format.\n\n\n\nSpecific tags (vX.Y.Z) are annotated tags and have an associated GitHub Release entry with auto-generated notes.\nFloating tags (vX, vX.Y) are lightweight tags that are force-updated on every release to point to the latest matching commit. They do not have their own GitHub Release entries — this is intentional. The GitHub Releases page only shows entries for specific vX.Y.Z tags.\nConsumers of these actions should pin to a floating tag (e.g. @v2 or @v2.17) or a specific tag (e.g. @v2.17.0), not to a Release object.\n\nTo verify what commit a floating tag resolves to:\n# Show the commit a tag points to\ngit ls-remote --tags https://github.com/MiguelRodo/actions \"refs/tags/v2\"\n# or, in a local clone:\ngit rev-list -n 1 refs/tags/v2"
+  },
+  {
+    "objectID": "CONTRIBUTING.html#code-of-conduct",
+    "href": "CONTRIBUTING.html#code-of-conduct",
+    "title": "Contributing",
+    "section": "",
+    "text": "Please be respectful and constructive in all interactions. This project follows the Contributor Covenant code of conduct."
   }
 ]
