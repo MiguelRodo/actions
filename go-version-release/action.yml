@@ -52,6 +52,10 @@ inputs:
     description: "Optional token for pushing Scoop manifests to an external tap repository."
     required: false
     default: ""
+  homebrew_token:
+    description: "Optional token for pushing Homebrew formulas to an external tap repository."
+    required: false
+    default: ""
 outputs:
   version:
     description: "Released version without a leading v (e.g. 1.2.3)."
@@ -184,6 +188,7 @@ runs:
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
         SCOOP_TAP_TOKEN: ${{ inputs.scoop_token }}
+        HOMEBREW_TAP_TOKEN: ${{ inputs.homebrew_token }}
 
     - name: Publish Debian packages to apt repository
       if: inputs.apt_repo != ''
