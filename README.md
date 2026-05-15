@@ -199,6 +199,96 @@ See the [action README](./go-version-release/README.md) for all inputs, outputs,
 
 ---
 
+### [R Version and Release](./r-version-release)
+
+Bumps the version in an R `DESCRIPTION` file, builds the R package as a tarball, creates a versioned git tag with floating major/minor aliases, and publishes a GitHub Release containing the `.tar.gz` package artifact.
+
+<details>
+<summary>Minimal workflow</summary>
+
+```yaml
+name: R Version and Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Exact version (e.g. v1.2.3). Cannot be used with bump_type.'
+        required: false
+      bump_type:
+        description: 'Component to bump: major | minor | patch. Cannot be used with version.'
+        required: false
+      version_force:
+        description: 'When true, skip strict version progression checks.'
+        required: false
+        type: boolean
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: MiguelRodo/actions/r-version-release@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          version: ${{ inputs.version }}
+          bump_type: ${{ inputs.bump_type }}
+          version_force: ${{ inputs.version_force }}
+```
+
+</details>
+
+See the [action README](./r-version-release/README.md) for all inputs, outputs, and behavior details.
+
+---
+
+### [APT Repository Prune](./apt-repo-prune)
+
+Prunes superseded `.deb` package versions from a GitHub-hosted apt repository by rewriting Git history, then regenerates the apt metadata and force-pushes the result.
+
+<details>
+<summary>Minimal workflow</summary>
+
+```yaml
+name: Prune APT Repository
+
+on:
+  workflow_dispatch:
+    inputs:
+      retention:
+        description: 'Retention policy: latest | latest-per-minor | latest-per-major'
+        required: false
+        default: latest-per-major
+  schedule:
+    - cron: '0 3 * * 0'   # weekly on Sunday at 03:00 UTC
+
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: MiguelRodo/actions/apt-repo-prune@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          retention: ${{ inputs.retention || 'latest-per-major' }}
+          apt_signing_key: ${{ secrets.APT_SIGNING_KEY }}
+          apt_signing_key_passphrase: ${{ secrets.APT_SIGNING_KEY_PASSPHRASE }}
+```
+
+</details>
+
+See the [action README](./apt-repo-prune/README.md) for all inputs, retention policies, and how the history rewrite works.
+
+---
+
 ### [Publish Quarto Site](./publish-quarto-site)
 
 Publishes a Quarto site to the `gh-pages` branch, creating the branch automatically if it does not already exist.

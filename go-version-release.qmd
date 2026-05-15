@@ -1,4 +1,6 @@
-# Go Version and Release Action
+---
+title: "Go Version and Release"
+---
 
 Standalone composite action for pure Go releases. It resolves a semantic version, optionally validates strict progression from the latest semver tag, creates/pushes the release tag, updates floating major/minor tags, runs GoReleaser for native publishing (GitHub Releases/Homebrew/Scoop via `.goreleaser.yml`), and can also publish generated `.deb` artifacts to a separate GitHub repository as a structured apt repository.
 

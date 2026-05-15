@@ -16,6 +16,12 @@ website:
         text: Add Issues to Project
       - href: version-release.qmd
         text: Version and Release
+      - href: r-version-release.qmd
+        text: R Version and Release
+      - href: go-version-release.qmd
+        text: Go Version and Release
+      - href: apt-repo-prune.qmd
+        text: APT Repository Prune
       - href: publish-quarto-site.qmd
         text: Publish Quarto Site
     right:
