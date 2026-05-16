@@ -80,17 +80,20 @@ runs:
 
     - name: Set dynamic image name
       shell: bash
+      env:
+        IMAGE_NAME_INPUT: ${{ inputs.image_name }}
+        REGISTRY: ${{ inputs.registry }}
+        INPUT_TAG: ${{ inputs.tag }}
       run: |
         BRANCH_SUFFIX=${BRANCH_NAME//\//-}
 
-        if [ -z "${{ inputs.image_name }}" ]; then
-          echo "IMAGE_NAME=${{ inputs.registry }}/${GITHUB_REPOSITORY,,}-${BRANCH_SUFFIX,,}" >> $GITHUB_ENV
+        if [ -z "${IMAGE_NAME_INPUT}" ]; then
+          echo "IMAGE_NAME=${REGISTRY}/${GITHUB_REPOSITORY,,}-${BRANCH_SUFFIX,,}" >> $GITHUB_ENV
         else
-          echo "IMAGE_NAME=${{ inputs.image_name }}" >> $GITHUB_ENV
+          echo "IMAGE_NAME=${IMAGE_NAME_INPUT}" >> $GITHUB_ENV
         fi
 
         # Determine primary tag: use input, or auto-detect from GITHUB_REF on tag push
-        INPUT_TAG="${{ inputs.tag }}"
         if [ -n "$INPUT_TAG" ]; then
           IMAGE_TAG="$INPUT_TAG"
         elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
@@ -108,8 +111,10 @@ runs:
 
     - name: Check version progression
       shell: bash
+      env:
+        VERSION_FORCE: ${{ inputs.version_force }}
       run: |
-        if [ "${{ inputs.version_force }}" = "true" ]; then
+        if [ "${VERSION_FORCE}" = "true" ]; then
           echo "version_force=true; skipping version progression check."
           exit 0
         fi
@@ -186,8 +191,10 @@ runs:
 
     - name: Compute devcontainer subfolder
       shell: bash
+      env:
+        DEVCONTAINER_PATH_INPUT: ${{ inputs.devcontainer_path }}
       run: |
-        DEVCONTAINER_PATH="${{ inputs.devcontainer_path }}"
+        DEVCONTAINER_PATH="${DEVCONTAINER_PATH_INPUT}"
         DEVCONTAINER_PATH="${DEVCONTAINER_PATH%/}"
         DIR=$(dirname "$DEVCONTAINER_PATH")
         if [ "$DIR" = "." ]; then
@@ -219,9 +226,11 @@ runs:
     - name: Update or create prebuild/devcontainer.json
       if: ${{ inputs.create_prebuild_json == 'true' }}
       shell: bash
+      env:
+        DEVCONTAINER_PATH_INPUT: ${{ inputs.devcontainer_path }}
       run: |
         FULL_IMAGE_REF="${IMAGE_NAME}:${IMAGE_TAG}"
-        DEVCONTAINER_PATH="${{ inputs.devcontainer_path }}"
+        DEVCONTAINER_PATH="${DEVCONTAINER_PATH_INPUT}"
         DEVCONTAINER_JSON="${DEVCONTAINER_PATH}/devcontainer.json"
         PREBUILD_JSON="${DEVCONTAINER_PATH}/prebuild/devcontainer.json"
 
@@ -243,8 +252,10 @@ runs:
     - name: Commit and push changes
       if: ${{ inputs.create_prebuild_json == 'true' }}
       shell: bash
+      env:
+        DEVCONTAINER_PATH_INPUT: ${{ inputs.devcontainer_path }}
       run: |
-        DEVCONTAINER_PATH="${{ inputs.devcontainer_path }}"
+        DEVCONTAINER_PATH="${DEVCONTAINER_PATH_INPUT}"
         PREBUILD_JSON="${DEVCONTAINER_PATH}/prebuild/devcontainer.json"
 
         git config --local user.email "actions@github.com"

@@ -64,10 +64,10 @@ runs:
     - name: Determine version
       id: get_version
       shell: bash
+      env:
+        VERSION_INPUT: ${{ inputs.version }}
+        BUMP_INPUT: ${{ inputs.bump_type }}
       run: |
-        VERSION_INPUT="${{ inputs.version }}"
-        BUMP_INPUT="${{ inputs.bump_type }}"
-
         if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
           # version and bump_type are mutually exclusive
           if [ -n "$VERSION_INPUT" ] && [ -n "$BUMP_INPUT" ]; then
@@ -116,9 +116,9 @@ runs:
     - name: Check version progression
       if: inputs.version_check == 'true'
       shell: bash
+      env:
+        NEW_VERSION: ${{ steps.get_version.outputs.version }}
       run: |
-        NEW_VERSION="${{ steps.get_version.outputs.version }}"
-
         # Get the latest semver tag, ignoring the new tag if it already exists
         PREV_TAG=$(git tag --sort=version:refname \
           | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
@@ -136,11 +136,13 @@ runs:
     - name: Determine bump type
       id: determine_bump_type
       shell: bash
+      env:
+        BUMP_TYPE_INPUT: ${{ inputs.bump_type }}
+        NEW_VERSION: ${{ steps.get_version.outputs.version }}
       run: |
-        if [ -n "${{ inputs.bump_type }}" ]; then
-          BUMP_TYPE="${{ inputs.bump_type }}"
+        if [ -n "${BUMP_TYPE_INPUT}" ]; then
+          BUMP_TYPE="${BUMP_TYPE_INPUT}"
         else
-          NEW_VERSION="${{ steps.get_version.outputs.version }}"
           NEW_TAG="v${NEW_VERSION}"
 
           # All full semver tags sorted by version, excluding the new one
@@ -163,6 +165,9 @@ runs:
     - name: Update Python version
       id: update_python
       shell: bash
+      env:
+        GLOBAL_VERSION_INPUT: ${{ inputs.version }}
+        PY_INPUT_RAW: ${{ inputs.python_version }}
       run: |
         if [ ! -f pyproject.toml ]; then
           echo "No pyproject.toml found; skipping Python version update."
@@ -170,9 +175,9 @@ runs:
           exit 0
         fi
 
-        GLOBAL_VERSION="${{ inputs.version }}"
+        GLOBAL_VERSION="${GLOBAL_VERSION_INPUT}"
         GLOBAL_VERSION="${GLOBAL_VERSION#v}"
-        PY_INPUT="${{ inputs.python_version }}"
+        PY_INPUT="${PY_INPUT_RAW}"
         PY_INPUT="${PY_INPUT#v}"
 
         if [ -n "$PY_INPUT" ]; then
@@ -202,6 +207,9 @@ runs:
     - name: Update R version
       id: update_r
       shell: bash
+      env:
+        GLOBAL_VERSION_INPUT: ${{ inputs.version }}
+        R_INPUT_RAW: ${{ inputs.r_version }}
       run: |
         if [ ! -f DESCRIPTION ]; then
           echo "No DESCRIPTION found; skipping R version update."
@@ -209,9 +217,9 @@ runs:
           exit 0
         fi
 
-        GLOBAL_VERSION="${{ inputs.version }}"
+        GLOBAL_VERSION="${GLOBAL_VERSION_INPUT}"
         GLOBAL_VERSION="${GLOBAL_VERSION#v}"
-        R_INPUT="${{ inputs.r_version }}"
+        R_INPUT="${R_INPUT_RAW}"
         R_INPUT="${R_INPUT#v}"
 
         if [ -n "$R_INPUT" ]; then
@@ -240,6 +248,8 @@ runs:
 
     - name: Commit version changes
       shell: bash
+      env:
+        NEW_VERSION: ${{ steps.get_version.outputs.version }}
       run: |
         if git diff --quiet; then
           echo "No version file changes to commit."
@@ -250,14 +260,15 @@ runs:
           if [ ${#FILES_TO_ADD[@]} -gt 0 ]; then
             git add "${FILES_TO_ADD[@]}"
           fi
-          git commit -m "chore: bump version to ${{ steps.get_version.outputs.version }}"
+          git commit -m "chore: bump version to ${NEW_VERSION}"
           git push
         fi
 
     - name: Create or verify base tag
       shell: bash
+      env:
+        TAG: ${{ steps.get_version.outputs.tag }}
       run: |
-        TAG="${{ steps.get_version.outputs.tag }}"
         if git show-ref --tags --verify --quiet "refs/tags/$TAG"; then
           echo "Tag $TAG already exists."
         else
@@ -268,8 +279,9 @@ runs:
 
     - name: Update floating major and minor tags
       shell: bash
+      env:
+        TAG: ${{ steps.get_version.outputs.tag }}
       run: |
-        TAG="${{ steps.get_version.outputs.tag }}"
         MAJOR=$(echo "$TAG" | cut -d'.' -f1)
         MINOR=$(echo "$TAG" | cut -d'.' -f1,2)
 

@@ -109,10 +109,10 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   run grep -F 'export GIT_ASKPASS="$ASKPASS_SCRIPT"' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
-  run grep -F 'APT_PUSH_TOKEN="${{ inputs.apt_repo_token }}"' "$ACTION_FILE"
+  run grep -F 'APT_PUSH_TOKEN="${APT_REPO_TOKEN}"' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
-  run grep -F 'APT_PUSH_TOKEN="${{ inputs.github_token }}"' "$ACTION_FILE"
+  run grep -F 'APT_PUSH_TOKEN="${GITHUB_TOKEN_INPUT}"' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
   run grep -F 'export GIT_TOKEN_FOR_ASKPASS="$APT_PUSH_TOKEN"' "$ACTION_FILE"
@@ -147,10 +147,10 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
 }
 
 @test "apt publishing signs Release when apt_signing_key is provided, otherwise removes stale signed metadata" {
-  run grep -F 'APT_SIGNING_KEY="${{ inputs.apt_signing_key }}"' "$ACTION_FILE"
+  run grep -F 'APT_SIGNING_KEY: ${{ inputs.apt_signing_key }}' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
-  run grep -F 'APT_SIGNING_KEY_PASSPHRASE="${{ inputs.apt_signing_key_passphrase }}"' "$ACTION_FILE"
+  run grep -F 'APT_SIGNING_KEY_PASSPHRASE: ${{ inputs.apt_signing_key_passphrase }}' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
   run grep -F 'SIGNING_KEY_FINGERPRINT=""' "$ACTION_FILE"
