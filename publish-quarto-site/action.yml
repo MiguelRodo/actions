@@ -76,8 +76,9 @@ runs:
     - name: Install Python dependencies
       if: ${{ inputs.setup_python == 'true' }}
       shell: bash
+      env:
+        PROJ_PATH: ${{ inputs.path }}
       run: |
-        PROJ_PATH="${{ inputs.path }}"
         if [ -f "${PROJ_PATH}/requirements.txt" ]; then
           pip install -r "${PROJ_PATH}/requirements.txt"
         elif [ -f "${PROJ_PATH}/pyproject.toml" ]; then

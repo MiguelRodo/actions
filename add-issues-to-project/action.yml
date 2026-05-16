@@ -50,7 +50,7 @@ runs:
     - name: Authenticate with PAT
       shell: bash
       env:
-        PROJECT_TOKEN: "${{ inputs.ADD_ISSUES_TO_PROJECT_TOKEN  }}"
+        PROJECT_TOKEN: ${{ inputs.ADD_ISSUES_TO_PROJECT_TOKEN }}
       run: |
         unset GITHUB_TOKEN
         unset GH_TOKEN
@@ -71,12 +71,12 @@ runs:
     - name: Validate input and format used values
       shell: bash
       env:
-        PROJECT_NAME: "${{ inputs.project_name }}"
-        PROJECT_OWNER: "${{ inputs.project_owner }}"
-        IS_PROJECT_OWNER_ORG: "${{ inputs.is_project_owner_org }}"
-        SOURCE_REPO_NAME: "${{ inputs.source_repo_name }}"
-        SOURCE_REPO_OWNER: "${{ inputs.source_repo_owner }}"
-        CURRENT_USER: "${{ github.actor }}"
+        PROJECT_NAME: ${{ inputs.project_name }}
+        PROJECT_OWNER: ${{ inputs.project_owner }}
+        IS_PROJECT_OWNER_ORG: ${{ inputs.is_project_owner_org }}
+        SOURCE_REPO_NAME: ${{ inputs.source_repo_name }}
+        SOURCE_REPO_OWNER: ${{ inputs.source_repo_owner }}
+        CURRENT_USER: ${{ github.actor }}
       run: |
         if [ -z "${SOURCE_REPO_NAME}" ]; then
           SOURCE_REPO_NAME=$(basename "$(pwd)")
@@ -144,9 +144,9 @@ runs:
       id: get-project-id
       shell: bash
       env:
-        PROJECT_NAME: "${{ env.project_name }}"
-        PROJECT_OWNER: "${{ env.project_owner }}"
-        IS_PROJECT_OWNER_ORG: "${{ inputs.is_project_owner_org }}"
+        PROJECT_NAME: ${{ env.project_name }}
+        PROJECT_OWNER: ${{ env.project_owner }}
+        IS_PROJECT_OWNER_ORG: ${{ inputs.is_project_owner_org }}
       run: |
         echo "Getting project ID for project '${PROJECT_NAME}' owned by '${PROJECT_OWNER}'..."
         if [ "${IS_PROJECT_OWNER_ORG}" = "true" ]; then
@@ -186,7 +186,7 @@ runs:
       id: get-issues
       shell: bash
       env:
-        SOURCE_REPO: "${{ env.source_repo }}"
+        SOURCE_REPO: ${{ env.source_repo }}
       run: |
         issues=$(gh issue list --repo "${SOURCE_REPO}" --limit 9999 --json number --jq '.[].number' | tr '\n' ' ')
         if [ -z "$issues" ]; then
@@ -199,9 +199,9 @@ runs:
       id: add-issues
       shell: bash
       env:
-        ISSUES: "${{ env.issues }}"
-        PROJECT_ID: "${{ env.project_id }}"
-        SOURCE_REPO: "${{ env.source_repo }}"
+        ISSUES: ${{ env.issues }}
+        PROJECT_ID: ${{ env.project_id }}
+        SOURCE_REPO: ${{ env.source_repo }}
       run: |
         existing_issue_ids=()
         has_next_page=true

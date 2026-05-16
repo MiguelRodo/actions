@@ -47,10 +47,11 @@ runs:
 
     - name: Validate inputs and check required tools
       shell: bash
+      env:
+        RETENTION_RAW: ${{ inputs.retention }}
       run: |
         # Normalize to lowercase so the argument is case-agnostic.
-        RETENTION_INPUT="${{ inputs.retention }}"
-        RETENTION_INPUT="${RETENTION_INPUT,,}"
+        RETENTION_INPUT="${RETENTION_RAW,,}"
 
         case "$RETENTION_INPUT" in
           latest | latest-per-minor | latest-per-major) ;;
@@ -70,13 +71,14 @@ runs:
     - name: Analyze prune plan
       id: plan
       shell: bash
+      env:
+        RETENTION_RAW: ${{ inputs.retention }}
+        PUSH_TOKEN: ${{ inputs.token }}
       run: |
         REPO_INPUT="${{ github.repository }}"
         DEFAULT_BRANCH="${{ github.event.repository.default_branch || github.ref_name }}"
         # Normalize to lowercase so the argument is case-agnostic.
-        RETENTION="${{ inputs.retention }}"
-        RETENTION="${RETENTION,,}"
-        PUSH_TOKEN="${{ inputs.token }}"
+        RETENTION="${RETENTION_RAW,,}"
 
         # ── Build the authenticated remote URL ────────────────────────────────
         # Inject the token into the server URL so the action works on both
@@ -140,16 +142,17 @@ runs:
     - name: Rewrite history and regenerate metadata
       if: steps.plan.outputs.should_prune == 'true'
       shell: bash
+      env:
+        RETENTION_RAW: ${{ inputs.retention }}
+        APT_SIGNING_KEY: ${{ inputs.apt_signing_key }}
+        APT_SIGNING_KEY_PASSPHRASE: ${{ inputs.apt_signing_key_passphrase }}
+        PUSH_TOKEN: ${{ inputs.token }}
       run: |
         APT_REPO_DIR="${{ steps.plan.outputs.apt_repo_dir }}"
         PATHS_TO_REMOVE_FILE="${{ steps.plan.outputs.paths_to_remove_file }}"
         DEFAULT_BRANCH="${{ steps.plan.outputs.default_branch }}"
         REPO_INPUT="${{ github.repository }}"
-        RETENTION="${{ inputs.retention }}"
-        RETENTION="${RETENTION,,}"
-        APT_SIGNING_KEY="${{ inputs.apt_signing_key }}"
-        APT_SIGNING_KEY_PASSPHRASE="${{ inputs.apt_signing_key_passphrase }}"
-        PUSH_TOKEN="${{ inputs.token }}"
+        RETENTION="${RETENTION_RAW,,}"
 
         # ── Set up GPG signing when a signing key is supplied ────────────────
         SIGNING_KEY_FINGERPRINT=""
