@@ -1,4 +1,4 @@
-## 2024-05-16 - Prevent Shell Injection in GitHub Actions
-**Vulnerability:** User-controlled inputs (`${{ inputs.something }}`) were directly interpolated into bash scripts (`run:` blocks) in GitHub Actions, which can lead to shell injection vulnerabilities.
-**Learning:** GitHub Actions evaluate `${{ ... }}` expressions before running the script. If an input contains bash metacharacters (e.g. `'; r m - r f /; '`), it gets injected directly into the script content.
-**Prevention:** Always pass GitHub Actions inputs or variables to bash scripts via the `env:` context instead of direct interpolation, and reference them in the script as standard environment variables (`$ENV_VAR`).
+## 2024-05-18 - Prevent Shell Injection in GitHub Actions
+**Vulnerability:** User-controlled inputs (`${{ inputs.something }}`) and GitHub context variables (like `${{ github.ref_name }}`) were directly interpolated into bash scripts (`run:` blocks) in GitHub Actions. This allows attackers to craft branch names, inputs, or other contexts containing bash characters that execute arbitrary shell commands.
+**Learning:** Even built-in GitHub contexts (like `github.ref_name`, `github.event_name`) can sometimes contain untrusted data depending on the workflow trigger. Always map external data to environment variables first.
+**Prevention:** Always map `${{ ... }}` expressions to environment variables via the `env:` block, then reference the variable in bash using standard shell syntax (e.g., `VERSION="${INPUT_VERSION}"`).

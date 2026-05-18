@@ -68,7 +68,7 @@ runs:
         VERSION_INPUT: ${{ inputs.version }}
         BUMP_INPUT: ${{ inputs.bump_type }}
       run: |
-        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+        if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
           # version and bump_type are mutually exclusive
           if [ -n "$VERSION_INPUT" ] && [ -n "$BUMP_INPUT" ]; then
             echo "Error: cannot set both 'version' and 'bump_type'." >&2
@@ -95,8 +95,8 @@ runs:
             VERSION="${VERSION_INPUT#v}"
           fi
 
-        elif [ "${{ github.ref_type }}" = "tag" ]; then
-          VERSION="${{ github.ref_name }}"
+        elif [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+          VERSION="${GITHUB_REF_NAME}"
           VERSION="${VERSION#v}"
         else
           echo "Error: this action only runs on tag pushes or workflow_dispatch with version/bump_type." >&2

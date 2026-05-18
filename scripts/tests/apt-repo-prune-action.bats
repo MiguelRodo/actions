@@ -110,14 +110,14 @@ SELECT_SCRIPT="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)/apt-prune-sele
 }
 
 @test "apt-repo-prune uses github.repository context instead of repo input" {
-  run grep -F 'github.repository' "$ACTION_FILE"
+  run grep -F 'GITHUB_REPOSITORY' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 }
 
 @test "apt-repo-prune uses default_branch context for branch, not hardcoded main" {
   run grep -F 'github.event.repository.default_branch' "$ACTION_FILE"
   [ "$status" -eq 0 ]
-  run grep -F 'github.ref_name' "$ACTION_FILE"
+  run grep -F 'GITHUB_REF_NAME' "$ACTION_FILE"
   [ "$status" -eq 0 ]
   run grep -F -- '--branch main' "$ACTION_FILE"
   [ "$status" -ne 0 ]

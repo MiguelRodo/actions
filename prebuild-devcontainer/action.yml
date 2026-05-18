@@ -113,6 +113,7 @@ runs:
       shell: bash
       env:
         VERSION_FORCE: ${{ inputs.version_force }}
+        INPUT_GITHUB_TOKEN: ${{ inputs.github_token }}
       run: |
         if [ "${VERSION_FORCE}" = "true" ]; then
           echo "version_force=true; skipping version progression check."
@@ -143,7 +144,7 @@ runs:
         PACKAGE="${REST#*/}"
         ENCODED_PACKAGE="${PACKAGE//\//%2F}"
 
-        GITHUB_TOKEN="${{ inputs.github_token }}"
+        GITHUB_TOKEN="${INPUT_GITHUB_TOKEN}"
 
         # Try org packages endpoint, then user packages endpoint
         VERSIONS=$(curl -sf \
