@@ -204,6 +204,18 @@ runs:
           echo "DEVCONTAINER_SUBFOLDER=$DIR" >> $GITHUB_ENV
         fi
 
+    - name: Calculate and Export Tracking Metadata
+      shell: bash
+      run: |
+        CURRENT_BUMP_VERSION="${IMAGE_TAG}"
+        if [ -z "$CURRENT_BUMP_VERSION" ]; then
+          CURRENT_BUMP_VERSION="development"
+        fi
+        UTC_NOW=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+        echo "IMAGE_VERSION=${CURRENT_BUMP_VERSION}" >> $GITHUB_ENV
+        echo "IMAGE_BUILD_DATE=${UTC_NOW}" >> $GITHUB_ENV
+        echo "Host variables prepared: Version=$CURRENT_BUMP_VERSION, Date=$UTC_NOW"
+
     - name: Pre-build dev container image
       uses: devcontainers/ci@v0.3
       with:
