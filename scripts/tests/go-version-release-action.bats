@@ -118,7 +118,7 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   run grep -F 'export GIT_TOKEN_FOR_ASKPASS="$APT_PUSH_TOKEN"' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
-  run grep -F '${{ github.server_url }}/${APT_REPO_INPUT}.git' "$ACTION_FILE"
+  run grep -F '${GITHUB_SERVER_URL}/${APT_REPO_INPUT}.git' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
   run grep -F 'publish_deb() {' "$ACTION_FILE"

@@ -49,6 +49,7 @@ runs:
       shell: bash
       env:
         RETENTION_RAW: ${{ inputs.retention }}
+        DEFAULT_BRANCH_INPUT: ${{ github.event.repository.default_branch }}
       run: |
         # Normalize to lowercase so the argument is case-agnostic.
         RETENTION_INPUT="${RETENTION_RAW,,}"
@@ -73,17 +74,18 @@ runs:
       shell: bash
       env:
         RETENTION_RAW: ${{ inputs.retention }}
+        DEFAULT_BRANCH_INPUT: ${{ github.event.repository.default_branch }}
         PUSH_TOKEN: ${{ inputs.token }}
       run: |
-        REPO_INPUT="${{ github.repository }}"
-        DEFAULT_BRANCH="${{ github.event.repository.default_branch || github.ref_name }}"
+        REPO_INPUT="${GITHUB_REPOSITORY}"
+        DEFAULT_BRANCH="${DEFAULT_BRANCH_INPUT:-${GITHUB_REF_NAME}}"
         # Normalize to lowercase so the argument is case-agnostic.
         RETENTION="${RETENTION_RAW,,}"
 
         # ── Build the authenticated remote URL ────────────────────────────────
         # Inject the token into the server URL so the action works on both
         # GitHub.com and GitHub Enterprise Server.
-        SERVER_URL="${{ github.server_url }}"
+        SERVER_URL="${GITHUB_SERVER_URL}"
         AUTHENTICATED_REMOTE="${SERVER_URL/https:\/\//https:\/\/x-access-token:${PUSH_TOKEN}@}/${REPO_INPUT}.git"
 
         # ── Clone the apt repository with its full history ────────────────────
@@ -144,6 +146,7 @@ runs:
       shell: bash
       env:
         RETENTION_RAW: ${{ inputs.retention }}
+        DEFAULT_BRANCH_INPUT: ${{ github.event.repository.default_branch }}
         APT_SIGNING_KEY: ${{ inputs.apt_signing_key }}
         APT_SIGNING_KEY_PASSPHRASE: ${{ inputs.apt_signing_key_passphrase }}
         PUSH_TOKEN: ${{ inputs.token }}
@@ -151,7 +154,7 @@ runs:
         APT_REPO_DIR="${{ steps.plan.outputs.apt_repo_dir }}"
         PATHS_TO_REMOVE_FILE="${{ steps.plan.outputs.paths_to_remove_file }}"
         DEFAULT_BRANCH="${{ steps.plan.outputs.default_branch }}"
-        REPO_INPUT="${{ github.repository }}"
+        REPO_INPUT="${GITHUB_REPOSITORY}"
         RETENTION="${RETENTION_RAW,,}"
 
         # ── Set up GPG signing when a signing key is supplied ────────────────
@@ -197,7 +200,7 @@ runs:
         # ── Build the authenticated remote URL ────────────────────────────────
         # Inject the token into the server URL so the action works on both
         # GitHub.com and GitHub Enterprise Server.
-        SERVER_URL="${{ github.server_url }}"
+        SERVER_URL="${GITHUB_SERVER_URL}"
         AUTHENTICATED_REMOTE="${SERVER_URL/https:\/\//https:\/\/x-access-token:${PUSH_TOKEN}@}/${REPO_INPUT}.git"
 
         # ── Warn when any file to remove exists in the root commit ────────────

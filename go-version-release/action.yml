@@ -102,8 +102,8 @@ runs:
           VERSION=$("$GITHUB_ACTION_PATH/../scripts/apply-version-bump.sh" "$BUMP_INPUT" "$CURRENT")
         elif [ -n "$VERSION_INPUT" ]; then
           VERSION="${VERSION_INPUT#v}"
-        elif [ "${{ github.ref_type }}" = "tag" ]; then
-          VERSION="${{ github.ref_name }}"
+        elif [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+          VERSION="${GITHUB_REF_NAME}"
           VERSION="${VERSION#v}"
         else
           echo "Error: provide one of 'version' or 'bump_type', or run from a tag ref." >&2
@@ -297,7 +297,7 @@ runs:
         git clone \
           --branch main \
           --single-branch \
-          "${{ github.server_url }}/${APT_REPO_INPUT}.git" \
+          "${GITHUB_SERVER_URL}/${APT_REPO_INPUT}.git" \
           "$APT_REPO_DIR"
 
         declare -A ARCH_SEEN=()
