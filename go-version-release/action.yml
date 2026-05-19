@@ -32,10 +32,12 @@ inputs:
     description: "Version component to bump (major | minor | patch). Cannot be used with version."
     required: false
     default: ""
-  version_check:
-    description: "When true (default), enforce strict version progression from latest semver tag."
+  version_force:
+    description: >
+      When true (the default is false), skip strict version progression
+      checks (e.g., allowing downgrades or large version jumps).
     required: false
-    default: "true"
+    default: "false"
   go_version:
     description: "Go version to install with actions/setup-go."
     required: false
@@ -85,9 +87,21 @@ runs:
       id: get_version
       shell: bash
       env:
-        VERSION_INPUT: ${{ inputs.version }}
-        BUMP_INPUT: ${{ inputs.bump_type }}
+        RAW_VERSION: ${{ inputs.version }}
+        RAW_BUMP: ${{ inputs.bump_type }}
       run: |
+        # Massage version (trim whitespace, lowercase)
+        VERSION_INPUT=$(echo "$RAW_VERSION" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
+        if [ "$RAW_VERSION" != "$VERSION_INPUT" ] && [ -n "$RAW_VERSION" ]; then
+          echo "Note: Massaged version input from '$RAW_VERSION' to '$VERSION_INPUT'"
+        fi
+
+        # Massage bump_type (trim whitespace, lowercase)
+        BUMP_INPUT=$(echo "$RAW_BUMP" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
+        if [ "$RAW_BUMP" != "$BUMP_INPUT" ] && [ -n "$RAW_BUMP" ]; then
+          echo "Note: Massaged bump_type input from '$RAW_BUMP' to '$BUMP_INPUT'"
+        fi
+
         if [ -n "$VERSION_INPUT" ] && [ -n "$BUMP_INPUT" ]; then
           echo "Error: cannot set both 'version' and 'bump_type'." >&2
           exit 1
@@ -119,7 +133,7 @@ runs:
         echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
 
     - name: Check version progression
-      if: inputs.version_check == 'true'
+      if: inputs.version_force != 'true'
       shell: bash
       env:
         NEW_VERSION: ${{ steps.get_version.outputs.version }}
@@ -165,7 +179,7 @@ runs:
 
         git push origin "refs/tags/${TAG}"
 
-    - name: Update floating major and minor tags
+    - name: Update floating major, minor and latest tags
       shell: bash
       env:
         TAG: ${{ steps.get_version.outputs.tag }}
@@ -176,8 +190,10 @@ runs:
         echo "Updating floating tags to $TAG..."
         git tag -fa "$MINOR" -m "Update $MINOR to point to $TAG"
         git tag -fa "$MAJOR" -m "Update $MAJOR to point to $TAG"
+        git tag -fa "latest" -m "Update latest to point to $TAG"
         git push origin "refs/tags/$MINOR" --force
         git push origin "refs/tags/$MAJOR" --force
+        git push origin "refs/tags/latest" --force
 
     - name: Setup Go
       uses: actions/setup-go@v5

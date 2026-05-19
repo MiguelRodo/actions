@@ -27,7 +27,7 @@ if [ "$new_major" -lt "$prev_major" ] || \
    { [ "$new_major" -eq "$prev_major" ] && [ "$new_minor" -lt "$prev_minor" ]; } || \
    { [ "$new_major" -eq "$prev_major" ] && [ "$new_minor" -eq "$prev_minor" ] && [ "$new_patch" -le "$prev_patch" ]; }; then
   echo "Error: version '$NEW_VERSION' is not ahead of the previous release '$PREV_VERSION'." >&2
-  echo "  Set version_check: 'false' to override this guard." >&2
+  echo "  Set version_force: 'true' to override this guard." >&2
   exit 1
 fi
 
@@ -44,7 +44,7 @@ fi
 if [ "$VALID" = false ]; then
   echo "Error: version '$NEW_VERSION' is more than one increment ahead of '$PREV_VERSION'." >&2
   echo "  Valid next versions: ${next_major}.0.0, ${prev_major}.${next_minor}.0, ${prev_major}.${prev_minor}.${next_patch}" >&2
-  echo "  Set version_check: 'false' to override this guard." >&2
+  echo "  Set version_force: 'true' to override this guard." >&2
   exit 1
 fi
 

@@ -23,7 +23,7 @@ on:
       bump_type:
         description: 'Component to bump: major | minor | patch. Cannot be used with version.'
         required: false
-      version_check:
+      version_force:
         description: 'Run strict version progression checks (true/false).'
         required: false
       go_version:
@@ -59,7 +59,7 @@ jobs:
           apt_signing_key_passphrase: ${{ secrets.APT_SIGNING_KEY_PASSPHRASE }}
           version: ${{ inputs.version }}
           bump_type: ${{ inputs.bump_type }}
-          version_check: ${{ inputs.version_check }}
+          version_force: ${{ inputs.version_force }}
           go_version: ${{ inputs.go_version }}
           goreleaser_config: ${{ inputs.goreleaser_config }}
           apt_repo: ${{ inputs.apt_repo }}
@@ -77,7 +77,7 @@ jobs:
 | `github_token` | GitHub token for pushing tags and publishing releases. | **Yes** |
 | `version` | Exact version (e.g. `1.2.3`). Cannot be used with `bump_type`. | No |
 | `bump_type` | Version component to bump: `major`, `minor`, or `patch`. Cannot be used with `version`. | No |
-| `version_check` | When `true` (default), enforce strict progression from latest semver tag. | No |
+| `version_force` | When `true` (the default is false), skip strict version progression checks (e.g., allowing downgrades or large version jumps). | No |
 | `go_version` | Go version for `actions/setup-go` (default `1.22`). | No |
 | `goreleaser_config` | Path to the GoReleaser configuration file (default `.goreleaser.yml`). | No |
 | `apt_repo` | Optional GitHub repository in `owner/name` form. When set, generated `.deb` artifacts from `dist/` are published to that repo's `main` branch using a structured apt layout (`pool/` and `dists/stable/main/binary-*`). | No |
@@ -104,7 +104,7 @@ jobs:
 
 ## Version progression guard
 
-When `version_check: true`, the action validates the new version against the latest
+When `version_force: true`, the action validates the new version against the latest
 previous semver tag using `scripts/check-version-progression.sh`.
 
 ## Tag behavior
