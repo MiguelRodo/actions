@@ -79,15 +79,28 @@ runs:
         fi
 
         if [ -n "$BUMP_INPUT" ]; then
+          if [ ! -f DESCRIPTION ]; then
+            echo "Error: No DESCRIPTION file found in the root directory. This action must be run in an R package repository." >&2
+            exit 1
+          fi
+
           PREV_TAG=$(git tag --sort=version:refname \
             | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
             | tail -1 || true)
           CURRENT="${PREV_TAG#v}"
           if [ -z "$CURRENT" ]; then
-            CURRENT="0.0.0"
+            CURRENT=$(grep -E '^Version:' DESCRIPTION | awk '{print $2}' | tr -d '[:space:]')
+          fi
+          if [ -z "$CURRENT" ]; then
+            echo "Error: Could not determine current version from tags or DESCRIPTION file." >&2
+            exit 1
           fi
           VERSION=$("$GITHUB_ACTION_PATH/../scripts/apply-version-bump.sh" "$BUMP_INPUT" "$CURRENT")
         else
+          if [ ! -f DESCRIPTION ]; then
+            echo "Error: No DESCRIPTION file found in the root directory. This action must be run in an R package repository." >&2
+            exit 1
+          fi
           VERSION="${VERSION_INPUT#v}"
         fi
 
@@ -126,11 +139,6 @@ runs:
       env:
         NEW_VERSION: ${{ steps.get_version.outputs.version }}
       run: |
-        if [ ! -f DESCRIPTION ]; then
-          echo "Error: No DESCRIPTION file found in the root directory. This action must be run in an R package repository." >&2
-          exit 1
-        fi
-
         sed -i "s/^Version: .*/Version: ${NEW_VERSION}/" DESCRIPTION
         echo "R version updated to ${NEW_VERSION}"
 
