@@ -63,7 +63,7 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
 }
 
 @test "version progression step uses check-version-progression script" {
-  run grep -F "if: inputs.version_check == 'true'" "$ACTION_FILE"
+  run grep -F "if: inputs.version_force != 'true'" "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
   run grep -F '$GITHUB_ACTION_PATH/../scripts/check-version-progression.sh' "$ACTION_FILE"

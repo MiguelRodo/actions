@@ -28,7 +28,7 @@ inputs:
     description: >
       When true (the default is false), skip strict version progression
       checks (e.g., allowing downgrades or large version jumps).
-      Functions identically to version_check=false in other actions.
+
     required: false
     default: "false"
 

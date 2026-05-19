@@ -37,7 +37,7 @@ on:
       r_version:
         description: 'Override: exact version to set for the R package (e.g. 1.2.3).'
         required: false
-      version_check:
+      version_force:
         description: >
           Set to false to skip the guard that prevents downgrading or jumping
           more than one version increment at a time. Defaults to true.
@@ -63,7 +63,7 @@ jobs:
           bump_type: ${{ inputs.bump_type }}
           python_version: ${{ inputs.python_version }}
           r_version: ${{ inputs.r_version }}
-          version_check: ${{ inputs.version_check }}
+          version_force: ${{ inputs.version_force }}
 ```
 
 ## Permissions
@@ -93,7 +93,7 @@ permissions:
 | `bump_type` | Version component to bump: `major`, `minor`, or `patch`. Cannot be used with `version`. | No |
 | `python_version` | Per-package override: exact version for the Python package. | No |
 | `r_version` | Per-package override: exact version for the R package. | No |
-| `version_check` | When `true` (default), abort if the version is not exactly one increment ahead of the latest tag and not behind it. Set to `false` to skip this guard. | No |
+| `version_force` | When `true` (the default is false), skip strict version progression checks (e.g., allowing downgrades or large version jumps). | No |
 
 ## Outputs
 

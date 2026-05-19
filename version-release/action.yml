@@ -35,14 +35,12 @@ inputs:
     description: "Override: exact version to set for the R package (e.g. 1.2.3)."
     required: false
     default: ""
-  version_check:
+  version_force:
     description: >
-      When true (the default), abort if the resolved version is not exactly one
-      major, minor, or patch bump ahead of the latest semver tag — preventing
-      accidental downgrades or large version jumps.
-      Set to false to skip this guard.
+      When true (the default is false), skip strict version progression
+      checks (e.g., allowing downgrades or large version jumps).
     required: false
-    default: "true"
+    default: "false"
 
 outputs:
   version:
@@ -65,9 +63,21 @@ runs:
       id: get_version
       shell: bash
       env:
-        VERSION_INPUT: ${{ inputs.version }}
-        BUMP_INPUT: ${{ inputs.bump_type }}
+        RAW_VERSION: ${{ inputs.version }}
+        RAW_BUMP: ${{ inputs.bump_type }}
       run: |
+        # Massage version (trim whitespace, lowercase)
+        VERSION_INPUT=$(echo "$RAW_VERSION" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
+        if [ "$RAW_VERSION" != "$VERSION_INPUT" ] && [ -n "$RAW_VERSION" ]; then
+          echo "Note: Massaged version input from '$RAW_VERSION' to '$VERSION_INPUT'"
+        fi
+
+        # Massage bump_type (trim whitespace, lowercase)
+        BUMP_INPUT=$(echo "$RAW_BUMP" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
+        if [ "$RAW_BUMP" != "$BUMP_INPUT" ] && [ -n "$RAW_BUMP" ]; then
+          echo "Note: Massaged bump_type input from '$RAW_BUMP' to '$BUMP_INPUT'"
+        fi
+
         if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
           # version and bump_type are mutually exclusive
           if [ -n "$VERSION_INPUT" ] && [ -n "$BUMP_INPUT" ]; then
@@ -114,7 +124,7 @@ runs:
         echo "Resolved version: $VERSION"
 
     - name: Check version progression
-      if: inputs.version_check == 'true'
+      if: inputs.version_force != 'true'
       shell: bash
       env:
         NEW_VERSION: ${{ steps.get_version.outputs.version }}
@@ -137,9 +147,10 @@ runs:
       id: determine_bump_type
       shell: bash
       env:
-        BUMP_TYPE_INPUT: ${{ inputs.bump_type }}
+        RAW_BUMP: ${{ inputs.bump_type }}
         NEW_VERSION: ${{ steps.get_version.outputs.version }}
       run: |
+        BUMP_TYPE_INPUT=$(echo "$RAW_BUMP" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
         if [ -n "${BUMP_TYPE_INPUT}" ]; then
           BUMP_TYPE="${BUMP_TYPE_INPUT}"
         else
@@ -175,9 +186,9 @@ runs:
           exit 0
         fi
 
-        GLOBAL_VERSION="${GLOBAL_VERSION_INPUT}"
+        GLOBAL_VERSION=$(echo "${GLOBAL_VERSION_INPUT}" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
         GLOBAL_VERSION="${GLOBAL_VERSION#v}"
-        PY_INPUT="${PY_INPUT_RAW}"
+        PY_INPUT=$(echo "${PY_INPUT_RAW}" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
         PY_INPUT="${PY_INPUT#v}"
 
         if [ -n "$PY_INPUT" ]; then
@@ -217,9 +228,9 @@ runs:
           exit 0
         fi
 
-        GLOBAL_VERSION="${GLOBAL_VERSION_INPUT}"
+        GLOBAL_VERSION=$(echo "${GLOBAL_VERSION_INPUT}" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
         GLOBAL_VERSION="${GLOBAL_VERSION#v}"
-        R_INPUT="${R_INPUT_RAW}"
+        R_INPUT=$(echo "${R_INPUT_RAW}" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
         R_INPUT="${R_INPUT#v}"
 
         if [ -n "$R_INPUT" ]; then
