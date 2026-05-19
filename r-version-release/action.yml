@@ -168,7 +168,7 @@ runs:
           git push origin "$TAG"
         fi
 
-    - name: Update floating major and minor tags
+    - name: Update floating major, minor and latest tags
       shell: bash
       env:
         TAG: ${{ steps.get_version.outputs.tag }}
@@ -179,8 +179,10 @@ runs:
         echo "Updating floating tags to $TAG..."
         git tag -fa "$MINOR" -m "Update $MINOR to point to $TAG"
         git tag -fa "$MAJOR" -m "Update $MAJOR to point to $TAG"
+        git tag -fa "latest" -m "Update latest tag"
         git push origin "$MINOR" --force
         git push origin "$MAJOR" --force
+        git push origin "latest" --force
 
     - name: Set up R
       uses: r-lib/actions/setup-r@v2
