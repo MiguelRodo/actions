@@ -236,7 +236,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">bump_type</span><span class="kw">:</span></span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">description</span><span class="kw">:</span><span class="at"> </span><span class="st">'Component to bump: major | minor | patch. Cannot be used with version.'</span></span>
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">required</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">version_check</span><span class="kw">:</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">version_force</span><span class="kw">:</span></span>
 <span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">description</span><span class="kw">:</span><span class="at"> </span><span class="st">'Run strict version progression checks (true/false).'</span></span>
 <span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">required</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
 <span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">go_version</span><span class="kw">:</span></span>
@@ -272,7 +272,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">apt_signing_key_passphrase</span><span class="kw">:</span><span class="at"> ${{ secrets.APT_SIGNING_KEY_PASSPHRASE }}</span></span>
 <span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">version</span><span class="kw">:</span><span class="at"> ${{ inputs.version }}</span></span>
 <span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">bump_type</span><span class="kw">:</span><span class="at"> ${{ inputs.bump_type }}</span></span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">version_check</span><span class="kw">:</span><span class="at"> ${{ inputs.version_check }}</span></span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">version_force</span><span class="kw">:</span><span class="at"> ${{ inputs.version_force }}</span></span>
 <span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">go_version</span><span class="kw">:</span><span class="at"> ${{ inputs.go_version }}</span></span>
 <span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">goreleaser_config</span><span class="kw">:</span><span class="at"> ${{ inputs.goreleaser_config }}</span></span>
 <span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">apt_repo</span><span class="kw">:</span><span class="at"> ${{ inputs.apt_repo }}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -313,8 +313,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>No</td>
 </tr>
 <tr class="even">
-<td><code>version_check</code></td>
-<td>When <code>true</code> (default), enforce strict progression from latest semver tag.</td>
+<td><code>version_force</code></td>
+<td>When <code>true</code> (the default is false), skip strict version progression checks (e.g., allowing downgrades or large version jumps).</td>
 <td>No</td>
 </tr>
 <tr class="odd">
@@ -392,7 +392,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="version-progression-guard" class="level2">
 <h2 class="anchored" data-anchor-id="version-progression-guard">Version progression guard</h2>
-<p>When <code>version_check: true</code>, the action validates the new version against the latest previous semver tag using <code>scripts/check-version-progression.sh</code>.</p>
+<p>When <code>version_force: true</code>, the action validates the new version against the latest previous semver tag using <code>scripts/check-version-progression.sh</code>.</p>
 </section>
 <section id="tag-behavior" class="level2">
 <h2 class="anchored" data-anchor-id="tag-behavior">Tag behavior</h2>
