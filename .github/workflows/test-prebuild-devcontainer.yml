@@ -1,0 +1,43 @@
+name: Test prebuild-devcontainer
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-prebuild-devcontainer:
+    runs-on: ubuntu-latest
+    services:
+      registry:
+        image: registry:2
+        ports:
+          - 5000:5000
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create mock devcontainer.json
+        run: |
+          mkdir -p .devcontainer
+          cat << 'JSON' > .devcontainer/devcontainer.json
+          {
+            "image": "mcr.microsoft.com/devcontainers/base:ubuntu"
+          }
+          JSON
+
+      - name: Run prebuild-devcontainer action
+        uses: ./prebuild-devcontainer
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          create_prebuild_json: 'false'
+          image_name: localhost:5000/test-repo-main
+          tag: v1.0.0
+          registry: localhost:5000
+          registry_username: testuser
+
+      - name: Verify image was pushed to local registry
+        run: |
+          curl -s http://localhost:5000/v2/_catalog | grep "test-repo-main"
+          curl -s http://localhost:5000/v2/test-repo-main/tags/list | grep "v1.0.0"
