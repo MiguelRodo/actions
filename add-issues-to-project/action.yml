@@ -184,21 +184,26 @@ runs:
       env:
         SOURCE_REPO: ${{ env.source_repo }}
       run: |
-        issues=$(gh issue list --repo "${SOURCE_REPO}" --limit 9999 --json number --jq '.[].number' | tr '\n' ' ')
-        if [ -z "$issues" ]; then
+        issues_json=$(gh issue list --repo "${SOURCE_REPO}" --limit 9999 --json number,id)
+        if [ "$issues_json" = "[]" ] || [ -z "$issues_json" ]; then
           echo "No issues found in repository '${SOURCE_REPO}'."
+          echo "[]" > "$RUNNER_TEMP/issues_data.json"
           exit 0
         fi
-        echo "issues=$issues" >> $GITHUB_ENV
+        echo "$issues_json" > "$RUNNER_TEMP/issues_data.json"
 
     - name: Add issues to project if not already present
       id: add-issues
       shell: bash
       env:
-        ISSUES: ${{ env.issues }}
         PROJECT_ID: ${{ env.project_id }}
         SOURCE_REPO: ${{ env.source_repo }}
       run: |
+        if [ ! -s "$RUNNER_TEMP/issues_data.json" ] || [ "$(cat "$RUNNER_TEMP/issues_data.json")" = "[]" ]; then
+          echo "issues_added=0" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
         existing_issue_ids=()
         has_next_page=true
         end_cursor=""
@@ -215,14 +220,13 @@ runs:
 
         existing_issue_ids_str="${existing_issue_ids[*]}"
         issues_added=0
-        for issue in $ISSUES; do
-          issue_node_id=$(gh issue view "$issue" --repo "${SOURCE_REPO}" --json id --jq '.id')
+        while read -r issue_number issue_node_id; do
           if [[ " ${existing_issue_ids_str[@]} " =~ " $issue_node_id " ]]; then
-            echo "Issue #$issue is already in the project. Skipping."
+            echo "Issue #$issue_number is already in the project. Skipping."
           else
             gh api graphql -f query='mutation($projectId: ID!, $contentId: ID!) { addProjectV2ItemById(input: {projectId: $projectId, contentId: $contentId}) { item { id } } }' -f projectId="$PROJECT_ID" -f contentId="$issue_node_id"
-            echo "Added issue #$issue to the project."
+            echo "Added issue #$issue_number to the project."
             issues_added=$((issues_added + 1))
           fi
-        done
+        done < <(jq -r '.[] | "\(.number) \(.id)"' "$RUNNER_TEMP/issues_data.json")
         echo "issues_added=${issues_added}" >> "$GITHUB_OUTPUT"
