@@ -1,0 +1,106 @@
+name: Test Add Issues to Project Action
+
+on:
+  push:
+    paths:
+      - 'add-issues-to-project/**'
+      - '.github/workflows/test-add-issues-to-project.yml'
+  pull_request:
+    paths:
+      - 'add-issues-to-project/**'
+      - '.github/workflows/test-add-issues-to-project.yml'
+
+jobs:
+  test-action:
+    name: Test Action
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create mock gh CLI
+        run: |
+          # shellcheck disable=SC2086
+          mkdir -p "$HOME"/mock-bin
+          cat << 'EOF' > "$HOME"/mock-bin/gh
+          #!/bin/bash
+          # Mock the gh CLI
+          if [[ "$1" == "--version" ]]; then
+            echo "gh version 2.0.0 (mock)"
+            exit 0
+          fi
+
+          if [[ "$1" == "auth" ]]; then
+            exit 0
+          fi
+
+          if [[ "$1" == "extension" ]]; then
+            exit 0
+          fi
+
+          if [[ "$1" == "api" ]]; then
+            # Validation checks
+            if [[ "$2" == "orgs/"* || "$2" == "users/"* || "$2" == "repos/"* ]]; then
+              exit 0
+            fi
+
+            # GraphQL: add to project
+            if [[ "$*" == *"addProjectV2ItemById"* ]]; then
+              echo '{"data": {"addProjectV2ItemById": {"item": {"id": "mock-item-id"}}}}'
+              exit 0
+            fi
+
+            # GraphQL: get existing issues
+            if [[ "$*" == *"query(\$projectId: ID!"* ]]; then
+              echo '{"data": {"node": {"items": {"pageInfo": {"hasNextPage": false, "endCursor": null}, "nodes": []}}}}'
+              exit 0
+            fi
+
+            exit 0
+          fi
+
+          if [[ "$1" == "projects" && "$2" == "list" ]]; then
+            echo '{"projects":[{"title":"test-project","id":"mock-project-id"}]}'
+            exit 0
+          fi
+
+          if [[ "$1" == "issue" && "$2" == "list" ]]; then
+            echo "1"
+            echo "2"
+            exit 0
+          fi
+
+          if [[ "$1" == "issue" && "$2" == "view" ]]; then
+            if [[ "$*" == *"1"* ]]; then
+              echo '{"id":"node-id-1"}'
+            else
+              echo '{"id":"node-id-2"}'
+            fi
+            exit 0
+          fi
+
+          echo "Mock unhandled: $*" >&2
+          exit 0
+          EOF
+          chmod +x "$HOME"/mock-bin/gh
+          echo "$HOME/mock-bin" >> "$GITHUB_PATH"
+
+      - name: Run action
+        id: add-issues
+        uses: ./add-issues-to-project
+        with:
+          project_name: "test-project"
+          project_owner: "test-owner"
+          is_project_owner_org: "false"
+          source_repo_name: "test-repo"
+          source_repo_owner: "test-owner"
+          ADD_ISSUES_TO_PROJECT_TOKEN: "mock-token"
+
+      - name: Verify outputs
+        run: |
+          # shellcheck disable=SC2086
+          if [ "${{ steps.add-issues.outputs.issues_added }}" != "2" ]; then
+            echo "Expected 2 issues added, but got ${{ steps.add-issues.outputs.issues_added }}"
+            exit 1
+          fi
+          echo "Integration test passed."

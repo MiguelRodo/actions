@@ -19,7 +19,7 @@ SCRIPT_DIR=$(dirname "$0")
 PARSED=$("$SCRIPT_DIR/parse-semver.sh" "$TAG")
 
 if [ -n "$PARSED" ]; then
-  IFS='|' read -r PREFIX MAJOR MINOR PATCH <<< "$PARSED"
+  IFS='|' read -r PREFIX MAJOR MINOR _ <<< "$PARSED"
   if [ -n "$PREFIX" ]; then
     ALIAS_TAGS="${PREFIX}-v${MAJOR}.${MINOR},${PREFIX}-v${MAJOR}"
   else
