@@ -228,6 +228,9 @@ runs:
         imageName: ${{ env.IMAGE_NAME }}
         imageTag: ${{ env.IMAGE_TAG }}
         push: always
+        # Override the default 'push' filter to ensure images are pushed even during PRs or manual dispatches.
+        # Use an empty string so we don't have to specify all possible events (or just PR and push).
+        eventFilterForPush: ""
         noCache: ${{ inputs.no_cache }}
         subFolder: ${{ env.DEVCONTAINER_SUBFOLDER }}
 
@@ -284,7 +287,7 @@ runs:
         if git diff --cached --quiet; then
           echo "No changes to commit"
         else
-          git commit -m "Update prebuild devcontainer.json with image ${IMAGE_NAME}:${IMAGE_TAG}"
+          git commit -m "Update prebuild devcontainer.json with image ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}"
 
           if ! git push; then
             echo "::error::Failed to push the prebuild/devcontainer.json file to the repository."
