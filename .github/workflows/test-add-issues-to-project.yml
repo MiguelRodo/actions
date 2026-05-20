@@ -97,10 +97,12 @@ jobs:
           ADD_ISSUES_TO_PROJECT_TOKEN: "mock-token"
 
       - name: Verify outputs
+        env:
+          ISSUES_ADDED: ${{ steps.add-issues.outputs.issues_added }}
         run: |
           # shellcheck disable=SC2086
-          if [ "${{ steps.add-issues.outputs.issues_added }}" != "2" ]; then
-            echo "Expected 2 issues added, but got ${{ steps.add-issues.outputs.issues_added }}"
+          if [ "${ISSUES_ADDED}" != "2" ]; then
+            echo "Expected 2 issues added, but got ${ISSUES_ADDED}"
             exit 1
           fi
           echo "Integration test passed."

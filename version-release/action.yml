@@ -179,6 +179,7 @@ runs:
       env:
         GLOBAL_VERSION_INPUT: ${{ inputs.version }}
         PY_INPUT_RAW: ${{ inputs.python_version }}
+        BUMP_TYPE_INPUT: ${{ steps.determine_bump_type.outputs.bump_type }}
       run: |
         if [ ! -f pyproject.toml ]; then
           echo "No pyproject.toml found; skipping Python version update."
@@ -196,7 +197,7 @@ runs:
         elif [ -n "$GLOBAL_VERSION" ]; then
           NEW_PY_VERSION="$GLOBAL_VERSION"
         else
-          BUMP_TYPE="${{ steps.determine_bump_type.outputs.bump_type }}"
+          BUMP_TYPE="${BUMP_TYPE_INPUT}"
           CURRENT_PY=$(sed -n "s/^version = [\"']\([^\"']*\)[\"']/\1/p" pyproject.toml | tr -d '[:space:]')
           if [ -z "$CURRENT_PY" ]; then
             echo "Error: could not read version from pyproject.toml" >&2
@@ -221,6 +222,7 @@ runs:
       env:
         GLOBAL_VERSION_INPUT: ${{ inputs.version }}
         R_INPUT_RAW: ${{ inputs.r_version }}
+        BUMP_TYPE_INPUT: ${{ steps.determine_bump_type.outputs.bump_type }}
       run: |
         if [ ! -f DESCRIPTION ]; then
           echo "No DESCRIPTION found; skipping R version update."
@@ -238,7 +240,7 @@ runs:
         elif [ -n "$GLOBAL_VERSION" ]; then
           NEW_R_VERSION="$GLOBAL_VERSION"
         else
-          BUMP_TYPE="${{ steps.determine_bump_type.outputs.bump_type }}"
+          BUMP_TYPE="${BUMP_TYPE_INPUT}"
           CURRENT_R=$(sed -n 's/^Version: \([0-9][0-9.]*\).*/\1/p' DESCRIPTION | tr -d '[:space:]')
           if [ -z "$CURRENT_R" ]; then
             echo "Error: could not read Version from DESCRIPTION" >&2

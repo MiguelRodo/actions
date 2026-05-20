@@ -68,7 +68,7 @@ ACTION_FILE="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/prebuild-devc
 @test "prebuild-devcontainer commits and pushes changes when create_prebuild_json is true" {
   run grep -F 'Commit and push changes' "$ACTION_FILE"
   [ "$status" -eq 0 ]
-  run grep -F 'git commit -m "Update prebuild devcontainer.json with image ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}"' "$ACTION_FILE"
+  run grep -F 'git commit -m "Update prebuild devcontainer.json with image ${IMAGE_NAME}:${IMAGE_TAG}"' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 }
 

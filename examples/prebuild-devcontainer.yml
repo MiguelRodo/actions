@@ -46,6 +46,9 @@ jobs:
           # registry: "ghcr.io"
 
       - name: Show outputs
+        env:
+          IMAGE_REF: ${{ steps.prebuild.outputs.image_ref }}
+          ALIAS_TAGS: ${{ steps.prebuild.outputs.alias_tags }}
         run: |
-          echo "Image: ${{ steps.prebuild.outputs.image_ref }}"
-          echo "Alias tags: ${{ steps.prebuild.outputs.alias_tags }}"
+          echo "Image: ${IMAGE_REF}"
+          echo "Alias tags: ${ALIAS_TAGS}"

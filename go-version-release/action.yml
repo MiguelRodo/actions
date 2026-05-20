@@ -71,8 +71,10 @@ runs:
   steps:
     - name: Validate Linux runner
       shell: bash
+      env:
+        RUNNER_OS: ${{ runner.os }}
       run: |
-        if [ "${{ runner.os }}" != "Linux" ]; then
+        if [ "${RUNNER_OS}" != "Linux" ]; then
           echo "Error: go-version-release currently supports Linux runners only. Use a Linux runner such as ubuntu-latest." >&2
           exit 1
         fi
@@ -218,6 +220,7 @@ runs:
         GITHUB_TOKEN_INPUT: ${{ inputs.github_token }}
         APT_SIGNING_KEY: ${{ inputs.apt_signing_key }}
         APT_SIGNING_KEY_PASSPHRASE: ${{ inputs.apt_signing_key_passphrase }}
+        TAG: ${{ steps.get_version.outputs.tag }}
       run: |
         mapfile -d '' DEB_FILES < <(find dist -type f -name '*.deb' -print0 | sort -z)
 
@@ -429,6 +432,6 @@ runs:
             exit 0
           fi
 
-          git commit -m "Publish Debian packages for ${{ steps.get_version.outputs.tag }}"
+          git commit -m "Publish Debian packages for $TAG"
           git push origin HEAD:main
         )
