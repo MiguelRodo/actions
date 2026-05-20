@@ -108,21 +108,19 @@ runs:
 
         # check that owners exist
         if [ "${IS_PROJECT_OWNER_ORG}" = "true" ]; then
-          gh api orgs/"${PROJECT_OWNER_FINAL}" > /dev/null
-          if [ $? -ne 0 ]; then
-            echo "Error: Organization '${PROJECT_OWNER_FINAL}' not found."
-            exit 1
-          else 
-            echo "Organization '${PROJECT_OWNER_FINAL}' found."
-          fi
+          OWNER_TYPE="orgs"
+          OWNER_LABEL="Organization"
         else
-          gh api users/"${PROJECT_OWNER_FINAL}" > /dev/null
-          if [ $? -ne 0 ]; then
-            echo "Error: User '${PROJECT_OWNER_FINAL}' not found."
-            exit 1
-          else
-            echo "User '${PROJECT_OWNER_FINAL}' found."
-          fi
+          OWNER_TYPE="users"
+          OWNER_LABEL="User"
+        fi
+
+        gh api "${OWNER_TYPE}/${PROJECT_OWNER_FINAL}" > /dev/null
+        if [ $? -ne 0 ]; then
+          echo "Error: ${OWNER_LABEL} '${PROJECT_OWNER_FINAL}' not found."
+          exit 1
+        else
+          echo "${OWNER_LABEL} '${PROJECT_OWNER_FINAL}' found."
         fi
 
         # check that repo exists
