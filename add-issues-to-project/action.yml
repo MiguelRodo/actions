@@ -167,7 +167,7 @@ runs:
         echo "project_list: $project_list"
 
         # Attempt to extract the project ID
-        project_id=$(echo "$project_list" | jq -r '.projects[] | select(.title=="'"${PROJECT_NAME}"'") | .id') || {
+        project_id=$(echo "$project_list" | jq -r --arg title "${PROJECT_NAME}" '.projects[] | select(.title==$title) | .id') || {
           echo "Error: Could not extract project ID."
           exit 1
         }
