@@ -228,6 +228,8 @@ runs:
         imageName: ${{ env.IMAGE_NAME }}
         imageTag: ${{ env.IMAGE_TAG }}
         push: always
+        # Override the default 'push' filter to ensure images are pushed even during PRs or manual dispatches
+        eventFilterForPush: ${{ github.event_name }}
         noCache: ${{ inputs.no_cache }}
         subFolder: ${{ env.DEVCONTAINER_SUBFOLDER }}
 
