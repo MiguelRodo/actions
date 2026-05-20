@@ -126,12 +126,15 @@ runs:
         fi
 
         # Only check SemVer tags
-        if [[ "${IMAGE_TAG}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
-          NEW_VERSION="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}"
-          TAG_PREFIX=""
-        elif [[ "${IMAGE_TAG}" =~ ^(.+)-v([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
-          TAG_PREFIX="${BASH_REMATCH[1]}-"
-          NEW_VERSION="${BASH_REMATCH[2]}.${BASH_REMATCH[3]}.${BASH_REMATCH[4]}"
+        PARSED=$("$GITHUB_ACTION_PATH/../scripts/parse-semver.sh" "${IMAGE_TAG}")
+        if [ -n "$PARSED" ]; then
+          IFS='|' read -r PREFIX MAJOR MINOR PATCH <<< "$PARSED"
+          NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          if [ -n "$PREFIX" ]; then
+            TAG_PREFIX="${PREFIX}-"
+          else
+            TAG_PREFIX=""
+          fi
         else
           echo "Tag '${IMAGE_TAG}' is not a SemVer tag; skipping version progression check."
           exit 0

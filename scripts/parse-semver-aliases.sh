@@ -15,15 +15,16 @@ set -euo pipefail
 TAG="${1:?Usage: parse-semver-aliases.sh <TAG>}"
 ALIAS_TAGS=""
 
-if [[ "$TAG" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
-  MAJOR="${BASH_REMATCH[1]}"
-  MINOR="${BASH_REMATCH[2]}"
-  ALIAS_TAGS="v${MAJOR}.${MINOR},v${MAJOR}"
-elif [[ "$TAG" =~ ^(.+)-v([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
-  PREFIX="${BASH_REMATCH[1]}"
-  MAJOR="${BASH_REMATCH[2]}"
-  MINOR="${BASH_REMATCH[3]}"
-  ALIAS_TAGS="${PREFIX}-v${MAJOR}.${MINOR},${PREFIX}-v${MAJOR}"
+SCRIPT_DIR=$(dirname "$0")
+PARSED=$("$SCRIPT_DIR/parse-semver.sh" "$TAG")
+
+if [ -n "$PARSED" ]; then
+  IFS='|' read -r PREFIX MAJOR MINOR PATCH <<< "$PARSED"
+  if [ -n "$PREFIX" ]; then
+    ALIAS_TAGS="${PREFIX}-v${MAJOR}.${MINOR},${PREFIX}-v${MAJOR}"
+  else
+    ALIAS_TAGS="v${MAJOR}.${MINOR},v${MAJOR}"
+  fi
 fi
 
 echo "$ALIAS_TAGS"
