@@ -65,8 +65,7 @@ jobs:
           fi
 
           if [[ "$1" == "issue" && "$2" == "list" ]]; then
-            echo "1"
-            echo "2"
+            echo '[{"number":1,"id":"node-id-1"},{"number":2,"id":"node-id-2"}]'
             exit 0
           fi
 
