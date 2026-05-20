@@ -33,11 +33,12 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           create_prebuild_json: 'false'
           image_name: localhost:5000/test-repo-main
-          tag: v1.0.0
+          # Use a non-semver tag so it doesn't push alias tags which can cause blob unknown errors with local registry
+          tag: latest
           registry: localhost:5000
           registry_username: testuser
 
       - name: Verify image was pushed to local registry
         run: |
           curl -s http://localhost:5000/v2/_catalog | grep "test-repo-main"
-          curl -s http://localhost:5000/v2/test-repo-main/tags/list | grep "v1.0.0"
+          curl -s http://localhost:5000/v2/test-repo-main/tags/list | grep "latest"
