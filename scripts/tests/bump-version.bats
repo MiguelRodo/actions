@@ -61,6 +61,24 @@ teardown() {
   [[ "$output" == *"semantic format"* ]]
 }
 
+@test "fails when version has too many components" {
+  run bash "$SCRIPT" v1.2.3.4 my-action
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"semantic format"* ]]
+}
+
+@test "fails when version has a pre-release suffix" {
+  run bash "$SCRIPT" v1.2.3-beta my-action
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"semantic format"* ]]
+}
+
+@test "succeeds with multiple digits in version components" {
+  run bash "$SCRIPT" v10.20.300 my-action
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"v10.20.300"* ]]
+}
+
 # ---------------------------------------------------------------------------
 # Successful execution
 # ---------------------------------------------------------------------------
