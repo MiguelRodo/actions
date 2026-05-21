@@ -56,6 +56,7 @@ jobs:
           bump_type: ${{ inputs.bump_type }}
           version_force: ${{ inputs.version_force }}
           rust_version: ${{ inputs.rust_version }}
+```
 
 > [!IMPORTANT]
 > Use `fetch-depth: 0` on checkout so the action can inspect existing tags.
