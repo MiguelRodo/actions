@@ -230,7 +230,7 @@ runs:
         push: always
         # Override the default 'push' filter to ensure images are pushed even during PRs or manual dispatches.
         # Use an empty string so we don't have to specify all possible events (or just PR and push).
-        eventFilterForPush: ""
+        eventFilterForPush: ${{ github.event_name }}
         noCache: ${{ inputs.no_cache }}
         subFolder: ${{ env.DEVCONTAINER_SUBFOLDER }}
 
