@@ -47,28 +47,16 @@ runs:
         echo "GitHub CLI version: $(gh --version)"
         echo "jq version: $(jq --version)"
 
-    - name: Authenticate with PAT
-      shell: bash
-      env:
-        PROJECT_TOKEN: ${{ inputs.ADD_ISSUES_TO_PROJECT_TOKEN }}
-      run: |
-        unset GITHUB_TOKEN
-        unset GH_TOKEN
-        if [ -z "$PROJECT_TOKEN" ]; then
-          echo "Error: No token provided."
-          exit 1
-        fi
-        echo "$PROJECT_TOKEN" | gh auth login -h github.com --with-token
-        echo "gh auth status:"
-        gh auth status
-
     - name: Install gh-projects extension
       shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.ADD_ISSUES_TO_PROJECT_TOKEN }}
       run: gh extension install github/gh-projects
 
     - name: Validate input and format used values
       shell: bash
       env:
+        GH_TOKEN: ${{ inputs.ADD_ISSUES_TO_PROJECT_TOKEN }}
         PROJECT_NAME: ${{ inputs.project_name }}
         PROJECT_OWNER: ${{ inputs.project_owner }}
         IS_PROJECT_OWNER_ORG: ${{ inputs.is_project_owner_org }}
@@ -140,6 +128,7 @@ runs:
       id: get-project-id
       shell: bash
       env:
+        GH_TOKEN: ${{ inputs.ADD_ISSUES_TO_PROJECT_TOKEN }}
         PROJECT_NAME: ${{ env.project_name }}
         PROJECT_OWNER: ${{ env.project_owner }}
         IS_PROJECT_OWNER_ORG: ${{ inputs.is_project_owner_org }}
@@ -182,6 +171,7 @@ runs:
       id: get-issues
       shell: bash
       env:
+        GH_TOKEN: ${{ inputs.ADD_ISSUES_TO_PROJECT_TOKEN }}
         SOURCE_REPO: ${{ env.source_repo }}
       run: |
         issues_json=$(gh issue list --repo "${SOURCE_REPO}" --limit 9999 --json number,id)
@@ -196,6 +186,7 @@ runs:
       id: add-issues
       shell: bash
       env:
+        GH_TOKEN: ${{ inputs.ADD_ISSUES_TO_PROJECT_TOKEN }}
         PROJECT_ID: ${{ env.project_id }}
         SOURCE_REPO: ${{ env.source_repo }}
       run: |

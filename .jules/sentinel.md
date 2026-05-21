@@ -1,4 +1,4 @@
-## 2024-05-18 - Prevent Shell Injection in GitHub Actions
-**Vulnerability:** User-controlled inputs (`${{ inputs.something }}`) and GitHub context variables (like `${{ github.ref_name }}`) were directly interpolated into bash scripts (`run:` blocks) in GitHub Actions. This allows attackers to craft branch names, inputs, or other contexts containing bash characters that execute arbitrary shell commands.
-**Learning:** Even built-in GitHub contexts (like `github.ref_name`, `github.event_name`) can sometimes contain untrusted data depending on the workflow trigger. Always map external data to environment variables first.
-**Prevention:** Always map `${{ ... }}` expressions to environment variables via the `env:` block, then reference the variable in bash using standard shell syntax (e.g., `VERSION="${INPUT_VERSION}"`).
+## 2024-05-21 - [Prevent Token Logging in GitHub Actions]
+**Vulnerability:** A GitHub PAT (`ADD_ISSUES_TO_PROJECT_TOKEN`) was being piped directly to `gh auth login` via `echo "$PROJECT_TOKEN" | gh auth login`. This practice risks leaking the token into runner logs if shell tracing (`set -x`) is inadvertently enabled anywhere in the step. It also persisted credentials across the global runner state which isn't ideal for composite actions.
+**Learning:** The GitHub CLI (`gh`) natively respects and securely uses the `GH_TOKEN` environment variable. Piping to `auth login` is an unnecessary and insecure anti-pattern.
+**Prevention:** Instead of using `gh auth login`, map the required PAT directly to `GH_TOKEN` in the `env` block of individual steps that invoke the `gh` command. This ensures credentials are not logged during execution and are tightly scoped to only the steps that actually need them.
