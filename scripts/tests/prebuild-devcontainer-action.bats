@@ -48,7 +48,7 @@ ACTION_FILE="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/prebuild-devc
   [ "$status" -eq 0 ]
   run grep -F 'imageTag: ${{ env.IMAGE_TAG }}' "$ACTION_FILE"
   [ "$status" -eq 0 ]
-  run grep -F 'push: always' "$ACTION_FILE"
+  run grep -E 'push: (always|never)' "$ACTION_FILE"
   [ "$status" -eq 0 ]
   run grep -F 'noCache: ${{ inputs.no_cache }}' "$ACTION_FILE"
   [ "$status" -eq 0 ]

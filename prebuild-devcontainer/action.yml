@@ -227,7 +227,7 @@ runs:
       with:
         imageName: ${{ env.IMAGE_NAME }}
         imageTag: ${{ env.IMAGE_TAG }}
-        push: always
+        push: never
         # Override the default 'push' filter to ensure images are pushed even during PRs or manual dispatches.
         # Use an empty string so we don't have to specify all possible events (or just PR and push).
         eventFilterForPush: ""
@@ -237,6 +237,7 @@ runs:
     - name: Tag and push SemVer alias images
       shell: bash
       run: |
+        docker push "${IMAGE_NAME}:${IMAGE_TAG}"
         if [ -n "${ALIAS_TAGS}" ]; then
           IFS=',' read -ra TAGS <<< "${ALIAS_TAGS}"
           for alias_tag in "${TAGS[@]}"; do
