@@ -8,7 +8,7 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   run grep -F 'using: "composite"' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
-  run grep -F 'if [ "${{ runner.os }}" != "Linux" ]; then' "$ACTION_FILE"
+  run grep -F 'if [ "${RUNNER_OS}" != "Linux" ]; then' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 
   run grep -F 'go-version-release currently supports Linux runners only' "$ACTION_FILE"

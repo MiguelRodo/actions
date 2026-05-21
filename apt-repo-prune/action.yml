@@ -39,8 +39,10 @@ runs:
   steps:
     - name: Validate Linux runner
       shell: bash
+      env:
+        RUNNER_OS: ${{ runner.os }}
       run: |
-        if [ "${{ runner.os }}" != "Linux" ]; then
+        if [ "${RUNNER_OS}" != "Linux" ]; then
           echo "Error: apt-repo-prune supports Linux runners only." >&2
           exit 1
         fi
@@ -150,10 +152,10 @@ runs:
         APT_SIGNING_KEY: ${{ inputs.apt_signing_key }}
         APT_SIGNING_KEY_PASSPHRASE: ${{ inputs.apt_signing_key_passphrase }}
         PUSH_TOKEN: ${{ inputs.token }}
+        APT_REPO_DIR: ${{ steps.plan.outputs.apt_repo_dir }}
+        PATHS_TO_REMOVE_FILE: ${{ steps.plan.outputs.paths_to_remove_file }}
+        DEFAULT_BRANCH: ${{ steps.plan.outputs.default_branch }}
       run: |
-        APT_REPO_DIR="${{ steps.plan.outputs.apt_repo_dir }}"
-        PATHS_TO_REMOVE_FILE="${{ steps.plan.outputs.paths_to_remove_file }}"
-        DEFAULT_BRANCH="${{ steps.plan.outputs.default_branch }}"
         REPO_INPUT="${GITHUB_REPOSITORY}"
         RETENTION="${RETENTION_RAW,,}"
 

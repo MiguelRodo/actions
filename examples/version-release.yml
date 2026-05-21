@@ -56,6 +56,9 @@ jobs:
           r_version: ${{ inputs.r_version }}
 
       - name: Show outputs
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+          TAG: ${{ steps.release.outputs.tag }}
         run: |
-          echo "Version: ${{ steps.release.outputs.version }}"
-          echo "Tag:     ${{ steps.release.outputs.tag }}"
+          echo "Version: ${VERSION}"
+          echo "Tag:     ${TAG}"

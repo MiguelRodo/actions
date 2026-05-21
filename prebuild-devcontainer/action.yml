@@ -287,7 +287,7 @@ runs:
         if git diff --cached --quiet; then
           echo "No changes to commit"
         else
-          git commit -m "Update prebuild devcontainer.json with image ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}"
+          git commit -m "Update prebuild devcontainer.json with image ${IMAGE_NAME}:${IMAGE_TAG}"
 
           if ! git push; then
             echo "::error::Failed to push the prebuild/devcontainer.json file to the repository."
