@@ -138,6 +138,33 @@ See the [action README](./version-release/README.md) for all inputs, outputs, an
 
 ---
 
+### [Rust Version and Release](./rust-version-release)
+
+Creates a Rust release by resolving a semantic version (explicit or bumped), optionally validating version progression, pushing the git tag, updating floating tags (`vX`, `vX.Y`), building `.deb` artifacts with `cargo-deb`, and optionally publishing generated `.deb` artifacts to a separate apt repository.
+
+<details>
+<summary>Minimal workflow</summary>
+
+```yaml
+name: Rust Version and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: MiguelRodo/actions/rust-version-release@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+```
+</details>
+
+---
+
 ### [Go Version and Release](./go-version-release)
 
 Creates a Go release by resolving a semantic version (explicit or bumped), optionally validating version progression, pushing the git tag, updating floating tags (`vX`, `vX.Y`), running GoReleaser native publishing, and optionally publishing generated `.deb` artifacts to a separate apt repository.
