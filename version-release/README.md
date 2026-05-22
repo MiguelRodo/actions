@@ -93,7 +93,7 @@ permissions:
 | `bump_type` | Version component to bump: `major`, `minor`, or `patch`. Cannot be used with `version`. | No |
 | `python_version` | Per-package override: exact version for the Python package. | No |
 | `r_version` | Per-package override: exact version for the R package. | No |
-| `version_force` | When `true` (the default is false), skip strict version progression checks (e.g., allowing downgrades or large version jumps). | No |
+| `version_force` | When `true` (the default is false), skip strict version progression checks (e.g., allowing downgrades or large version jumps). Invalid values will cause the action to error. | No |
 
 ## Outputs
 

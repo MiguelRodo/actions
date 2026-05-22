@@ -123,11 +123,22 @@ runs:
         echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
 
     - name: Check version progression
-      if: inputs.version_force != 'true'
       shell: bash
       env:
         NEW_VERSION: ${{ steps.get_version.outputs.version }}
+        VERSION_FORCE: ${{ inputs.version_force || 'false' }}
       run: |
+        VERSION_FORCE_INPUT=$(echo "$VERSION_FORCE" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
+        if [ "$VERSION_FORCE_INPUT" != "true" ] && [ "$VERSION_FORCE_INPUT" != "false" ]; then
+          echo "Error: version_force must be 'true' or 'false', got: '${VERSION_FORCE}'" >&2
+          exit 1
+        fi
+
+        if [ "$VERSION_FORCE_INPUT" = "true" ]; then
+          echo "version_force is true; skipping version progression check."
+          exit 0
+        fi
+
         PREV_TAG=$(git tag --sort=version:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | grep -vxF "v${NEW_VERSION}" | tail -1 || true)
 
         if [ -z "$PREV_TAG" ]; then
@@ -200,7 +211,7 @@ runs:
     - name: Setup Rust
       uses: dtolnay/rust-toolchain@master
       with:
-        toolchain: ${{ inputs.rust_version }}
+        toolchain: ${{ inputs.rust_version || 'stable' }}
 
     - name: Build Debian packages
       shell: bash

@@ -52,7 +52,7 @@ jobs:
 | `github_token` | **Yes** | N/A | GitHub token (`${{ secrets.GITHUB_TOKEN }}`) for pushing tags and creating releases. |
 | `version` | No | `""` | Exact version to set (e.g. `v1.2.3`). Cannot be set together with `bump_type`. Whitespace is ignored and case is insensitive. |
 | `bump_type` | No | `""` | Version component to bump (`major` \| `minor` \| `patch`). Cannot be set together with `version`. Whitespace is ignored and case is insensitive. |
-| `version_force` | No | `"false"` | When `"true"`, skip strict version progression checks (e.g., allowing downgrades or large version jumps). |
+| `version_force` | No | `"false"` | When `"true"`, skip strict version progression checks (e.g., allowing downgrades or large version jumps). Invalid values will cause the action to error. |
 
 ## Outputs
 
