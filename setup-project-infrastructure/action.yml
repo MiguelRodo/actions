@@ -1,0 +1,333 @@
+name: "Setup Project Infrastructure"
+description: "Bootstraps new multi-repo workspaces by linking working repo, devcontainers, caches, and tracking."
+author: "MiguelRodo"
+
+branding:
+  icon: "git-branch"
+  color: "blue"
+
+inputs:
+  working_repo:
+    description: "The primary coding/compendium repository and target branch we are setting up."
+    required: true
+  template_repo:
+    description: "The base template source supplying the boilerplate .devcontainer/ layout."
+    required: true
+  builder_repo:
+    description: "The repository designated to compile the Docker image and host it on GHCR."
+    required: false
+    default: ""
+  config_repo:
+    description: "The destination repository where the active workspace devcontainer.json will be written."
+    required: false
+    default: ""
+  renv_pkgs:
+    description: "Semicolon/comma-separated list of standalone R packages to inject into renv-cache."
+    required: false
+    default: ""
+  renv_repos:
+    description: "Semicolon/comma-separated list of lockfile repositories to cache via renv-cache."
+    required: false
+    default: ""
+  repos_list:
+    description: "Semicolon/comma-separated list of external sub-repositories/branches to track."
+    required: false
+    default: ""
+  gh_token:
+    description: "A Classic PAT (or Fine-Grained PAT) with write access across all involved repositories."
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run infrastructure setup
+      shell: bash
+      env:
+        WORKING_REPO_INPUT: ${{ inputs.working_repo }}
+        TEMPLATE_REPO_INPUT: ${{ inputs.template_repo }}
+        BUILDER_REPO_INPUT: ${{ inputs.builder_repo }}
+        CONFIG_REPO_INPUT: ${{ inputs.config_repo }}
+        RENV_PKGS_INPUT: ${{ inputs.renv_pkgs }}
+        RENV_REPOS_INPUT: ${{ inputs.renv_repos }}
+        REPOS_LIST_INPUT: ${{ inputs.repos_list }}
+        GH_TOKEN: ${{ inputs.gh_token }}
+      run: |
+        set -euo pipefail
+
+        echo "::group::Phase 1: Workspace Tracking & Initialization"
+
+        # Determine actual values
+        BUILDER_REPO="${BUILDER_REPO_INPUT:-$WORKING_REPO_INPUT}"
+        CONFIG_REPO="${CONFIG_REPO_INPUT:-$WORKING_REPO_INPUT}"
+
+        # Parse owner/repo@branch syntax
+        parse_repo_string() {
+          local input="$1"
+          local repo="${input%%@*}"
+          local branch="${input##*@}"
+          if [ "$branch" = "$input" ]; then
+            branch=""
+          fi
+          echo "$repo|$branch"
+        }
+
+        # working repo parts
+        WORKING_PARTS=$(parse_repo_string "$WORKING_REPO_INPUT")
+        WORKING_REPO="${WORKING_PARTS%%|*}"
+        WORKING_BRANCH="${WORKING_PARTS##*|}"
+        WORKING_OWNER="${WORKING_REPO%%/*}"
+        WORKING_NAME="${WORKING_REPO##*/}"
+
+        # template repo parts
+        TEMPLATE_PARTS=$(parse_repo_string "$TEMPLATE_REPO_INPUT")
+        TEMPLATE_REPO="${TEMPLATE_PARTS%%|*}"
+        TEMPLATE_BRANCH="${TEMPLATE_PARTS##*|}"
+
+        # builder repo parts
+        BUILDER_PARTS=$(parse_repo_string "$BUILDER_REPO")
+        BUILDER_REPO_STR="${BUILDER_PARTS%%|*}"
+        BUILDER_BRANCH="${BUILDER_PARTS##*|}"
+        BUILDER_OWNER="${BUILDER_REPO_STR%%/*}"
+        BUILDER_NAME="${BUILDER_REPO_STR##*/}"
+
+        # config repo parts
+        CONFIG_PARTS=$(parse_repo_string "$CONFIG_REPO")
+        CONFIG_REPO_STR="${CONFIG_PARTS%%|*}"
+        CONFIG_BRANCH="${CONFIG_PARTS##*|}"
+
+        # Setup authentication
+        gh auth login --with-token <<< "$GH_TOKEN"
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git config --global credential.helper store
+        echo "https://x-access-token:${GH_TOKEN}@github.com" > ~/.git-credentials
+
+        # Install setupmjr
+        echo "Installing setupmjr..."
+        sudo add-apt-repository -y ppa:miguelrodo/apt-miguelrodo
+        sudo apt-get update
+        sudo apt-get install -y setupmjr repos jq
+
+        # Create workspace root
+        WORKSPACE_ROOT="$RUNNER_TEMP/project-setup-workspace"
+        mkdir -p "$WORKSPACE_ROOT"
+        cd "$WORKSPACE_ROOT"
+
+        clone_or_checkout() {
+          local repo_str="$1"
+          local branch_str="$2"
+          local dest_dir="$3"
+
+          if [ -d "$dest_dir" ]; then
+            echo "Directory $dest_dir already exists."
+            return
+          fi
+
+          echo "Cloning $repo_str..."
+          git clone "https://github.com/${repo_str}.git" "$dest_dir"
+
+          cd "$dest_dir"
+          if [ -n "$branch_str" ]; then
+            # Check if branch exists remotely
+            if git ls-remote --heads origin "$branch_str" | grep -q "$branch_str"; then
+              git checkout "$branch_str"
+            else
+              echo "Branch $branch_str not found, creating from default branch..."
+              git checkout -b "$branch_str"
+            fi
+          fi
+          cd - >/dev/null
+        }
+
+        # Clone and verify branches for all required repos
+        clone_or_checkout "$WORKING_REPO" "$WORKING_BRANCH" "working_repo_dir"
+        clone_or_checkout "$TEMPLATE_REPO" "$TEMPLATE_BRANCH" "template_repo_dir"
+
+        if [ "$BUILDER_REPO_STR" = "$WORKING_REPO" ]; then
+          BUILDER_DIR="working_repo_dir"
+        else
+          BUILDER_DIR="builder_repo_dir"
+          clone_or_checkout "$BUILDER_REPO_STR" "$BUILDER_BRANCH" "$BUILDER_DIR"
+        fi
+
+        if [ "$CONFIG_REPO_STR" = "$WORKING_REPO" ]; then
+          CONFIG_DIR="working_repo_dir"
+        elif [ "$CONFIG_REPO_STR" = "$BUILDER_REPO_STR" ]; then
+          CONFIG_DIR="$BUILDER_DIR"
+        else
+          CONFIG_DIR="config_repo_dir"
+          clone_or_checkout "$CONFIG_REPO_STR" "$CONFIG_BRANCH" "$CONFIG_DIR"
+        fi
+
+        echo "::endgroup::"
+        echo "::group::Phase 2: Configuration Scaffolding & Interlinking"
+
+        # Copy template .devcontainer to builder
+        if [ -d "template_repo_dir/.devcontainer" ]; then
+          echo "Copying .devcontainer from template to builder..."
+          mkdir -p "$BUILDER_DIR/.devcontainer"
+          cp -r template_repo_dir/.devcontainer/* "$BUILDER_DIR/.devcontainer/"
+        else
+          echo "Warning: template repo does not contain a .devcontainer directory."
+        fi
+
+        # Modify renv-cache in builder_repo
+        DEVCONTAINER_JSON="$BUILDER_DIR/.devcontainer/devcontainer.json"
+        if [ -f "$DEVCONTAINER_JSON" ]; then
+          echo "Updating renv-cache feature in builder devcontainer.json..."
+          sed -i -E 's/(^|[^:])\/\/.*/\1/g' "$DEVCONTAINER_JSON"
+
+          if [ -n "$RENV_PKGS_INPUT" ] || [ -n "$RENV_REPOS_INPUT" ]; then
+            PKGS_ARRAY=$(echo "[\"$(echo "$RENV_PKGS_INPUT" | sed 's/[,;]/\" , \"/g')\"]" | sed 's/\"\"//g')
+            REPOS_ARRAY=$(echo "[\"$(echo "$RENV_REPOS_INPUT" | sed 's/[,;]/\" , \"/g')\"]" | sed 's/\"\"//g')
+
+            if [ "$PKGS_ARRAY" = '[""]' ]; then PKGS_ARRAY="[]"; fi
+            if [ "$REPOS_ARRAY" = '[""]' ]; then REPOS_ARRAY="[]"; fi
+
+            jq --argjson pkgs "$PKGS_ARRAY" \
+               --argjson repos "$REPOS_ARRAY" \
+               'if .features then
+                  if .features | has("ghcr.io/miguelrodo/devcontainers/renv-cache:latest") then
+                    .features["ghcr.io/miguelrodo/devcontainers/renv-cache:latest"].pkg = $pkgs |
+                    .features["ghcr.io/miguelrodo/devcontainers/renv-cache:latest"].repos = $repos
+                  else
+                    .features["ghcr.io/miguelrodo/devcontainers/renv-cache:latest"] = { "pkg": $pkgs, "repos": $repos }
+                  end
+                else
+                  .features = {
+                    "ghcr.io/miguelrodo/devcontainers/renv-cache:latest": {
+                      "pkg": $pkgs,
+                      "repos": $repos
+                    }
+                  }
+                end' "$DEVCONTAINER_JSON" > "${DEVCONTAINER_JSON}.tmp" && mv "${DEVCONTAINER_JSON}.tmp" "$DEVCONTAINER_JSON"
+          fi
+        fi
+
+        # Decoupled Workflow Injection
+        if [ "$BUILDER_REPO_STR" != "$WORKING_REPO" ]; then
+          echo "Builder repo is distinct from working repo."
+          echo "Injecting devcontainer-build.yml workflow into builder repo..."
+          mkdir -p "$BUILDER_DIR/.github/workflows"
+          # Use line by line echo to avoid YAML syntax errors in the enclosing action.yml
+          echo 'name: Pre-build Dev Container' > "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
+          echo 'on:' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
+          echo '  push:' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
+          echo '    branches:' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
+          echo '      - "**"' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
+          echo '  workflow_dispatch:' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
+          echo 'jobs:' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
+          echo '  build:' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
+          echo '    runs-on: ubuntu-latest' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
+          echo '    permissions:' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
+          echo '      contents: write' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
+          echo '      packages: write' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
+          echo '    steps:' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
+          echo '      - uses: actions/checkout@v4' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
+          echo '      - uses: MiguelRodo/actions/prebuild-devcontainer@v2' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
+          echo '        with:' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
+          echo '          github_token: ${{ secrets.GITHUB_TOKEN }}' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
+
+          # Cross-Repo Image Linkage
+          echo "Linking config repo devcontainer to builder GHCR image..."
+          mkdir -p "$CONFIG_DIR/.devcontainer"
+
+          IMAGE_TAG="${BUILDER_BRANCH:-latest}"
+          IMAGE_URL="ghcr.io/${BUILDER_OWNER}/${BUILDER_NAME}-${IMAGE_TAG}:latest"
+          IMAGE_URL=$(echo "$IMAGE_URL" | tr '[:upper:]' '[:lower:]')
+
+          echo '{' > "$CONFIG_DIR/.devcontainer/devcontainer.json"
+          echo '  "image": "'${IMAGE_URL}'"' >> "$CONFIG_DIR/.devcontainer/devcontainer.json"
+          echo '}' >> "$CONFIG_DIR/.devcontainer/devcontainer.json"
+        fi
+
+        echo "::endgroup::"
+        echo "::group::Phase 3: Project Architecture & Multi-Repo Orchestration"
+
+        # We need to run inside the working_repo
+        cd "working_repo_dir"
+
+        # Bootstrap Documentation
+        if [ ! -f "README.md" ]; then
+          echo "No README.md found, running setupmjr readme..."
+          setupmjr readme || echo "Warning: setupmjr readme failed, continuing..."
+        fi
+
+        # repos.list Provisioning
+        if [ -n "$REPOS_LIST_INPUT" ]; then
+          echo "Provisioning repos.list..."
+          # Split by semicolon or comma and write line-by-line
+          echo "$REPOS_LIST_INPUT" | sed 's/[,;]/\n/g' | while read -r repo_item; do
+            if [ -n "$repo_item" ]; then
+              echo "$repo_item" >> repos.list
+            fi
+          done
+        fi
+
+        # Workspace Generation
+        echo "Running workspace generation commands..."
+        repos codespace || echo "Warning: repos codespace failed."
+        repos workspace || echo "Warning: repos workspace failed."
+
+        if [ -n "$REPOS_LIST_INPUT" ] && [ -f "repos.list" ]; then
+          echo "Running repos create..."
+          repos create || echo "Warning: repos create failed."
+        fi
+
+        cd "$WORKSPACE_ROOT"
+
+        echo "::endgroup::"
+
+        echo "::group::Phase 4: State Serialization & Push"
+
+        commit_and_push() {
+          local repo_dir="$1"
+          local branch_str="$2"
+
+          if [ ! -d "$repo_dir" ]; then
+            return
+          fi
+
+          cd "$repo_dir"
+
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit in $repo_dir."
+          else
+            echo "Committing and pushing changes in $repo_dir..."
+            git commit -m "chore: setup project infrastructure"
+            if [ -n "$branch_str" ]; then
+              git push origin HEAD:"$branch_str"
+            else
+              git push origin HEAD
+            fi
+          fi
+
+          cd "$WORKSPACE_ROOT"
+        }
+
+        # Push working repo
+        commit_and_push "working_repo_dir" "$WORKING_BRANCH"
+
+        # Push builder repo if distinct
+        if [ "$BUILDER_REPO_STR" != "$WORKING_REPO" ]; then
+          commit_and_push "$BUILDER_DIR" "$BUILDER_BRANCH"
+        fi
+
+        # Push config repo if distinct
+        if [ "$CONFIG_REPO_STR" != "$WORKING_REPO" ] && [ "$CONFIG_REPO_STR" != "$BUILDER_REPO_STR" ]; then
+          commit_and_push "$CONFIG_DIR" "$CONFIG_BRANCH"
+        fi
+
+        echo "::endgroup::"
+
+        # Output Summary
+        echo "### 🏗️ Project Infrastructure Established!" >> "$GITHUB_STEP_SUMMARY"
+        echo "" >> "$GITHUB_STEP_SUMMARY"
+        echo "The repository branches, devcontainer pipelines, and multi-repo architectures have been cross-linked and configured upstream." >> "$GITHUB_STEP_SUMMARY"
+        echo "" >> "$GITHUB_STEP_SUMMARY"
+        echo "#### 🏁 Next Steps to Enter Your Environment:" >> "$GITHUB_STEP_SUMMARY"
+        echo "1. **Trigger Container Prebuild:** Go to your builder repository action panel and ensure the container prebuild workflow is building." >> "$GITHUB_STEP_SUMMARY"
+        echo "2. **Launch Project:** Once the image lands successfully on GHCR, head back to your working branch and launch the environment." >> "$GITHUB_STEP_SUMMARY"
+
+        echo "Done!"
