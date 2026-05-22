@@ -24,7 +24,7 @@
 @test "setup-project-infrastructure injects builder workflow and devcontainer.json correctly" {
   run grep "Injecting devcontainer-build.yml workflow" setup-project-infrastructure/action.yml
   [ "$status" -eq 0 ]
-  run grep "config_repo_dir/.devcontainer/devcontainer.json" setup-project-infrastructure/action.yml
+  run grep "$CONFIG_DIR/.devcontainer/devcontainer.json" setup-project-infrastructure/action.yml
   [ "$status" -eq 0 ]
 }
 
