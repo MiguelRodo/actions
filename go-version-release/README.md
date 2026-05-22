@@ -75,8 +75,8 @@ jobs:
 | `github_token` | GitHub token for pushing tags and publishing releases. | **Yes** |
 | `version` | Exact version (e.g. `1.2.3`). Cannot be used with `bump_type`. | No |
 | `bump_type` | Version component to bump: `major`, `minor`, or `patch`. Cannot be used with `version`. | No |
-| `version_force` | When `true` (the default is false), skip strict version progression checks (e.g., allowing downgrades or large version jumps). | No |
-| `go_version` | Go version for `actions/setup-go` (default `1.22`). | No |
+| `version_force` | When `true` (the default is false), skip strict version progression checks (e.g., allowing downgrades or large version jumps). Invalid values will cause the action to error. | No |
+| `go_version` | Go version for `actions/setup-go`. Defaults to `1.22` if empty. | No |
 | `goreleaser_config` | Path to the GoReleaser configuration file (default `.goreleaser.yml`). | No |
 | `apt_repo` | Optional GitHub repository in `owner/name` form. When set, generated `.deb` artifacts from `dist/` are published to that repo's `main` branch using a structured apt layout (`pool/` and `dists/stable/main/binary-*`). | No |
 | `apt_repo_token` | Optional token used only for `apt_repo` clone/push operations. If omitted, the action falls back to `github_token`. | No |
