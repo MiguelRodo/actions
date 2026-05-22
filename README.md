@@ -163,6 +163,8 @@ jobs:
 ```
 </details>
 
+See the [action README](./rust-version-release/README.md) for all inputs, outputs, and behavior details.
+
 ---
 
 ### [Go Version and Release](./go-version-release)
