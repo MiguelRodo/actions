@@ -6,6 +6,36 @@ Reusable composite GitHub Actions for common CI/CD tasks: pre-building Dev Conta
 
 ## Actions
 
+### [Setup Project Infrastructure](./setup-project-infrastructure)
+
+Bootstraps new multi-repo workspaces by linking working repo, devcontainers, caches, and tracking logic automatically.
+
+<details>
+<summary>Minimal workflow</summary>
+
+```yaml
+name: Bootstrap Project Environment
+
+on:
+  workflow_dispatch:
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: MiguelRodo/actions/setup-project-infrastructure@v2
+        with:
+          working_repo: "owner/target-compendium@main"
+          template_repo: "owner/template-repo@main"
+          gh_token: ${{ secrets.PAT_TOKEN }}
+```
+
+</details>
+
+See the [action README](./setup-project-infrastructure/README.md) for all inputs and cross-repository linking capabilities.
+
+---
+
 ### [Pre-build Dev Container](./prebuild-devcontainer)
 
 Builds your Dev Container image, pushes it to a container registry (GHCR by default), and optionally generates a `prebuild/devcontainer.json` for instant environment loads.
