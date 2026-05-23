@@ -96,11 +96,9 @@ runs:
         CONFIG_BRANCH="${CONFIG_PARTS##*|}"
 
         # Setup authentication
-        gh auth login --with-token <<< "$GH_TOKEN"
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        git config --global credential.helper store
-        echo "https://x-access-token:${GH_TOKEN}@github.com" > ~/.git-credentials
+        git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
 
         # Install setupmjr
         echo "Installing setupmjr..."
