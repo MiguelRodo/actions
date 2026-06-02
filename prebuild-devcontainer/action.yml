@@ -100,8 +100,8 @@ runs:
         INPUT_TAG: ${{ inputs.tag }}
         INPUT_VERSION: ${{ inputs.version }}
         INPUT_BUMP: ${{ inputs.bump_type }}
+        INPUT_GITHUB_TOKEN: ${{ inputs.github_token }}
       run: |
-        # Safely map inputs to environment variables to prevent shell injection
         BRANCH_SUFFIX=${BRANCH_NAME//\//-}
 
         if [ -z "${INPUT_IMAGE_NAME}" ]; then
@@ -110,7 +110,6 @@ runs:
           echo "IMAGE_NAME=${INPUT_IMAGE_NAME}" >> $GITHUB_ENV
         fi
 
-        # Consolidate legacy input
         VERSION_INPUT="${INPUT_VERSION:-$INPUT_TAG}"
         BUMP_INPUT=$(echo "$INPUT_BUMP" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
 
@@ -119,19 +118,39 @@ runs:
           exit 1
         fi
 
-        # Determine primary tag: use bump_type, exact input, or auto-detect from GITHUB_REF
         if [ -n "$BUMP_INPUT" ]; then
+          PREV_TAG=""
+
+          # --- HYBRID REGISTRY CHECK ---
+          if [[ "${IMAGE_NAME}" == ghcr.io/* ]]; then
+            # GHCR: Use native GitHub API
+            REST="${IMAGE_NAME#ghcr.io/}"
+            OWNER="${REST%%/*}"
+            PACKAGE="${REST#*/}"
+            ENCODED_PACKAGE="${PACKAGE//\//%2F}"
+
+            VERSIONS=$(curl -sf -H "Authorization: Bearer ${INPUT_GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" "https://api.github.com/orgs/${OWNER}/packages/container/${ENCODED_PACKAGE}/versions?per_page=100" 2>/dev/null || echo "[]")
+            if ! echo "${VERSIONS}" | jq -e 'type == "array" and length > 0' > /dev/null 2>&1; then
+              VERSIONS=$(curl -sf -H "Authorization: Bearer ${INPUT_GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" "https://api.github.com/user/packages/container/${ENCODED_PACKAGE}/versions?per_page=100" 2>/dev/null || echo "[]")
+            fi
+
+            PREV_TAG=$(echo "${VERSIONS}" | jq -r '.[] | select(.metadata.container.tags | index("latest")) | .metadata.container.tags[]?' 2>/dev/null | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)
+            
+            if [ -z "$PREV_TAG" ]; then
+              PREV_TAG=$(echo "${VERSIONS}" | jq -r '.[].metadata.container.tags[]? // empty' 2>/dev/null | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)
+            fi
+          else
+            # Docker Hub / Other Registries: Use Skopeo
+            PREV_TAG=$(skopeo list-tags --authfile ~/.docker/config.json "docker://${IMAGE_NAME}" 2>/dev/null \
+              | jq -r '.Tags[]?' \
+              | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+              | sort -V \
+              | tail -n 1 || true)
+          fi
+          # -----------------------------
           
-          # Query the registry for existing Docker image tags using skopeo
-          PREV_TAG=$(skopeo list-tags --authfile ~/.docker/config.json "docker://${IMAGE_NAME}" 2>/dev/null \
-            | jq -r '.Tags[]?' \
-            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
-            | sort -V \
-            | tail -n 1 || true)
-          
-          # Handle the very first build gracefully
           if [ -z "$PREV_TAG" ]; then
-            echo "Notice: Could not determine current version from GHCR. Defaulting to v0.0.0 for initial bump."
+            echo "Notice: Could not determine current version from registry. Defaulting to v0.0.0 for initial bump."
             PREV_TAG="v0.0.0"
           fi
           
@@ -142,7 +161,6 @@ runs:
         elif [ -n "$VERSION_INPUT" ]; then
           IMAGE_TAG=$(echo "$VERSION_INPUT" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
           IMAGE_TAG="${IMAGE_TAG#v}"
-          # Prepend 'v' back if it's a valid semver string to keep original devcontainer behavior
           if [[ "$IMAGE_TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             IMAGE_TAG="v${IMAGE_TAG}"
           fi
@@ -171,7 +189,6 @@ runs:
           exit 0
         fi
 
-        # Only check SemVer tags
         if [[ "${IMAGE_TAG}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
           NEW_VERSION="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}"
           TAG_PREFIX=""
@@ -183,54 +200,53 @@ runs:
           exit 0
         fi
 
-        # Only supported for ghcr.io
-        if [[ "${IMAGE_NAME}" != ghcr.io/* ]]; then
-          echo "Version progression check is only supported for ghcr.io; skipping."
-          exit 0
-        fi
-
-        # Parse owner and package from IMAGE_NAME (ghcr.io/owner/package)
-        REST="${IMAGE_NAME#ghcr.io/}"
-        OWNER="${REST%%/*}"
-        PACKAGE="${REST#*/}"
-        ENCODED_PACKAGE="${PACKAGE//\//%2F}"
-
-        GITHUB_TOKEN="${INPUT_GITHUB_TOKEN}"
-
-        # Try org packages endpoint, then user packages endpoint
-        VERSIONS=$(curl -sf \
-          -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-          -H "Accept: application/vnd.github+json" \
-          "https://api.github.com/orgs/${OWNER}/packages/container/${ENCODED_PACKAGE}/versions?per_page=100" \
-          2>/dev/null || echo "[]")
-
-        if ! echo "${VERSIONS}" | jq -e 'type == "array" and length > 0' > /dev/null 2>&1; then
-          VERSIONS=$(curl -sf \
-            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/user/packages/container/${ENCODED_PACKAGE}/versions?per_page=100" \
-            2>/dev/null || echo "[]")
-        fi
-
-        if ! echo "${VERSIONS}" | jq -e 'type == "array" and length > 0' > /dev/null 2>&1; then
-          echo "No existing image found in registry; skipping version progression check."
-          exit 0
-        fi
-
-        # Build grep pattern for full SemVer tags matching the same prefix
         if [ -z "${TAG_PREFIX}" ]; then
           SEMVER_GREP='^v[0-9]+\.[0-9]+\.[0-9]+$'
         else
           SEMVER_GREP="^${TAG_PREFIX}v[0-9]+\\.[0-9]+\\.[0-9]+\$"
         fi
 
-        PREV_VERSION=$(echo "${VERSIONS}" \
-          | jq -r '.[].metadata.container.tags[]? // empty' \
-          | grep -E "${SEMVER_GREP}" \
-          | grep -vxF "${IMAGE_TAG}" \
-          | sed "s/^${TAG_PREFIX}v//" \
-          | sort -V \
-          | tail -1)
+        # --- HYBRID REGISTRY CHECK ---
+        if [[ "${IMAGE_NAME}" == ghcr.io/* ]]; then
+          REST="${IMAGE_NAME#ghcr.io/}"
+          OWNER="${REST%%/*}"
+          PACKAGE="${REST#*/}"
+          ENCODED_PACKAGE="${PACKAGE//\//%2F}"
+
+          VERSIONS=$(curl -sf -H "Authorization: Bearer ${INPUT_GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" "https://api.github.com/orgs/${OWNER}/packages/container/${ENCODED_PACKAGE}/versions?per_page=100" 2>/dev/null || echo "[]")
+          if ! echo "${VERSIONS}" | jq -e 'type == "array" and length > 0' > /dev/null 2>&1; then
+            VERSIONS=$(curl -sf -H "Authorization: Bearer ${INPUT_GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" "https://api.github.com/user/packages/container/${ENCODED_PACKAGE}/versions?per_page=100" 2>/dev/null || echo "[]")
+          fi
+
+          if ! echo "${VERSIONS}" | jq -e 'type == "array" and length > 0' > /dev/null 2>&1; then
+            echo "No existing image found in GHCR registry; skipping version progression check."
+            exit 0
+          fi
+
+          PREV_VERSION=$(echo "${VERSIONS}" \
+            | jq -r '.[].metadata.container.tags[]? // empty' \
+            | grep -E "${SEMVER_GREP}" \
+            | grep -vxF "${IMAGE_TAG}" \
+            | sed "s/^${TAG_PREFIX}v//" \
+            | sort -V \
+            | tail -1)
+        else
+          # Docker Hub / Other
+          ALL_TAGS=$(skopeo list-tags --authfile ~/.docker/config.json "docker://${IMAGE_NAME}" 2>/dev/null | jq -r '.Tags[]?' || true)
+          
+          if [ -z "$ALL_TAGS" ]; then
+            echo "No existing tags found via Skopeo; skipping version progression check."
+            exit 0
+          fi
+          
+          PREV_VERSION=$(echo "${ALL_TAGS}" \
+            | grep -E "${SEMVER_GREP}" \
+            | grep -vxF "${IMAGE_TAG}" \
+            | sed "s/^${TAG_PREFIX}v//" \
+            | sort -V \
+            | tail -1)
+        fi
+        # -----------------------------
 
         if [ -z "${PREV_VERSION}" ]; then
           echo "No previous SemVer version found for image; skipping version progression check."
@@ -247,33 +263,23 @@ runs:
       env:
         INPUT_GITHUB_TOKEN: ${{ inputs.github_token }}
       run: |
-        if [[ "${IMAGE_NAME}" != ghcr.io/* ]]; then
-          echo "Cache determination is only supported for ghcr.io; falling back to latest."
-          echo "CACHE_FROM=${IMAGE_NAME}:latest" >> $GITHUB_ENV
-          exit 0
+        # --- HYBRID REGISTRY CHECK ---
+        if [[ "${IMAGE_NAME}" == ghcr.io/* ]]; then
+          REST="${IMAGE_NAME#ghcr.io/}"
+          OWNER="${REST%%/*}"
+          PACKAGE="${REST#*/}"
+          ENCODED_PACKAGE="${PACKAGE//\//%2F}"
+
+          VERSIONS=$(curl -sf -H "Authorization: Bearer ${INPUT_GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" "https://api.github.com/orgs/${OWNER}/packages/container/${ENCODED_PACKAGE}/versions?per_page=100" 2>/dev/null || echo "[]")
+          if ! echo "${VERSIONS}" | jq -e 'type == "array" and length > 0' > /dev/null 2>&1; then
+            VERSIONS=$(curl -sf -H "Authorization: Bearer ${INPUT_GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" "https://api.github.com/user/packages/container/${ENCODED_PACKAGE}/versions?per_page=100" 2>/dev/null || echo "[]")
+          fi
+          ALL_TAGS=$(echo "${VERSIONS}" | jq -r '.[].metadata.container.tags[]? // empty' 2>/dev/null)
+        else
+          # Docker Hub / Other
+          ALL_TAGS=$(skopeo list-tags --authfile ~/.docker/config.json "docker://${IMAGE_NAME}" 2>/dev/null | jq -r '.Tags[]?' || true)
         fi
-
-        REST="${IMAGE_NAME#ghcr.io/}"
-        OWNER="${REST%%/*}"
-        PACKAGE="${REST#*/}"
-        ENCODED_PACKAGE="${PACKAGE//\//%2F}"
-        GITHUB_TOKEN="${INPUT_GITHUB_TOKEN}"
-
-        VERSIONS=$(curl -sf \
-          -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-          -H "Accept: application/vnd.github+json" \
-          "https://api.github.com/orgs/${OWNER}/packages/container/${ENCODED_PACKAGE}/versions?per_page=100" \
-          2>/dev/null || echo "[]")
-
-        if ! echo "${VERSIONS}" | jq -e 'type == "array" and length > 0' > /dev/null 2>&1; then
-          VERSIONS=$(curl -sf \
-            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/user/packages/container/${ENCODED_PACKAGE}/versions?per_page=100" \
-            2>/dev/null || echo "[]")
-        fi
-
-        ALL_TAGS=$(echo "${VERSIONS}" | jq -r '.[].metadata.container.tags[]? // empty' 2>/dev/null)
+        # -----------------------------
 
         if [ -z "$ALL_TAGS" ]; then
           echo "No existing tags found in registry. Falling back to latest (will gracefully cache-miss)."
@@ -285,7 +291,6 @@ runs:
           echo "Found 'latest' tag. Using as cache source."
           CACHE_TAG="latest"
         else
-          # Determine Prefix if any (e.g. main-v1.2.3)
           if [[ "${IMAGE_TAG}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
             TAG_PREFIX=""
           elif [[ "${IMAGE_TAG}" =~ ^(.+)-v([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
@@ -310,7 +315,6 @@ runs:
             echo "Found previous SemVer tag '${PREV_TAG}'. Using as cache source."
             CACHE_TAG="$PREV_TAG"
           else
-            # Grab the most recently created tag by taking the first tag from the JSON
             FIRST_TAG=$(echo "$ALL_TAGS" | grep -v '^\s*$' | head -n 1)
             if [ -n "$FIRST_TAG" ]; then
               echo "No 'latest' or previous SemVer tag found. Using most recent tag '${FIRST_TAG}' as cache source."
