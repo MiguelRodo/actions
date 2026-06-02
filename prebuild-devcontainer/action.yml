@@ -10,6 +10,10 @@ inputs:
   github_token:
     description: "Token for logging into the container registry and pushing commits."
     required: true
+  target_branch:
+    description: "Branch to use for image naming and pushing. Overrides the triggering branch if provided."
+    required: false
+    default: ""
   no_cache:
     description: "Disable Docker cache during build (true/false)."
     required: false
@@ -77,8 +81,12 @@ runs:
     - name: Set branch name
       id: extract_branch
       shell: bash
+      env:
+        INPUT_TARGET_BRANCH: ${{ inputs.target_branch }}
       run: |
-        if [[ "${GITHUB_REF}" == refs/heads/* ]]; then
+        if [ -n "$INPUT_TARGET_BRANCH" ]; then
+          branch="$INPUT_TARGET_BRANCH"
+        elif [[ "${GITHUB_REF}" == refs/heads/* ]]; then
           branch="${GITHUB_REF#refs/heads/}"
         else
           branch="main"
@@ -123,7 +131,6 @@ runs:
 
           # --- HYBRID REGISTRY CHECK ---
           if [[ "${IMAGE_NAME}" == ghcr.io/* ]]; then
-            # GHCR: Use native GitHub API
             REST="${IMAGE_NAME#ghcr.io/}"
             OWNER="${REST%%/*}"
             PACKAGE="${REST#*/}"
@@ -140,7 +147,6 @@ runs:
               PREV_TAG=$(echo "${VERSIONS}" | jq -r '.[].metadata.container.tags[]? // empty' 2>/dev/null | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)
             fi
           else
-            # Docker Hub / Other Registries: Use Skopeo
             PREV_TAG=$(skopeo list-tags --authfile ~/.docker/config.json "docker://${IMAGE_NAME}" 2>/dev/null \
               | jq -r '.Tags[]?' \
               | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
@@ -231,7 +237,6 @@ runs:
             | sort -V \
             | tail -1)
         else
-          # Docker Hub / Other
           ALL_TAGS=$(skopeo list-tags --authfile ~/.docker/config.json "docker://${IMAGE_NAME}" 2>/dev/null | jq -r '.Tags[]?' || true)
           
           if [ -z "$ALL_TAGS" ]; then
@@ -276,7 +281,6 @@ runs:
           fi
           ALL_TAGS=$(echo "${VERSIONS}" | jq -r '.[].metadata.container.tags[]? // empty' 2>/dev/null)
         else
-          # Docker Hub / Other
           ALL_TAGS=$(skopeo list-tags --authfile ~/.docker/config.json "docker://${IMAGE_NAME}" 2>/dev/null | jq -r '.Tags[]?' || true)
         fi
         # -----------------------------
@@ -428,7 +432,8 @@ runs:
         else
           git commit -m "Update prebuild devcontainer.json with image ${IMAGE_NAME}:${IMAGE_TAG}"
 
-          if ! git push; then
+          # Explicit push mapping prevents detached HEAD errors
+          if ! git push origin "HEAD:refs/heads/${BRANCH_NAME}"; then
             echo "::error::Failed to push the prebuild/devcontainer.json file to the repository."
             echo "======================================================================================="
             echo "❌ GITHUB ACTIONS PERMISSION ERROR"

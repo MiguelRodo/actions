@@ -16,6 +16,11 @@ on:
       - '*-v*'
   workflow_dispatch:
     inputs:
+      target_branch: 
+        description: 'Branch to check out and build (e.g., 2024-stimgate)'
+        required: true
+        default: 'main'
+        type: string
       bump_type:
         description: 'Version component to bump (major, minor, patch)'
         required: false
@@ -44,12 +49,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Required to fetch tags for version bumping
+          ref: ${{ inputs.target_branch }}
+          fetch-depth: 0
 
       - name: Run Dev Container Prebuild
         uses: MiguelRodo/actions/prebuild-devcontainer@v2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          target_branch: ${{ inputs.target_branch }}
           bump_type: ${{ github.event.inputs.bump_type }}
           version: ${{ github.event.inputs.version }}
 
