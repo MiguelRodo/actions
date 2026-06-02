@@ -112,11 +112,13 @@ runs:
       run: |
         BRANCH_SUFFIX=${BRANCH_NAME//\//-}
 
+        # FIX: Assign to a local variable FIRST so the current shell can use it, then export it.
         if [ -z "${INPUT_IMAGE_NAME}" ]; then
-          echo "IMAGE_NAME=${INPUT_REGISTRY}/${GITHUB_REPOSITORY,,}-${BRANCH_SUFFIX,,}" >> $GITHUB_ENV
+          IMAGE_NAME="${INPUT_REGISTRY}/${GITHUB_REPOSITORY,,}-${BRANCH_SUFFIX,,}"
         else
-          echo "IMAGE_NAME=${INPUT_IMAGE_NAME}" >> $GITHUB_ENV
+          IMAGE_NAME="${INPUT_IMAGE_NAME}"
         fi
+        echo "IMAGE_NAME=${IMAGE_NAME}" >> $GITHUB_ENV
 
         VERSION_INPUT="${INPUT_VERSION:-$INPUT_TAG}"
         BUMP_INPUT=$(echo "$INPUT_BUMP" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
@@ -141,7 +143,8 @@ runs:
               VERSIONS=$(curl -sf -H "Authorization: Bearer ${INPUT_GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" "https://api.github.com/user/packages/container/${ENCODED_PACKAGE}/versions?per_page=100" 2>/dev/null || echo "[]")
             fi
 
-            PREV_TAG=$(echo "${VERSIONS}" | jq -r '.[] | select(.metadata.container.tags | index("latest")) | .metadata.container.tags[]?' 2>/dev/null | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)
+            # Added a safety select filter for null tags to prevent jq errors on phantom layers
+            PREV_TAG=$(echo "${VERSIONS}" | jq -r '.[] | select(.metadata.container.tags != null) | select(.metadata.container.tags | index("latest")) | .metadata.container.tags[]?' 2>/dev/null | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)
             
             if [ -z "$PREV_TAG" ]; then
               PREV_TAG=$(echo "${VERSIONS}" | jq -r '.[].metadata.container.tags[]? // empty' 2>/dev/null | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)
