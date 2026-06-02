@@ -26,10 +26,6 @@ inputs:
     description: "Full image name without tag (e.g. 'ghcr.io/myorg/myimage'). Defaults to '{registry}/{repo}-{branch}'."
     required: false
     default: ""
-  tag:
-    description: "Git tag to use as the primary container image tag (e.g. 'v1.2.3' or 'main-v1.2.3'). Auto-detected from GITHUB_REF when triggered by a tag push."
-    required: false
-    default: ""
   registry:
     description: "Container registry URL."
     required: false
@@ -42,6 +38,24 @@ inputs:
     description: "When 'true', skip the version progression check and push the specified version as-is, even if it is more than one increment ahead of (or behind) the previous image version."
     required: false
     default: "false"
+  tag:
+    description: "Git tag to use as the primary container image tag. (Deprecated, use 'version')"
+    required: false
+    default: ""
+  version:
+    description: >
+      Exact version to set (e.g. v1.2.3 or main-v1.2.3).
+      Cannot be set together with bump_type.
+      Whitespace is ignored and case is insensitive.
+    required: false
+    default: ""
+  bump_type:
+    description: >
+      Version component to bump (major | minor | patch).
+      Cannot be set together with version.
+      Whitespace is ignored and case is insensitive.
+    required: false
+    default: ""
 
 outputs:
   image_name:
@@ -78,12 +92,14 @@ runs:
         username: ${{ inputs.registry_username != '' && inputs.registry_username || github.repository_owner }}
         password: ${{ inputs.github_token }}
 
-    - name: Set dynamic image name
+    - name: Set dynamic image name and resolve version
       shell: bash
       env:
         INPUT_IMAGE_NAME: ${{ inputs.image_name }}
         INPUT_REGISTRY: ${{ inputs.registry }}
         INPUT_TAG: ${{ inputs.tag }}
+        INPUT_VERSION: ${{ inputs.version }}
+        INPUT_BUMP: ${{ inputs.bump_type }}
       run: |
         # Safely map inputs to environment variables to prevent shell injection
         BRANCH_SUFFIX=${BRANCH_NAME//\//-}
@@ -94,9 +110,32 @@ runs:
           echo "IMAGE_NAME=${INPUT_IMAGE_NAME}" >> $GITHUB_ENV
         fi
 
-        # Determine primary tag: use input, or auto-detect from GITHUB_REF on tag push
-        if [ -n "$INPUT_TAG" ]; then
-          IMAGE_TAG=$(echo "$INPUT_TAG" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
+        # Consolidate legacy input
+        VERSION_INPUT="${INPUT_VERSION:-$INPUT_TAG}"
+        BUMP_INPUT=$(echo "$INPUT_BUMP" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
+
+        if [ -n "$VERSION_INPUT" ] && [ -n "$BUMP_INPUT" ]; then
+          echo "Error: cannot set both 'version' (or 'tag') and 'bump_type'." >&2
+          exit 1
+        fi
+
+        # Determine primary tag: use bump_type, exact input, or auto-detect from GITHUB_REF
+        if [ -n "$BUMP_INPUT" ]; then
+          PREV_TAG=$(git tag --sort=version:refname \
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+            | tail -1 || true)
+          
+          if [ -z "$PREV_TAG" ]; then
+            echo "Error: Could not determine current version from git tags for bump." >&2
+            exit 1
+          fi
+          
+          CURRENT="${PREV_TAG#v}"
+          VERSION=$("$GITHUB_ACTION_PATH/../scripts/apply-version-bump.sh" "$BUMP_INPUT" "$CURRENT")
+          IMAGE_TAG="v${VERSION}"
+          
+        elif [ -n "$VERSION_INPUT" ]; then
+          IMAGE_TAG=$(echo "$VERSION_INPUT" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
           IMAGE_TAG="${IMAGE_TAG#v}"
           # Prepend 'v' back if it's a valid semver string to keep original devcontainer behavior
           if [[ "$IMAGE_TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -107,6 +146,7 @@ runs:
         else
           IMAGE_TAG="latest"
         fi
+        
         echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
 
     - name: Parse SemVer aliases
@@ -196,6 +236,89 @@ runs:
         echo "To skip this check, set version_force: 'true'."
         "$GITHUB_ACTION_PATH/../scripts/check-version-progression.sh" "${NEW_VERSION}" "${PREV_VERSION}"
 
+    - name: Determine cache source
+      id: determine_cache
+      shell: bash
+      env:
+        INPUT_GITHUB_TOKEN: ${{ inputs.github_token }}
+      run: |
+        if [[ "${IMAGE_NAME}" != ghcr.io/* ]]; then
+          echo "Cache determination is only supported for ghcr.io; falling back to latest."
+          echo "CACHE_FROM=${IMAGE_NAME}:latest" >> $GITHUB_ENV
+          exit 0
+        fi
+
+        REST="${IMAGE_NAME#ghcr.io/}"
+        OWNER="${REST%%/*}"
+        PACKAGE="${REST#*/}"
+        ENCODED_PACKAGE="${PACKAGE//\//%2F}"
+        GITHUB_TOKEN="${INPUT_GITHUB_TOKEN}"
+
+        VERSIONS=$(curl -sf \
+          -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+          -H "Accept: application/vnd.github+json" \
+          "https://api.github.com/orgs/${OWNER}/packages/container/${ENCODED_PACKAGE}/versions?per_page=100" \
+          2>/dev/null || echo "[]")
+
+        if ! echo "${VERSIONS}" | jq -e 'type == "array" and length > 0' > /dev/null 2>&1; then
+          VERSIONS=$(curl -sf \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/user/packages/container/${ENCODED_PACKAGE}/versions?per_page=100" \
+            2>/dev/null || echo "[]")
+        fi
+
+        ALL_TAGS=$(echo "${VERSIONS}" | jq -r '.[].metadata.container.tags[]? // empty' 2>/dev/null)
+
+        if [ -z "$ALL_TAGS" ]; then
+          echo "No existing tags found in registry. Falling back to latest (will gracefully cache-miss)."
+          echo "CACHE_FROM=${IMAGE_NAME}:latest" >> $GITHUB_ENV
+          exit 0
+        fi
+
+        if echo "$ALL_TAGS" | grep -qFx "latest"; then
+          echo "Found 'latest' tag. Using as cache source."
+          CACHE_TAG="latest"
+        else
+          # Determine Prefix if any (e.g. main-v1.2.3)
+          if [[ "${IMAGE_TAG}" =~ ^v([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
+            TAG_PREFIX=""
+          elif [[ "${IMAGE_TAG}" =~ ^(.+)-v([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
+            TAG_PREFIX="${BASH_REMATCH[1]}-"
+          else
+            TAG_PREFIX=""
+          fi
+
+          if [ -z "${TAG_PREFIX}" ]; then
+            SEMVER_GREP='^v[0-9]+\.[0-9]+\.[0-9]+$'
+          else
+            SEMVER_GREP="^${TAG_PREFIX}v[0-9]+\\.[0-9]+\\.[0-9]+\$"
+          fi
+
+          PREV_TAG=$(echo "$ALL_TAGS" \
+            | grep -E "${SEMVER_GREP}" \
+            | grep -vxF "${IMAGE_TAG}" \
+            | sort -V \
+            | tail -1)
+
+          if [ -n "$PREV_TAG" ]; then
+            echo "Found previous SemVer tag '${PREV_TAG}'. Using as cache source."
+            CACHE_TAG="$PREV_TAG"
+          else
+            # Grab the most recently created tag by taking the first tag from the JSON
+            FIRST_TAG=$(echo "$ALL_TAGS" | grep -v '^\s*$' | head -n 1)
+            if [ -n "$FIRST_TAG" ]; then
+              echo "No 'latest' or previous SemVer tag found. Using most recent tag '${FIRST_TAG}' as cache source."
+              CACHE_TAG="$FIRST_TAG"
+            else
+              echo "No usable tags found. Falling back to latest."
+              CACHE_TAG="latest"
+            fi
+          fi
+        fi
+
+        echo "CACHE_FROM=${IMAGE_NAME}:${CACHE_TAG}" >> $GITHUB_ENV
+
     - name: Compute devcontainer subfolder
       shell: bash
       env:
@@ -228,11 +351,10 @@ runs:
         imageName: ${{ env.IMAGE_NAME }}
         imageTag: ${{ env.IMAGE_TAG }}
         push: never
-        # Override the default 'push' filter to ensure images are pushed even during PRs or manual dispatches.
-        # Use an empty string so we don't have to specify all possible events (or just PR and push).
         eventFilterForPush: ""
         noCache: ${{ inputs.no_cache }}
         subFolder: ${{ env.DEVCONTAINER_SUBFOLDER }}
+        cacheFrom: ${{ env.CACHE_FROM }}
 
     - name: Tag and push SemVer alias images
       shell: bash
