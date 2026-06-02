@@ -121,13 +121,18 @@ runs:
 
         # Determine primary tag: use bump_type, exact input, or auto-detect from GITHUB_REF
         if [ -n "$BUMP_INPUT" ]; then
-          PREV_TAG=$(git tag --sort=version:refname \
-            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
-            | tail -1 || true)
           
+          # Query the registry for existing Docker image tags using skopeo
+          PREV_TAG=$(skopeo list-tags --authfile ~/.docker/config.json "docker://${IMAGE_NAME}" 2>/dev/null \
+            | jq -r '.Tags[]?' \
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+            | sort -V \
+            | tail -n 1 || true)
+          
+          # Handle the very first build gracefully
           if [ -z "$PREV_TAG" ]; then
-            echo "Error: Could not determine current version from git tags for bump." >&2
-            exit 1
+            echo "Notice: Could not determine current version from GHCR. Defaulting to v0.0.0 for initial bump."
+            PREV_TAG="v0.0.0"
           fi
           
           CURRENT="${PREV_TAG#v}"
@@ -360,6 +365,13 @@ runs:
       shell: bash
       run: |
         docker push "${IMAGE_NAME}:${IMAGE_TAG}"
+        
+        # Automatically apply the latest tag alongside the version bump
+        if [ "${IMAGE_TAG}" != "latest" ]; then
+          docker tag "${IMAGE_NAME}:${IMAGE_TAG}" "${IMAGE_NAME}:latest"
+          docker push "${IMAGE_NAME}:latest"
+        fi
+        
         if [ -n "${ALIAS_TAGS}" ]; then
           IFS=',' read -ra TAGS <<< "${ALIAS_TAGS}"
           for alias_tag in "${TAGS[@]}"; do
