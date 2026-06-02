@@ -21,7 +21,7 @@ inputs:
   create_prebuild_json:
     description: "Generate, commit, and push the prebuild devcontainer.json (true/false)."
     required: false
-    default: "true"
+    default: "false"
   devcontainer_path:
     description: "Path to the .devcontainer directory, relative to the repo root."
     required: false
