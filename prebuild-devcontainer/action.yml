@@ -364,6 +364,9 @@ runs:
 
     - name: Pre-build dev container image
       uses: devcontainers/ci@v0.3
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+        GITHUB_PAT: ${{ inputs.github_token }}
       with:
         imageName: ${{ env.IMAGE_NAME }}
         imageTag: ${{ env.IMAGE_TAG }}
@@ -372,6 +375,7 @@ runs:
         noCache: ${{ inputs.no_cache }}
         subFolder: ${{ env.DEVCONTAINER_SUBFOLDER }}
         cacheFrom: ${{ env.CACHE_FROM }}
+
 
     - name: Tag and push SemVer alias images
       shell: bash
