@@ -176,7 +176,8 @@ runs:
         elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
           IMAGE_TAG="${GITHUB_REF#refs/tags/}"
         else
-          IMAGE_TAG="latest"
+          echo "Error: no version source available. Provide 'bump_type', 'version', or trigger from a git tag." >&2
+          exit 1
         fi
         
         echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
