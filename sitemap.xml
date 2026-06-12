@@ -1,47 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>https://MiguelRodo.github.io/actions/index.html</loc>
+    <lastmod>2026-06-12T14:47:55.897Z</lastmod>
+  </url>
+  <url>
     <loc>https://MiguelRodo.github.io/actions/rust-version-release.html</loc>
-    <lastmod>2026-06-03T19:24:18.112Z</lastmod>
+    <lastmod>2026-06-12T14:47:55.898Z</lastmod>
   </url>
   <url>
     <loc>https://MiguelRodo.github.io/actions/SECURITY.html</loc>
-    <lastmod>2026-06-03T19:24:18.110Z</lastmod>
+    <lastmod>2026-06-12T14:47:55.896Z</lastmod>
   </url>
   <url>
     <loc>https://MiguelRodo.github.io/actions/version-release.html</loc>
-    <lastmod>2026-06-03T19:24:18.113Z</lastmod>
+    <lastmod>2026-06-12T14:47:55.899Z</lastmod>
   </url>
   <url>
     <loc>https://MiguelRodo.github.io/actions/r-version-release.html</loc>
-    <lastmod>2026-06-03T19:24:18.112Z</lastmod>
-  </url>
-  <url>
-    <loc>https://MiguelRodo.github.io/actions/CONTRIBUTING.html</loc>
-    <lastmod>2026-06-03T19:24:18.110Z</lastmod>
-  </url>
-  <url>
-    <loc>https://MiguelRodo.github.io/actions/go-version-release.html</loc>
-    <lastmod>2026-06-03T19:24:18.111Z</lastmod>
+    <lastmod>2026-06-12T14:47:55.898Z</lastmod>
   </url>
   <url>
     <loc>https://MiguelRodo.github.io/actions/publish-quarto-site.html</loc>
-    <lastmod>2026-06-03T19:24:18.111Z</lastmod>
-  </url>
-  <url>
-    <loc>https://MiguelRodo.github.io/actions/add-issues-to-project.html</loc>
-    <lastmod>2026-06-03T19:24:18.110Z</lastmod>
-  </url>
-  <url>
-    <loc>https://MiguelRodo.github.io/actions/apt-repo-prune.html</loc>
-    <lastmod>2026-06-03T19:24:18.110Z</lastmod>
-  </url>
-  <url>
-    <loc>https://MiguelRodo.github.io/actions/index.html</loc>
-    <lastmod>2026-06-03T19:24:18.111Z</lastmod>
+    <lastmod>2026-06-12T14:47:55.898Z</lastmod>
   </url>
   <url>
     <loc>https://MiguelRodo.github.io/actions/prebuild-devcontainer.html</loc>
-    <lastmod>2026-06-03T19:24:18.111Z</lastmod>
+    <lastmod>2026-06-12T14:47:55.897Z</lastmod>
+  </url>
+  <url>
+    <loc>https://MiguelRodo.github.io/actions/go-version-release.html</loc>
+    <lastmod>2026-06-12T14:47:55.897Z</lastmod>
+  </url>
+  <url>
+    <loc>https://MiguelRodo.github.io/actions/apt-repo-prune.html</loc>
+    <lastmod>2026-06-12T14:47:55.896Z</lastmod>
+  </url>
+  <url>
+    <loc>https://MiguelRodo.github.io/actions/CONTRIBUTING.html</loc>
+    <lastmod>2026-06-12T14:47:55.896Z</lastmod>
+  </url>
+  <url>
+    <loc>https://MiguelRodo.github.io/actions/add-issues-to-project.html</loc>
+    <lastmod>2026-06-12T14:47:55.896Z</lastmod>
   </url>
 </urlset>
