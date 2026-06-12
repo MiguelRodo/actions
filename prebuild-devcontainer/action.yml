@@ -372,10 +372,15 @@ runs:
       run: |
         DEVCONTAINER_JSON="${DEVCONTAINER_PATH_INPUT}/devcontainer.json"
         
+        if [ ! -f "$DEVCONTAINER_JSON" ]; then
+          echo "Warning: $DEVCONTAINER_JSON not found. Skipping injection."
+          exit 0
+        fi
+        
         # 1. Create a clean backup of the original file
         cp "$DEVCONTAINER_JSON" "${DEVCONTAINER_JSON}.bak"
         
-        # 2. Use Node.js to safely inject ONLY if the feature is present
+        # 2. Use Node.js to safely inject the version
         node -e "
           const fs = require('fs');
           const file = '$DEVCONTAINER_JSON';
@@ -386,28 +391,37 @@ runs:
             
             const targetBase = 'ghcr.io/miguelrodo/devcontainerfeatures/build-info';
             let foundKey = null;
-
+        
+            // Find the exact key the user typed, ignoring casing differences
             if (config.features) {
               foundKey = Object.keys(config.features).find(key => 
-                key === targetBase || key.startsWith(targetBase + ':')
+                key.toLowerCase() === targetBase.toLowerCase() || 
+                key.toLowerCase().startsWith(targetBase.toLowerCase() + ':')
               );
             }
             
             if (foundKey) {
-              // Only log that injection is happening once we know the feature exists
               console.log(\`💉 Injecting metadata into \${file}...\`);
               console.log(\`   Version: \${process.env.IMAGE_VERSION}\`);
-
-              // Ensure the feature object is initialized if it's currently an empty object or string
-              if (typeof config.features[foundKey] !== 'object' || config.features[foundKey] === null) {
-                config.features[foundKey] = {};
-              }
+        
+              let existingVal = config.features[foundKey];
               
-              config.features[foundKey].imageVersion = process.env.IMAGE_VERSION;
-              // buildDate intentionally omitted to allow the bash script's dynamic fallback to run only on cache-miss
+              // SAFE INJECTION: Preserve the version if it was defined as a string
+              if (typeof existingVal === 'string') {
+                config.features[foundKey] = {
+                  version: existingVal,
+                  imageVersion: process.env.IMAGE_VERSION
+                };
+              } else if (typeof existingVal === 'object' && existingVal !== null) {
+                config.features[foundKey].imageVersion = process.env.IMAGE_VERSION;
+              } else {
+                config.features[foundKey] = { imageVersion: process.env.IMAGE_VERSION };
+              }
               
               fs.writeFileSync(file, JSON.stringify(config, null, 4));
               console.log(\`✅ Successfully injected build-info version into \${foundKey}.\`);
+            } else {
+              console.log('⏭️ Feature build-info not found in devcontainer.json. Skipping injection.');
             }
           } catch (err) {
             console.error('❌ Failed to inject metadata into devcontainer.json:', err.message);
