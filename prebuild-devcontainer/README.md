@@ -102,7 +102,6 @@ permissions:
 | `github_token` | Token for logging into the container registry and pushing commits. | **Yes** | — |
 | `bump_type` | Version component to bump (`major`, `minor`, `patch`). Calculates the next version automatically based on git tags. Cannot be set together with `version`. | No | `""` |
 | `version` | Exact version to set (e.g. `v1.2.3` or `main-v1.2.3`). Cannot be set together with `bump_type`. Auto-detected from `GITHUB_REF` on tag push. Falls back to `latest` if no inputs or tags are found. | No | `""` |
-| `tag` | *(Deprecated)* Git tag used as the primary container image tag. Use `version` instead. | No | `""` |
 | `no_cache` | Disable Docker cache during build (`true`/`false`). | No | `false` |
 | `create_prebuild_json` | Generate and commit a `prebuild/devcontainer.json` (`true`/`false`). | No | `true` |
 | `devcontainer_path` | Path to the `.devcontainer` directory, relative to the repo root. | No | `.devcontainer` |
@@ -111,9 +110,19 @@ permissions:
 | `registry_username` | Username for registry login. | No | Repository owner |
 | `version_force` | When `'true'`, skip the version progression check and push the specified version as-is. Useful when jumping more than one increment at a time or when no previous image exists and you want an explicit override. | No | `false` |
 
+## Outputs
+
+| Output | Description |
+| --- | --- |
+| `image_name` | Full image name without tag (e.g. `ghcr.io/owner/repo-main`). |
+| `image_tag` | Primary image tag that was built and pushed (e.g. `v1.2.3`). |
+| `image_ref` | Full image reference including tag (e.g. `ghcr.io/owner/repo-main:v1.2.3`). |
+| `alias_tags` | Comma-separated list of SemVer alias tags that were also pushed (e.g. `v1.2,v1`). |
+
 ## Intelligent Caching
 
-To drastically reduce build times, this action automatically identifies the best layer cache to pull from your container registry. It falls back gracefully in the following order:
+To drastically reduce build times, this action automatically identifies the best layer cache to pull from your container registry.
+It falls back gracefully in the following order:
 
 1. The `latest` tag.
 2. The immediately preceding SemVer tag (if bumping or providing a new version).
@@ -203,5 +212,24 @@ When using a custom `image_name`, the `registry` input is only used for login—
           registry: 'registry.example.com'
           registry_username: 'my-username'
           image_name: '[registry.example.com/myorg/my-devcontainer](https://registry.example.com/myorg/my-devcontainer)'
-
 ```
+
+## Smart Metadata Injection (`zzz-build-info`)
+
+This Action features native integration with the `ghcr.io/MiguelRodo/DevContainerFeatures/zzz-build-info` devcontainer feature.
+
+When `inject_build_info` is `true` (the default), the Action safely parses your `.devcontainer/devcontainer.json`.
+If it detects that you have included the `zzz-build-info` feature, it temporarily injects the dynamically calculated `imageVersion` into the configuration directly prior to the build.
+
+This provides the command `/usr/local/bin/container-info` inside the container, which outputs the build details in this format:
+
+```text
+--------------------------------------------------
+🚀 DevContainer Release Information
+--------------------------------------------------
+Version: v1.2.3
+Built On: 2026-06-12T14:36:22Z
+--------------------------------------------------
+```
+
+Note that the devcontainer.json file is reverted to its state when the imageVersion option was not injected, immediately after the build.
