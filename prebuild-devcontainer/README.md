@@ -214,12 +214,12 @@ When using a custom `image_name`, the `registry` input is only used for login—
           image_name: '[registry.example.com/myorg/my-devcontainer](https://registry.example.com/myorg/my-devcontainer)'
 ```
 
-## Smart Metadata Injection (`zzz-build-info`)
+## Smart Metadata Injection (`build-info`)
 
-This Action features native integration with the `ghcr.io/MiguelRodo/DevContainerFeatures/zzz-build-info` devcontainer feature.
+This Action features native integration with the `ghcr.io/MiguelRodo/DevContainerFeatures/build-info` devcontainer feature.
 
 When `inject_build_info` is `true` (the default), the Action safely parses your `.devcontainer/devcontainer.json`.
-If it detects that you have included the `zzz-build-info` feature, it temporarily injects the dynamically calculated `imageVersion` into the configuration directly prior to the build.
+If it detects that you have included the `build-info` feature, it temporarily injects the dynamically calculated `imageVersion` into the configuration directly prior to the build.
 
 This provides the command `/usr/local/bin/container-info` inside the container, which outputs the build details in this format:
 

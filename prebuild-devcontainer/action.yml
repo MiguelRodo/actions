@@ -61,7 +61,7 @@ inputs:
     required: false
     default: ""
   inject_build_info:
-    description: "Inject imageVersion into the MiguelRodo/DevContainerFeatures/zzz-build-info feature if it is present in devcontainer.json (true/false)."
+    description: "Inject imageVersion into the MiguelRodo/DevContainerFeatures/build-info feature if it is present in devcontainer.json (true/false)."
     required: false
     default: "true"
 
@@ -384,7 +384,7 @@ runs:
             let rawData = fs.readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '');
             let config = JSON.parse(rawData);
             
-            const targetBase = 'ghcr.io/miguelrodo/devcontainerfeatures/zzz-build-info';
+            const targetBase = 'ghcr.io/miguelrodo/devcontainerfeatures/build-info';
             let foundKey = null;
 
             if (config.features) {
@@ -407,7 +407,7 @@ runs:
               // buildDate intentionally omitted to allow the bash script's dynamic fallback to run only on cache-miss
               
               fs.writeFileSync(file, JSON.stringify(config, null, 4));
-              console.log(\`✅ Successfully injected zzz-build-info version into \${foundKey}.\`);
+              console.log(\`✅ Successfully injected build-info version into \${foundKey}.\`);
             }
           } catch (err) {
             console.error('❌ Failed to inject metadata into devcontainer.json:', err.message);
