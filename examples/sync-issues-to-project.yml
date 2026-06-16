@@ -37,4 +37,7 @@ jobs:
           # source_repo_owner: "myorg"
 
       - name: Report result
-        run: echo "Issues added this run: ${{ steps.sync.outputs.issues_added }}"
+        env:
+          ISSUES_ADDED: ${{ steps.sync.outputs.issues_added }}
+        run: |
+          echo "Issues added this run: $ISSUES_ADDED"
