@@ -224,7 +224,8 @@ runs:
           echo '      - uses: actions/checkout@v4' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
           echo '      - uses: MiguelRodo/actions/prebuild-devcontainer@v2' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
           echo '        with:' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
-          echo '          github_token: ${{ secrets.GITHUB_TOKEN }}' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
+          DOLLAR='$'
+          echo "          github_token: ${DOLLAR}{{ secrets.GITHUB_TOKEN }}" >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
 
           # Cross-Repo Image Linkage
           echo "Linking config repo devcontainer to builder GHCR image..."
