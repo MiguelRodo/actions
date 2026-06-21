@@ -6,3 +6,7 @@
 **Vulnerability:** A script was parsing a token from input and building an authenticated Git remote URL manually using `AUTHENTICATED_REMOTE="${SERVER_URL/https:\/\//https:\/\/x-access-token:${PUSH_TOKEN}@}/${REPO_INPUT}.git"`, and subsequently doing `git remote add origin "$AUTHENTICATED_REMOTE"`.
 **Learning:** Adding the remote with the token embedded directly writes the token in plain text to `.git/config` on disk inside the runner. This causes credentials to be leaked in case `.git/` folder gets cached, exposed or read by another step.
 **Prevention:** Instead of injecting into the remote URL, setup `git config --global url."https://x-access-token:${PUSH_TOKEN}@github.com/".insteadOf "https://github.com/"` in memory via CLI, ensuring subsequent standard checkout or clone commands pick up the authentication globally without polluting the local `.git/config` with credentials.
+## 2024-05-18 - [JSON Injection in bash string concatenation]
+**Vulnerability:** Found a JSON Injection vulnerability in GitHub Action script where inputs were parsed manually into JSON arrays using `sed`. A malformed input could easily inject arbitrary JSON.
+**Learning:** Using manual string manipulation tools like `sed` or bash interpolation to convert delimited strings to JSON arrays is unsafe and brittle.
+**Prevention:** Always use `jq -R` with splits to securely parse and convert delimited bash strings into JSON arrays. Example: `echo "$INPUT" | jq -R -c '[splits("[,;]")] | map(select(length > 0))'`.
