@@ -176,11 +176,11 @@ runs:
           sed -i -E 's/(^|[^:])\/\/.*/\1/g' "$DEVCONTAINER_JSON"
 
           if [ -n "$RENV_PKGS_INPUT" ] || [ -n "$RENV_REPOS_INPUT" ]; then
-            PKGS_ARRAY=$(echo "[\"$(echo "$RENV_PKGS_INPUT" | sed 's/[,;]/\" , \"/g')\"]" | sed 's/\"\"//g')
-            REPOS_ARRAY=$(echo "[\"$(echo "$RENV_REPOS_INPUT" | sed 's/[,;]/\" , \"/g')\"]" | sed 's/\"\"//g')
+            PKGS_ARRAY=$(echo "$RENV_PKGS_INPUT" | jq -R -c '[splits("[,;]"; "")] | map(select(length > 0))')
+            REPOS_ARRAY=$(echo "$RENV_REPOS_INPUT" | jq -R -c '[splits("[,;]"; "")] | map(select(length > 0))')
 
-            if [ "$PKGS_ARRAY" = '[""]' ]; then PKGS_ARRAY="[]"; fi
-            if [ "$REPOS_ARRAY" = '[""]' ]; then REPOS_ARRAY="[]"; fi
+            if [ -z "$PKGS_ARRAY" ] || [ "$PKGS_ARRAY" = "[]" ]; then PKGS_ARRAY="[]"; fi
+            if [ -z "$REPOS_ARRAY" ] || [ "$REPOS_ARRAY" = "[]" ]; then REPOS_ARRAY="[]"; fi
 
             jq --argjson pkgs "$PKGS_ARRAY" \
                --argjson repos "$REPOS_ARRAY" \
@@ -256,7 +256,7 @@ runs:
         if [ -n "$REPOS_LIST_INPUT" ]; then
           echo "Provisioning repos.list..."
           # Split by semicolon or comma and write line-by-line
-          echo "$REPOS_LIST_INPUT" | sed 's/[,;]/\n/g' | while read -r repo_item; do
+          echo "$REPOS_LIST_INPUT" | jq -R -r 'splits("[,;]"; "") | select(length > 0)' | while read -r repo_item; do
             if [ -n "$repo_item" ]; then
               echo "$repo_item" >> repos.list
             fi
