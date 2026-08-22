@@ -381,9 +381,10 @@ runs:
         cp "$DEVCONTAINER_JSON" "${DEVCONTAINER_JSON}.bak"
         
         # 2. Use Node.js to safely inject the version
+        export DEVCONTAINER_JSON
         node -e "
           const fs = require('fs');
-          const file = '$DEVCONTAINER_JSON';
+          const file = process.env.DEVCONTAINER_JSON;
           
           try {
             let rawData = fs.readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '');
