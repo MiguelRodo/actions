@@ -149,7 +149,7 @@ runs:
 
             # Added a safety select filter for null tags to prevent jq errors on phantom layers
             PREV_TAG=$(echo "${VERSIONS}" | jq -r '.[] | select(.metadata.container.tags != null) | select(.metadata.container.tags | index("latest")) | .metadata.container.tags[]?' 2>/dev/null | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)
-            
+
             if [ -z "$PREV_TAG" ]; then
               PREV_TAG=$(echo "${VERSIONS}" | jq -r '.[].metadata.container.tags[]? // empty' 2>/dev/null | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)
             fi
@@ -161,16 +161,16 @@ runs:
               | tail -n 1 || true)
           fi
           # -----------------------------
-          
+
           if [ -z "$PREV_TAG" ]; then
             echo "Notice: Could not determine current version from registry. Defaulting to v0.0.0 for initial bump."
             PREV_TAG="v0.0.0"
           fi
-          
+
           CURRENT="${PREV_TAG#v}"
           VERSION=$("$GITHUB_ACTION_PATH/../scripts/apply-version-bump.sh" "$BUMP_INPUT" "$CURRENT")
           IMAGE_TAG="v${VERSION}"
-          
+
         elif [ -n "$VERSION_INPUT" ]; then
           IMAGE_TAG=$(echo "$VERSION_INPUT" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
           IMAGE_TAG="${IMAGE_TAG#v}"
@@ -183,7 +183,7 @@ runs:
           echo "Error: no version source available. Provide 'bump_type', 'version', or trigger from a git tag." >&2
           exit 1
         fi
-        
+
         echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
 
     - name: Parse SemVer aliases
@@ -246,12 +246,12 @@ runs:
             | tail -1)
         else
           ALL_TAGS=$(skopeo list-tags --authfile ~/.docker/config.json "docker://${IMAGE_NAME}" 2>/dev/null | jq -r '.Tags[]?' || true)
-          
+
           if [ -z "$ALL_TAGS" ]; then
             echo "No existing tags found via Skopeo; skipping version progression check."
             exit 0
           fi
-          
+
           PREV_VERSION=$(echo "${ALL_TAGS}" \
             | grep -E "${SEMVER_GREP}" \
             | grep -vxF "${IMAGE_TAG}" \
@@ -371,41 +371,44 @@ runs:
         DEVCONTAINER_PATH_INPUT: ${{ inputs.devcontainer_path }}
       run: |
         DEVCONTAINER_JSON="${DEVCONTAINER_PATH_INPUT}/devcontainer.json"
-        
+
         if [ ! -f "$DEVCONTAINER_JSON" ]; then
           echo "Warning: $DEVCONTAINER_JSON not found. Skipping injection."
           exit 0
         fi
-        
+
         # 1. Create a clean backup of the original file
         cp "$DEVCONTAINER_JSON" "${DEVCONTAINER_JSON}.bak"
-        
+
+        # Export for safe Node.js consumption to prevent code injection
+        export DEVCONTAINER_JSON
+
         # 2. Use Node.js to safely inject the version
         node -e "
           const fs = require('fs');
-          const file = '$DEVCONTAINER_JSON';
-          
+          const file = process.env.DEVCONTAINER_JSON;
+
           try {
             let rawData = fs.readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '');
             let config = JSON.parse(rawData);
-            
+
             const targetBase = 'ghcr.io/miguelrodo/devcontainerfeatures/build-info';
             let foundKey = null;
-        
+
             // Find the exact key the user typed, ignoring casing differences
             if (config.features) {
-              foundKey = Object.keys(config.features).find(key => 
-                key.toLowerCase() === targetBase.toLowerCase() || 
+              foundKey = Object.keys(config.features).find(key =>
+                key.toLowerCase() === targetBase.toLowerCase() ||
                 key.toLowerCase().startsWith(targetBase.toLowerCase() + ':')
               );
             }
-            
+
             if (foundKey) {
               console.log(\`💉 Injecting metadata into \${file}...\`);
               console.log(\`   Version: \${process.env.IMAGE_VERSION}\`);
-        
+
               let existingVal = config.features[foundKey];
-              
+
               // SAFE INJECTION: Preserve the version if it was defined as a string
               if (typeof existingVal === 'string') {
                 config.features[foundKey] = {
@@ -417,7 +420,7 @@ runs:
               } else {
                 config.features[foundKey] = { imageVersion: process.env.IMAGE_VERSION };
               }
-              
+
               fs.writeFileSync(file, JSON.stringify(config, null, 4));
               console.log(\`✅ Successfully injected build-info version into \${foundKey}.\`);
             } else {
@@ -451,7 +454,7 @@ runs:
       run: |
         DEVCONTAINER_JSON="${DEVCONTAINER_PATH_INPUT}/devcontainer.json"
         BACKUP_JSON="${DEVCONTAINER_JSON}.bak"
-        
+
         if [ -f "$BACKUP_JSON" ]; then
           echo "⏪ Restoring $DEVCONTAINER_JSON to its original pre-injection state..."
           mv "$BACKUP_JSON" "$DEVCONTAINER_JSON"
@@ -462,13 +465,13 @@ runs:
       shell: bash
       run: |
         docker push "${IMAGE_NAME}:${IMAGE_TAG}"
-        
+
         # Automatically apply the latest tag alongside the version bump
         if [ "${IMAGE_TAG}" != "latest" ]; then
           docker tag "${IMAGE_NAME}:${IMAGE_TAG}" "${IMAGE_NAME}:latest"
           docker push "${IMAGE_NAME}:latest"
         fi
-        
+
         if [ -n "${ALIAS_TAGS}" ]; then
           IFS=',' read -ra TAGS <<< "${ALIAS_TAGS}"
           for alias_tag in "${TAGS[@]}"; do
