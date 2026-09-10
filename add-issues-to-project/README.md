@@ -50,26 +50,28 @@ jobs:
 
 ---
 
+<!-- action-inputs:start -->
+<!-- Generated from add-issues-to-project/action.yml by scripts/generate-action-docs.py. Do not edit this block manually. -->
 ## 🔧 Inputs
 
 | Input | Description | Required | Default |
-| --- | --- | --- | --- |
-| `ADD_ISSUES_TO_PROJECT_TOKEN` | A GitHub PAT with permissions to read the source repository and write to the target GitHub Project. | **Yes** | — |
-| `project_name` | The name of the target GitHub Project. | No | *Current Repository Name* |
-| `project_owner` | The username or organization that owns the target project. | No | *Current Repository Owner* |
-| `is_project_owner_org` | Set to `"true"` if the project owner is a GitHub Organization. | No | `"false"` |
-| `source_repo_name` | The name of the repository to pull issues from. | No | *Current Repository Name* |
-| `source_repo_owner` | The owner of the source repository. | No | *Current GitHub User* |
+| --- | --- | :---: | --- |
+| `project_name` | Project name. Defaults to repository name. | No | — |
+| `project_owner` | Project owner. Defaults to repository owner. | No | — |
+| `is_project_owner_org` | Whether the project owner is an organization. Defaults to `false`. | No | `false` |
+| `source_repo_name` | Repository name. Defaults to current repository. | No | — |
+| `source_repo_owner` | Repository owner. Defaults to current GitHub user. | No | — |
+| `ADD_ISSUES_TO_PROJECT_TOKEN` | GitHub token with correct access for accessing issues and writing to projects | Yes | — |
+<!-- action-inputs:end -->
 
----
-
+<!-- action-outputs:start -->
+<!-- Generated from add-issues-to-project/action.yml by scripts/generate-action-docs.py. Do not edit this block manually. -->
 ## 📤 Outputs
 
 | Output | Description |
 | --- | --- |
-| `issues_added` | Number of issues that were newly added to the project in this run. |
-
----
+| `issues_added` | Number of issues that were newly added to the project. |
+<!-- action-outputs:end -->
 
 ## 🔐 Permissions
 
