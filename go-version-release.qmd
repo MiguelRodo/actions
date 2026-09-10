@@ -70,29 +70,35 @@ jobs:
 >
 > This action currently supports Linux runners only. Use a Linux runner such as `ubuntu-latest`.
 
+<!-- action-inputs:start -->
+<!-- Generated from go-version-release/action.yml by scripts/generate-action-docs.py. Do not edit this block manually. -->
 ## Inputs
 
-| Input | Description | Required |
-|---|---|---|
-| `github_token` | GitHub token for pushing tags and publishing releases. | **Yes** |
-| `version` | Exact version (e.g. `1.2.3`). Cannot be used with `bump_type`. | No |
-| `bump_type` | Version component to bump: `major`, `minor`, or `patch`. Cannot be used with `version`. | No |
-| `version_force` | When `true` (the default is false), skip strict version progression checks (e.g., allowing downgrades or large version jumps). | No |
-| `go_version` | Go version for `actions/setup-go` (default `1.27`). | No |
-| `goreleaser_config` | Path to the GoReleaser configuration file (default `.goreleaser.yml`). | No |
-| `apt_repo` | Optional GitHub repository in `owner/name` form. When set, generated `.deb` artifacts from `dist/` are published to that repo's `main` branch using a structured apt layout (`pool/` and `dists/stable/main/binary-*`). | No |
-| `apt_repo_token` | Optional token used only for `apt_repo` clone/push operations. If omitted, the action falls back to `github_token`. | No |
-| `apt_signing_key` | Optional ASCII-armored GPG private key for signing apt repository metadata. When set, the action imports the key and generates signed `InRelease` and `Release.gpg` files alongside `Release`. Store this as a GitHub secret (e.g. `APT_SIGNING_KEY`). | No |
-| `apt_signing_key_passphrase` | Optional passphrase for `apt_signing_key`. When set, GPG uses it via `--passphrase-file` (written to a secure temp file) so passphrase-protected private keys work. Store as a GitHub secret (e.g. `APT_SIGNING_KEY_PASSPHRASE`). | No |
-| `scoop_token` | Optional token for pushing Scoop manifests to an external tap repository. | No |
-| `homebrew_token` | Optional token for pushing Homebrew formulas to an external tap repository. | No |
+| Input | Description | Required | Default |
+| --- | --- | :---: | --- |
+| `github_token` | GitHub token for pushing tags and publishing releases. | Yes | — |
+| `apt_repo_token` | Optional GitHub token used only for cloning/fetching/pushing apt_repo. Falls back to github_token when omitted. | No | `""` |
+| `apt_signing_key` | Optional ASCII-armored GPG private key for signing apt repository metadata. When set, the action imports the key and generates signed InRelease and Release.gpg files alongside the unsigned Release file. | No | `""` |
+| `apt_signing_key_passphrase` | Optional passphrase for the apt_signing_key. When set, it is written to a secure temporary file and passed to GPG via --passphrase-file so passphrase-protected private keys can be used for signing. | No | `""` |
+| `version` | Exact version to apply (e.g. 1.2.3). Cannot be used with bump_type. | No | `""` |
+| `bump_type` | Version component to bump (major \| minor \| patch). Cannot be used with version. | No | `""` |
+| `version_force` | When true (the default is false), skip strict version progression checks (e.g., allowing downgrades or large version jumps). | No | `false` |
+| `go_version` | Go version to install with actions/setup-go. | No | `1.27` |
+| `apt_repo` | Optional target GitHub repository in owner/name form for publishing generated .deb artifacts as an apt repository. | No | `""` |
+| `goreleaser_config` | Optional path to the GoReleaser config file. | No | `.goreleaser.yml` |
+| `scoop_token` | Optional token for pushing Scoop manifests to an external tap repository. | No | `""` |
+| `homebrew_token` | Optional token for pushing Homebrew formulas to an external tap repository. | No | `""` |
+<!-- action-inputs:end -->
 
+<!-- action-outputs:start -->
+<!-- Generated from go-version-release/action.yml by scripts/generate-action-docs.py. Do not edit this block manually. -->
 ## Outputs
 
 | Output | Description |
-|---|---|
-| `version` | Released version without leading `v` (e.g. `1.2.3`). |
-| `tag` | Released git tag with leading `v` (e.g. `v1.2.3`). |
+| --- | --- |
+| `version` | Released version without a leading v (e.g. 1.2.3). |
+| `tag` | Git tag that was created or reused (e.g. v1.2.3). |
+<!-- action-outputs:end -->
 
 ## Version resolution
 
