@@ -260,7 +260,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="releases" class="level3">
 <h3 class="anchored" data-anchor-id="releases">Releases</h3>
-<p>Releases are managed by the <code>.github/workflows/release.yml</code> workflow. Tags <strong>must</strong> originate from the <code>main</code> branch and follow the <code>vX.Y.Z</code> format.</p>
+<p>Releases are managed by <code>.github/workflows/publish-release.yml</code>. Release requests use a <code>repository_dispatch</code> event so GitHub always loads the privileged workflow from the default branch, never from the commit being tagged.</p>
+<p>Request a release with a token that can dispatch repository events:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">gh</span> api <span class="at">--method</span> POST repos/MiguelRodo/actions/dispatches <span class="at">--input</span> <span class="at">-</span> <span class="op">&lt;&lt;'JSON'</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="st">{"event_type":"release","client_payload":{"version":"vX.Y.Z"}}</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="op">JSON</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="release-guards" class="level4">
+<h4 class="anchored" data-anchor-id="release-guards">Release guards</h4>
+<p>The workflow refuses to release a commit that is not on <code>main</code>:</p>
+<ul>
+<li>Only <code>repository_dispatch</code> with event type <code>release</code> triggers publishing. Direct tag pushes do not trigger the trusted workflow.</li>
+<li>The checked-out release commit is the default-branch SHA associated with the dispatch event and must be <strong>reachable from <code>origin/main</code></strong> (<code>scripts/check-release-ancestry.sh</code>).</li>
+<li>All required checks must have <strong>succeeded for that exact commit</strong> (<code>scripts/check-required-ci.sh</code>) before any tag is moved: actionlint/shellcheck, BATS, and the prebuild-devcontainer integration test.</li>
+<li>An existing version tag is reusable only when it resolves to the validated release commit (<code>scripts/check-release-tag.sh</code>).</li>
+<li>Floating <code>vX</code> / <code>vX.Y</code> tags are updated <strong>last</strong>, only after ancestry, CI status and release creation have all passed, and are pinned to the validated commit.</li>
+</ul>
+<p>The one-time <code>.github/workflows/disable-legacy-release.yml</code> migration disables the historical <code>.github/workflows/release.yml</code> workflow identity after this change reaches <code>main</code>. This prevents a tag pointing at an older commit from executing that commit’s obsolete tag-push workflow.</p>
+</section>
 <section id="tag-vs.-release" class="level4">
 <h4 class="anchored" data-anchor-id="tag-vs.-release">Tag vs.&nbsp;Release</h4>
 <ul>
@@ -269,10 +285,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>Consumers of these actions should pin to a floating tag (e.g.&nbsp;<code>@v2</code> or <code>@v2.17</code>) or a specific tag (e.g.&nbsp;<code>@v2.17.0</code>), not to a Release object.</li>
 </ul>
 <p>To verify what commit a floating tag resolves to:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Show the commit a tag points to</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> ls-remote <span class="at">--tags</span> https://github.com/MiguelRodo/actions <span class="st">"refs/tags/v2"</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># or, in a local clone:</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> rev-list <span class="at">-n</span> 1 refs/tags/v2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Show the commit a tag points to</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> ls-remote <span class="at">--tags</span> https://github.com/MiguelRodo/actions <span class="st">"refs/tags/v2"</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># or, in a local clone:</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> rev-list <span class="at">-n</span> 1 refs/tags/v2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 </section>
 </section>
