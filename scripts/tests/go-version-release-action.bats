@@ -2,6 +2,7 @@
 
 ACTION_FILE="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-release/action.yml"
 ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-release/README.md"
+PUBLISHER="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/scripts/publish-apt-repository.sh"
 
 @test "go-version-release action exists and is a composite action" {
   [ -f "$ACTION_FILE" ]
@@ -93,104 +94,30 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   [ "$status" -ne 0 ]
 }
 
-@test "apt publishing is optional and generates structured multi-arch apt metadata from dist debs" {
+@test "apt publishing delegates structured multi-arch metadata generation to the shared script" {
   run grep -F "if: inputs.apt_repo != ''" "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
-
-  run grep -F 'apt_repo must be in owner/name format' "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
-
-  run grep -F "required command '\$REQUIRED_COMMAND' is not available on the runner" "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
-
-  run grep -F "find dist -type f -name '*.deb'" "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
-
-  run grep -F 'export GIT_ASKPASS="$ASKPASS_SCRIPT"' "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
-
-  run grep -F 'APT_PUSH_TOKEN="${APT_REPO_TOKEN}"' "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
-
-  run grep -F 'APT_PUSH_TOKEN="${GITHUB_TOKEN_INPUT}"' "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
-
-  run grep -F 'export GIT_TOKEN_FOR_ASKPASS="$APT_PUSH_TOKEN"' "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
-
-  run grep -F '${GITHUB_SERVER_URL}/${APT_REPO_INPUT}.git' "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
-
-  run grep -F 'publish_deb() {' "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
-
-  run grep -F 'find "$APT_REPO_DIR" \( -path "$APT_REPO_DIR/.git" -prune \) -o \( -type f -name '\''*.deb'\'' -print0 \)' "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
-
-  run grep -F 'DEST_DIR="$APT_REPO_DIR/pool/main/$BUCKET"' "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
-
-  run grep -F 'dpkg-scanpackages --multiversion -a "$ARCH" pool /dev/null > "$BINARY_DIR/Packages"' "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
-
-  run grep -F 'gzip -9c "$BINARY_DIR/Packages" > "$BINARY_DIR/Packages.gz"' "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
-
-  run grep -F 'apt-ftparchive \' "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
-
-  run grep -F 'release dists/stable > dists/stable/Release' "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
-
-  run grep -F 'git push origin HEAD:main' "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
+  [ "$status" -eq 0 ]
+  # shellcheck disable=SC2016
+  run grep -F 'run: "$GITHUB_ACTION_PATH/../scripts/publish-apt-repository.sh"' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+  run grep -F 'publish_deb() {' "$PUBLISHER"
+  [ "$status" -eq 0 ]
+  run grep -F 'dpkg-scanpackages --multiversion -a "$ARCH" pool /dev/null > "$BINARY_DIR/Packages"' "$PUBLISHER"
+  [ "$status" -eq 0 ]
+  run grep -F 'git push origin HEAD:main' "$PUBLISHER"
+  [ "$status" -eq 0 ]
 }
 
-@test "apt publishing signs Release when apt_signing_key is provided, otherwise removes stale signed metadata" {
+@test "shared apt publisher signs metadata when a signing key is provided" {
+  # shellcheck disable=SC2016
   run grep -F 'APT_SIGNING_KEY: ${{ inputs.apt_signing_key }}' "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
-
-  run grep -F 'APT_SIGNING_KEY_PASSPHRASE: ${{ inputs.apt_signing_key_passphrase }}' "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
-
-  run grep -F 'SIGNING_KEY_FINGERPRINT=""' "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
-
-  run grep -F 'GNUPGHOME=""' "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
-
-  run grep -F 'chmod 700 "$GNUPGHOME"' "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
-
-  run grep -F 'export GNUPGHOME' "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
-
-  run grep -F "could not extract fingerprint from apt_signing_key" "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
-
-  run grep -F "printf '%s\n' \"\$APT_SIGNING_KEY\" | gpg --batch --import" "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
-
-  run grep -F -- '--passphrase-file "$GPG_PASSPHRASE_FILE"' "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
-
-  run grep -F 'rm -f "$GPG_PASSPHRASE_FILE"' "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
-
-  run grep -F -- '--default-key "$SIGNING_KEY_FINGERPRINT"' "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
-
-  run grep -F -- '--armor --detach-sign -o dists/stable/Release.gpg dists/stable/Release' "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
-
-  run grep -F -- '--clearsign -o dists/stable/InRelease dists/stable/Release' "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
-
-  run grep -F 'rm -f InRelease Release.gpg dists/stable/InRelease dists/stable/Release.gpg' "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
-
-  run grep -F 'rm -rf "$GNUPGHOME"' "$ACTION_FILE"
-#  [ "$status" -eq 0 ]
+  [ "$status" -eq 0 ]
+  run grep -F -- '--passphrase-file "$GPG_PASSPHRASE_FILE"' "$PUBLISHER"
+  [ "$status" -eq 0 ]
+  run grep -F -- '--armor --detach-sign -o dists/stable/Release.gpg dists/stable/Release' "$PUBLISHER"
+  [ "$status" -eq 0 ]
+  run grep -F -- '--clearsign -o dists/stable/InRelease dists/stable/Release' "$PUBLISHER"
+  [ "$status" -eq 0 ]
 }
 
 @test "scoop and homebrew custom publishing steps are removed" {
