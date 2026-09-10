@@ -19,20 +19,13 @@
 | Common dimension | Provider location | Provider field |
 | --- | --- | --- |
 | Class | project field | Type |
-| Priority | project field | Priority |
+| Priority | pending live inspection | Priority |
 | Status | project field | Status |
 | Parent | native issue relationship | Parent issue |
 
 ## Priority mapping
 
-This Project uses the common names directly.
-
-| Common value | Provider value |
-| --- | --- |
-| P0 | P0 |
-| P1 | P1 |
-| P2 | P2 |
-| P3 | P3 |
+Priority mapping status: pending
 
 ## Type values
 
@@ -60,6 +53,7 @@ Use the current common vocabulary:
 - This repository contributes to MiguelRodo Project #41 (`actions`).
 - Required routing label: `project:actions`.
 - Issues intended for Project #41 should carry the routing label and have explicit Project membership rather than depending on auto-add timing.
+- Complete the Priority mapping from live Project #41 options before ranking or changing Priority.
 - `pj:implement-chat` is a local implementation handoff label, not a Project-routing label. Queue issues are not Project items by default.
 - Labels must not duplicate Type, Priority or Status.
 - Assignment is explicit only.
