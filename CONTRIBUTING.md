@@ -44,7 +44,27 @@ Inline `run:` blocks are linted by **actionlint** (which delegates to **shellche
 
 ### Releases
 
-Releases are managed by the `.github/workflows/release.yml` workflow. Tags **must** originate from the `main` branch and follow the `vX.Y.Z` format.
+Releases are managed by `.github/workflows/publish-release.yml`. Release requests use a `repository_dispatch` event so GitHub always loads the privileged workflow from the default branch, never from the commit being tagged.
+
+Request a release with a token that can dispatch repository events:
+
+```bash
+gh api --method POST repos/MiguelRodo/actions/dispatches --input - <<'JSON'
+{"event_type":"release","client_payload":{"version":"vX.Y.Z"}}
+JSON
+```
+
+#### Release guards
+
+The workflow refuses to release a commit that is not on `main`:
+
+- Only `repository_dispatch` with event type `release` triggers publishing. Direct tag pushes do not trigger the trusted workflow.
+- The checked-out release commit is the default-branch SHA associated with the dispatch event and must be **reachable from `origin/main`** (`scripts/check-release-ancestry.sh`).
+- All required checks must have **succeeded for that exact commit** (`scripts/check-required-ci.sh`) before any tag is moved: actionlint/shellcheck, BATS, and the prebuild-devcontainer integration test.
+- An existing version tag is reusable only when it resolves to the validated release commit (`scripts/check-release-tag.sh`).
+- Floating `vX` / `vX.Y` tags are updated **last**, only after ancestry, CI status and release creation have all passed, and are pinned to the validated commit.
+
+The one-time `.github/workflows/disable-legacy-release.yml` migration disables the historical `.github/workflows/release.yml` workflow identity after this change reaches `main`. This prevents a tag pointing at an older commit from executing that commit's obsolete tag-push workflow.
 
 #### Tag vs. Release
 

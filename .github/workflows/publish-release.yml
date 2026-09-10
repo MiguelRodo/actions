@@ -1,0 +1,118 @@
+name: Publish Release and Bump Floating Tags
+
+# repository_dispatch always loads this workflow from the default branch.
+# A tag push must never select release machinery from the tagged commit.
+on:
+  repository_dispatch:
+    types: [release]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Needed to push tags and create releases
+      checks: read # Needed to verify required CI succeeded for the release commit
+
+    steps:
+      - name: Checkout trusted release commit
+        uses: actions/checkout@v6
+        with:
+          # For repository_dispatch, github.sha is the default branch HEAD at
+          # event creation. Pinning it keeps validation and tagging deterministic.
+          ref: ${{ github.sha }}
+          fetch-depth: 0 # Required to fetch all tags for moving them
+
+      - name: Determine and Validate Version
+        id: vars
+        env:
+          REQUESTED_VERSION: ${{ github.event.client_payload.version }}
+        run: |
+          VERSION="${REQUESTED_VERSION}"
+
+          # Validate version format
+          if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "❌ Error: Version must be in the semantic format vX.Y.Z (e.g., v1.2.3)"
+            exit 1
+          fi
+
+          # Resolve the commit that will be released and tagged
+          RELEASE_SHA=$(git rev-parse HEAD)
+
+          # Extract major and minor versions
+          MAJOR_VERSION=$(echo "$VERSION" | cut -d'.' -f1)
+          MINOR_VERSION=$(echo "$VERSION" | cut -d'.' -f1,2)
+
+          # Set outputs for subsequent steps
+          {
+            echo "version=$VERSION"
+            echo "major=$MAJOR_VERSION"
+            echo "minor=$MINOR_VERSION"
+            echo "release_sha=$RELEASE_SHA"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Verify Release Commit Is On main
+        env:
+          RELEASE_SHA: ${{ steps.vars.outputs.release_sha }}
+        run: |
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          ./scripts/check-release-ancestry.sh "$RELEASE_SHA" origin/main
+
+      - name: Verify Required CI Succeeded
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ steps.vars.outputs.release_sha }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/commits/${RELEASE_SHA}/check-runs?per_page=100" \
+            | ./scripts/check-required-ci.sh \
+                "Lint workflow and action files (actionlint + shellcheck)" \
+                "BATS unit tests (shell scripts)" \
+                "test-prebuild-devcontainer"
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create or Validate Version Tag
+        env:
+          VERSION: ${{ steps.vars.outputs.version }}
+          RELEASE_SHA: ${{ steps.vars.outputs.release_sha }}
+        run: |
+          # An existing version tag is safe to reuse only when it already
+          # points at the validated release commit. GitHub ignores
+          # target_commitish when a tag already exists.
+          if git show-ref --tags --verify --quiet "refs/tags/$VERSION"; then
+            ./scripts/check-release-tag.sh "$VERSION" "$RELEASE_SHA"
+            echo "Reusing existing tag $VERSION."
+          else
+            echo "🔖 Creating specific tag: $VERSION"
+            git tag -a "$VERSION" -m "Release $VERSION"
+            git push origin "$VERSION"
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.vars.outputs.version }}
+          target_commitish: ${{ steps.vars.outputs.release_sha }}
+          generate_release_notes: true
+          make_latest: true
+
+      # Floating tags move last so downstream consumers only ever follow a
+      # commit whose ancestry, CI status and release creation all succeeded.
+      - name: Update Floating Major and Minor Tags
+        env:
+          MAJOR: ${{ steps.vars.outputs.major }}
+          MINOR: ${{ steps.vars.outputs.minor }}
+          RELEASE_SHA: ${{ steps.vars.outputs.release_sha }}
+          VERSION: ${{ steps.vars.outputs.version }}
+        run: |
+          echo "Moving floating tags to point to $VERSION..."
+
+          # Force create/update the floating tags on the validated commit
+          git tag -f "$MINOR" "$RELEASE_SHA"
+          git tag -f "$MAJOR" "$RELEASE_SHA"
+
+          # Force push the updated tags
+          git push origin "refs/tags/$MINOR" --force
+          git push origin "refs/tags/$MAJOR" --force
