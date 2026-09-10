@@ -1,136 +1,83 @@
 #!/usr/bin/env bats
 
-# Unit tests for scripts/bump-version.sh
-# Git commands are stubbed so no real repository or remote is needed.
-
 SCRIPT="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)/bump-version.sh"
 
 setup() {
-  STUB_DIR="$(mktemp -d)"
-  # Stub git: record every call and always succeed
-  cat > "$STUB_DIR/git" << 'EOF'
-#!/bin/bash
-echo "git $*" >> "$STUB_DIR/git_calls.log"
-EOF
-  # Expand STUB_DIR inside the stub at creation time
-  sed -i "s|\$STUB_DIR|${STUB_DIR}|g" "$STUB_DIR/git"
-  chmod +x "$STUB_DIR/git"
-  export PATH="$STUB_DIR:$PATH"
-  export _STUB_DIR="$STUB_DIR"
+  REMOTE_REPO="$BATS_TEST_TMPDIR/remote.git"
+  WORK_REPO="$BATS_TEST_TMPDIR/work"
+  git init --quiet --bare "$REMOTE_REPO"
+  git init --quiet --initial-branch=main "$WORK_REPO"
+  git -C "$WORK_REPO" config user.email "test@example.com"
+  git -C "$WORK_REPO" config user.name "Test User"
+  printf 'initial\n' > "$WORK_REPO/README.md"
+  git -C "$WORK_REPO" add README.md
+  git -C "$WORK_REPO" commit --quiet -m "Initial commit"
+  git -C "$WORK_REPO" remote add origin "$REMOTE_REPO"
+  git -C "$WORK_REPO" push --quiet -u origin main
 }
 
-teardown() {
-  rm -rf "$_STUB_DIR"
+run_bump() {
+  run bash -c 'cd "$1"; shift; "$@"' _ "$WORK_REPO" "$SCRIPT" "$@"
 }
 
-# ---------------------------------------------------------------------------
-# Argument validation
-# ---------------------------------------------------------------------------
-
-@test "fails with no arguments" {
+@test "fails with missing arguments" {
   run bash "$SCRIPT"
   [ "$status" -eq 1 ]
   [[ "$output" == *"Usage"* ]]
-}
 
-@test "fails with only a version and no action" {
   run bash "$SCRIPT" v1.2.3
   [ "$status" -eq 1 ]
   [[ "$output" == *"Usage"* ]]
 }
 
-# ---------------------------------------------------------------------------
-# Version format validation
-# ---------------------------------------------------------------------------
+@test "rejects malformed and injection-shaped versions without changing refs" {
+  for version in 1.2.3 v1.2 v1.2.x v1.2.3.4 v1.2.3-beta 'v1.2.3;touch-pwned'; do
+    run_bump "$version" my-action
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"semantic format"* ]]
+  done
 
-@test "fails when version lacks leading v" {
-  run bash "$SCRIPT" 1.2.3 my-action
-  [ "$status" -eq 1 ]
-  [[ "$output" == *"semantic format"* ]]
+  [ -z "$(git -C "$WORK_REPO" tag --list)" ]
+  [ ! -e "$WORK_REPO/touch-pwned" ]
 }
 
-@test "fails when version is vX.Y (missing patch)" {
-  run bash "$SCRIPT" v1.2 my-action
-  [ "$status" -eq 1 ]
-  [[ "$output" == *"semantic format"* ]]
-}
-
-@test "fails when version contains non-numeric component" {
-  run bash "$SCRIPT" v1.2.x my-action
-  [ "$status" -eq 1 ]
-  [[ "$output" == *"semantic format"* ]]
-}
-
-@test "fails when version has too many components" {
-  run bash "$SCRIPT" v1.2.3.4 my-action
-  [ "$status" -eq 1 ]
-  [[ "$output" == *"semantic format"* ]]
-}
-
-@test "fails when version has a pre-release suffix" {
-  run bash "$SCRIPT" v1.2.3-beta my-action
-  [ "$status" -eq 1 ]
-  [[ "$output" == *"semantic format"* ]]
-}
-
-@test "succeeds with multiple digits in version components" {
-  run bash "$SCRIPT" v10.20.300 my-action
+@test "creates annotated exact and floating tags in the local and remote repositories" {
+  run_bump v10.20.300 action1 action2
   [ "$status" -eq 0 ]
-  [[ "$output" == *"v10.20.300"* ]]
+  [[ "$output" == *"action1,action2"* ]]
+
+  head_sha="$(git -C "$WORK_REPO" rev-parse HEAD)"
+  for tag in v10.20.300 v10.20 v10; do
+    [ "$(git -C "$WORK_REPO" rev-list -n 1 "$tag")" = "$head_sha" ]
+    [ "$(git --git-dir="$REMOTE_REPO" rev-list -n 1 "$tag")" = "$head_sha" ]
+  done
+
+  [ "$(git -C "$WORK_REPO" cat-file -t v10.20.300)" = "tag" ]
 }
 
-# ---------------------------------------------------------------------------
-# Successful execution
-# ---------------------------------------------------------------------------
+@test "tag annotation preserves adversarial action names as data" {
+  action_name='quote '"'"'; $(touch should-not-exist); C:\path; {"json":true}'
 
-@test "succeeds with a valid version and a single action" {
-  run bash "$SCRIPT" v1.2.3 my-action
+  run_bump v1.2.3 "$action_name"
   [ "$status" -eq 0 ]
-  [[ "$output" == *"v1.2.3"* ]]
+  [ ! -e "$WORK_REPO/should-not-exist" ]
+
+  message="$(git -C "$WORK_REPO" tag -l --format='%(contents)' v1.2.3)"
+  [[ "$message" == *"$action_name"* ]]
 }
 
-@test "success message includes correct major tag" {
-  run bash "$SCRIPT" v3.5.7 my-action
+@test "an existing release tag on a different commit is rejected without moving remote refs" {
+  run_bump v2.3.4 first-release
   [ "$status" -eq 0 ]
-  [[ "$output" == *"v3"* ]]
-}
+  original_sha="$(git --git-dir="$REMOTE_REPO" rev-list -n 1 v2.3.4)"
 
-@test "success message includes correct minor tag" {
-  run bash "$SCRIPT" v3.5.7 my-action
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"v3.5"* ]]
-}
+  printf 'second\n' >> "$WORK_REPO/README.md"
+  git -C "$WORK_REPO" add README.md
+  git -C "$WORK_REPO" commit --quiet -m "Second commit"
 
-@test "succeeds with multiple actions and lists them comma-separated" {
-  run bash "$SCRIPT" v1.0.0 action1 action2 action3
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"action1,action2,action3"* ]]
-}
-
-# ---------------------------------------------------------------------------
-# Git call verification
-# ---------------------------------------------------------------------------
-
-@test "creates an annotated tag for the exact version" {
-  run bash "$SCRIPT" v2.3.4 my-action
-  [ "$status" -eq 0 ]
-  grep -q "git tag -a v2.3.4" "$_STUB_DIR/git_calls.log"
-}
-
-@test "force-updates the floating minor tag" {
-  run bash "$SCRIPT" v2.3.4 my-action
-  [ "$status" -eq 0 ]
-  grep -q "git tag -fa v2.3" "$_STUB_DIR/git_calls.log"
-}
-
-@test "force-updates the floating major tag" {
-  run bash "$SCRIPT" v2.3.4 my-action
-  [ "$status" -eq 0 ]
-  grep -q "git tag -fa v2 -m" "$_STUB_DIR/git_calls.log"
-}
-
-@test "pushes the exact version tag to origin" {
-  run bash "$SCRIPT" v2.3.4 my-action
-  [ "$status" -eq 0 ]
-  grep -q "git push origin v2.3.4" "$_STUB_DIR/git_calls.log"
+  run_bump v2.3.4 second-release
+  [ "$status" -ne 0 ]
+  [ "$(git --git-dir="$REMOTE_REPO" rev-list -n 1 v2.3.4)" = "$original_sha" ]
+  [ "$(git --git-dir="$REMOTE_REPO" rev-list -n 1 v2.3)" = "$original_sha" ]
+  [ "$(git --git-dir="$REMOTE_REPO" rev-list -n 1 v2)" = "$original_sha" ]
 }

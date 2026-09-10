@@ -57,13 +57,13 @@ runs:
         RAW_BUMP: ${{ inputs.bump_type }}
       run: |
         # Massage version (trim whitespace, lowercase)
-        VERSION_INPUT=$(echo "$RAW_VERSION" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
+        VERSION_INPUT=$("$GITHUB_ACTION_PATH/../scripts/normalize-action-input.sh" "$RAW_VERSION")
         if [ "$RAW_VERSION" != "$VERSION_INPUT" ] && [ -n "$RAW_VERSION" ]; then
           echo "Note: Massaged version input from '$RAW_VERSION' to '$VERSION_INPUT'"
         fi
 
         # Massage bump_type (trim whitespace, lowercase)
-        BUMP_INPUT=$(echo "$RAW_BUMP" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
+        BUMP_INPUT=$("$GITHUB_ACTION_PATH/../scripts/normalize-action-input.sh" "$RAW_BUMP")
         if [ "$RAW_BUMP" != "$BUMP_INPUT" ] && [ -n "$RAW_BUMP" ]; then
           echo "Note: Massaged bump_type input from '$RAW_BUMP' to '$BUMP_INPUT'"
         fi
@@ -120,7 +120,7 @@ runs:
         NEW_VERSION: ${{ steps.get_version.outputs.version }}
         VERSION_FORCE: ${{ inputs.version_force || 'false' }}
       run: |
-        VERSION_FORCE_INPUT=$(echo "$VERSION_FORCE" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
+        VERSION_FORCE_INPUT=$("$GITHUB_ACTION_PATH/../scripts/normalize-action-input.sh" "$VERSION_FORCE")
         if [ "$VERSION_FORCE_INPUT" != "true" ] && [ "$VERSION_FORCE_INPUT" != "false" ]; then
           echo "Error: version_force must be 'true' or 'false', got: '${VERSION_FORCE}'" >&2
           exit 1

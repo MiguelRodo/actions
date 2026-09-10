@@ -125,7 +125,7 @@ runs:
         echo "IMAGE_NAME=${IMAGE_NAME}" >> $GITHUB_ENV
 
         VERSION_INPUT="${INPUT_VERSION:-$INPUT_TAG}"
-        BUMP_INPUT=$(echo "$INPUT_BUMP" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
+        BUMP_INPUT=$("$GITHUB_ACTION_PATH/../scripts/normalize-action-input.sh" "$INPUT_BUMP")
 
         if [ -n "$VERSION_INPUT" ] && [ -n "$BUMP_INPUT" ]; then
           echo "Error: cannot set both 'version' (or 'tag') and 'bump_type'." >&2
@@ -172,7 +172,7 @@ runs:
           IMAGE_TAG="v${VERSION}"
           
         elif [ -n "$VERSION_INPUT" ]; then
-          IMAGE_TAG=$(echo "$VERSION_INPUT" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
+          IMAGE_TAG=$("$GITHUB_ACTION_PATH/../scripts/normalize-action-input.sh" "$VERSION_INPUT")
           IMAGE_TAG="${IMAGE_TAG#v}"
           if [[ "$IMAGE_TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             IMAGE_TAG="v${IMAGE_TAG}"
@@ -345,14 +345,12 @@ runs:
       env:
         DEVCONTAINER_PATH_INPUT: ${{ inputs.devcontainer_path }}
       run: |
-        DEVCONTAINER_PATH="${DEVCONTAINER_PATH_INPUT}"
-        DEVCONTAINER_PATH="${DEVCONTAINER_PATH%/}"
-        DIR=$(dirname "$DEVCONTAINER_PATH")
-        if [ "$DIR" = "." ]; then
-          echo "DEVCONTAINER_SUBFOLDER=" >> $GITHUB_ENV
-        else
-          echo "DEVCONTAINER_SUBFOLDER=$DIR" >> $GITHUB_ENV
-        fi
+        RESOLVED_PATH=$("$GITHUB_ACTION_PATH/../scripts/prebuild-devcontainer-files.sh" \
+          resolve "$DEVCONTAINER_PATH_INPUT")
+        DEVCONTAINER_PATH=$(jq -r '.path' <<<"$RESOLVED_PATH")
+        DEVCONTAINER_SUBFOLDER=$(jq -r '.subfolder' <<<"$RESOLVED_PATH")
+        printf 'DEVCONTAINER_PATH=%s\n' "$DEVCONTAINER_PATH" >> "$GITHUB_ENV"
+        printf 'DEVCONTAINER_SUBFOLDER=%s\n' "$DEVCONTAINER_SUBFOLDER" >> "$GITHUB_ENV"
 
     - name: Calculate and Export Tracking Metadata
       shell: bash
@@ -367,10 +365,8 @@ runs:
     - name: Inject dynamic options into devcontainer.json
       if: ${{ inputs.inject_build_info == 'true' }}
       shell: bash
-      env:
-        DEVCONTAINER_PATH_INPUT: ${{ inputs.devcontainer_path }}
       run: |
-        DEVCONTAINER_JSON="${DEVCONTAINER_PATH_INPUT}/devcontainer.json"
+        DEVCONTAINER_JSON="${DEVCONTAINER_PATH}/devcontainer.json"
         
         if [ ! -f "$DEVCONTAINER_JSON" ]; then
           echo "Warning: $DEVCONTAINER_JSON not found. Skipping injection."
@@ -401,10 +397,8 @@ runs:
     - name: Revert devcontainer.json to original state
       if: always() && inputs.inject_build_info == 'true'
       shell: bash
-      env:
-        DEVCONTAINER_PATH_INPUT: ${{ inputs.devcontainer_path }}
       run: |
-        DEVCONTAINER_JSON="${DEVCONTAINER_PATH_INPUT}/devcontainer.json"
+        DEVCONTAINER_JSON="${DEVCONTAINER_PATH}/devcontainer.json"
         BACKUP_JSON="${DEVCONTAINER_JSON}.bak"
         
         if [ -f "$BACKUP_JSON" ]; then
@@ -435,36 +429,15 @@ runs:
     - name: Update or create prebuild/devcontainer.json
       if: ${{ inputs.create_prebuild_json == 'true' }}
       shell: bash
-      env:
-        DEVCONTAINER_PATH_INPUT: ${{ inputs.devcontainer_path }}
       run: |
         FULL_IMAGE_REF="${IMAGE_NAME}:${IMAGE_TAG}"
-        DEVCONTAINER_PATH="${DEVCONTAINER_PATH_INPUT}"
-        DEVCONTAINER_JSON="${DEVCONTAINER_PATH}/devcontainer.json"
-        PREBUILD_JSON="${DEVCONTAINER_PATH}/prebuild/devcontainer.json"
-
-        mkdir -p "$(dirname "$PREBUILD_JSON")"
-
-        if [ -f "$PREBUILD_JSON" ]; then
-          jq --arg image "$FULL_IMAGE_REF" '.image = $image' "$PREBUILD_JSON" > temp.json && mv temp.json "$PREBUILD_JSON"
-        else
-          if [ -f "$DEVCONTAINER_JSON" ]; then
-            jq --arg image "$FULL_IMAGE_REF" \
-              '{image: $image, customizations: .customizations}' \
-              "$DEVCONTAINER_JSON" > "$PREBUILD_JSON"
-          else
-            echo "No devcontainer.json found at '${DEVCONTAINER_JSON}' to copy customizations from!"
-            exit 1
-          fi
-        fi
+        "$GITHUB_ACTION_PATH/../scripts/prebuild-devcontainer-files.sh" \
+          update-prebuild-json "$DEVCONTAINER_PATH" "$FULL_IMAGE_REF"
 
     - name: Commit and push changes
       if: ${{ inputs.create_prebuild_json == 'true' }}
       shell: bash
-      env:
-        DEVCONTAINER_PATH_INPUT: ${{ inputs.devcontainer_path }}
       run: |
-        DEVCONTAINER_PATH="${DEVCONTAINER_PATH_INPUT}"
         PREBUILD_JSON="${DEVCONTAINER_PATH}/prebuild/devcontainer.json"
 
         git config --local user.email "actions@github.com"
