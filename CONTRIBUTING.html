@@ -200,6 +200,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#composite-actions" id="toc-composite-actions" class="nav-link" data-scroll-target="#composite-actions">Composite actions</a></li>
   <li><a href="#shell-scripts" id="toc-shell-scripts" class="nav-link" data-scroll-target="#shell-scripts">Shell scripts</a></li>
   <li><a href="#documentation" id="toc-documentation" class="nav-link" data-scroll-target="#documentation">Documentation</a></li>
+  <li><a href="#workflow-dependency-security" id="toc-workflow-dependency-security" class="nav-link" data-scroll-target="#workflow-dependency-security">Workflow dependency security</a></li>
   <li><a href="#releases" id="toc-releases" class="nav-link" data-scroll-target="#releases">Releases</a></li>
   </ul></li>
   <li><a href="#code-of-conduct" id="toc-code-of-conduct" class="nav-link" data-scroll-target="#code-of-conduct">Code of conduct</a></li>
@@ -257,6 +258,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><p>The root <code>README.md</code> is intentionally a concise catalogue rather than a second copy of each action’s documentation.</p></li>
 <li><p>Complete, copy-paste-ready workflow files live in the <code>examples/</code> directory.</p></li>
 </ul>
+</section>
+<section id="workflow-dependency-security" class="level3">
+<h3 class="anchored" data-anchor-id="workflow-dependency-security">Workflow dependency security</h3>
+<p>Repository-owned workflows under <code>.github/workflows/</code> may receive privileged tokens, publish artifacts or enforce CI. Their third-party actions are therefore pinned to full immutable commit SHAs, with the corresponding release version retained as an inline comment. Dependabot updates these SHA pins monthly and groups routine GitHub Actions updates into one low-noise PR; updates still require the normal protected-branch CI before merge.</p>
+<p>Published composite actions and copy-paste consumer examples may instead use readable major tags such as <code>@v2</code>. Those surfaces prioritize consumer compatibility and automatic patch uptake, while this repository’s own privileged execution path uses stricter immutable pins.</p>
+<p><code>actionlint</code> is installed by <code>scripts/install-actionlint.sh</code> from a fixed release archive whose SHA-256 digest is pinned to the checksum published with that upstream release. It is updated manually when needed rather than through a separate recurring version-check workflow.</p>
 </section>
 <section id="releases" class="level3">
 <h3 class="anchored" data-anchor-id="releases">Releases</h3>
