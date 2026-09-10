@@ -106,6 +106,38 @@ run_select() {
   [ -z "$output" ]
 }
 
+@test "latest: keeps the newest Debian revision of the same upstream version" {
+  mk_deb myapp 1.0.0-1 amd64
+  mk_deb myapp 1.0.0-2 amd64
+
+  run_select latest
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"myapp_1.0.0-1_amd64.deb"* ]]
+  [[ "$output" != *"myapp_1.0.0-2_amd64.deb"* ]]
+}
+
+@test "latest: uses Debian ordering for non-numeric revisions" {
+  mk_deb myapp 1.0.0-1a amd64
+  mk_deb myapp 1.0.0-1.deb1 amd64
+
+  run_select latest
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"myapp_1.0.0-1a_amd64.deb"* ]]
+  [[ "$output" != *"myapp_1.0.0-1.deb1_amd64.deb"* ]]
+}
+
+@test "latest-per-minor: Debian revisions remain in their upstream minor series" {
+  mk_deb myapp 1.0.0-1 amd64
+  mk_deb myapp 1.0.0-2 amd64
+  mk_deb myapp 1.0.1-1 amd64
+
+  run_select latest-per-minor
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"myapp_1.0.0-1_amd64.deb"* ]]
+  [[ "$output" == *"myapp_1.0.0-2_amd64.deb"* ]]
+  [[ "$output" != *"myapp_1.0.1-1_amd64.deb"* ]]
+}
+
 @test "latest: removes all arches of old versions" {
   mk_deb myapp 1.0.0 amd64
   mk_deb myapp 1.0.0 arm64

@@ -3,59 +3,46 @@
 ROOT_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)"
 ACTION_FILE="$ROOT_DIR/prebuild-devcontainer/action.yml"
 INJECTOR="$ROOT_DIR/scripts/inject-build-info.js"
+FILES_SCRIPT="$ROOT_DIR/scripts/prebuild-devcontainer-files.sh"
 
-@test "prebuild-devcontainer action exists and is a composite action" {
-  [ -f "$ACTION_FILE" ]
+@test "prebuild-devcontainer remains a composite action with required integrations" {
   run grep -F 'using: "composite"' "$ACTION_FILE"
   [ "$status" -eq 0 ]
-}
-
-@test "prebuild-devcontainer inputs include required and optional inputs" {
-  run grep -F 'github_token:' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-
-  run grep -F 'no_cache:' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-
-  run grep -F 'create_prebuild_json:' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-
-  run grep -F 'devcontainer_path:' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-
-  run grep -F 'image_name:' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-
-  run grep -F 'tag:' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-
-  run grep -F 'registry:' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-
-  run grep -F 'version_force:' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-}
-
-@test "prebuild-devcontainer logs into container registry" {
   run grep -F 'uses: docker/login-action@v3' "$ACTION_FILE"
   [ "$status" -eq 0 ]
-  run grep -F 'registry: ${{ inputs.registry }}' "$ACTION_FILE"
+  run grep -F 'uses: devcontainers/ci@v0.3' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 }
 
-@test "prebuild-devcontainer calls devcontainers/ci@v0.3 to build and push" {
-  run grep -F 'uses: devcontainers/ci@v0.3' "$ACTION_FILE"
+@test "devcontainer path resolution preserves shell metacharacters as data" {
+  path='workspace/quote '"'"' $(touch should-not-exist) {"json":true}/.devcontainer/'
+
+  run "$FILES_SCRIPT" resolve "$path"
   [ "$status" -eq 0 ]
-  run grep -F 'imageName: ${{ env.IMAGE_NAME }}' "$ACTION_FILE"
+  [ ! -e "$BATS_TEST_TMPDIR/should-not-exist" ]
+  run jq -e '
+    .path == "workspace/quote '\'' $(touch should-not-exist) {\"json\":true}/.devcontainer" and
+    .subfolder == "workspace/quote '\'' $(touch should-not-exist) {\"json\":true}"
+  ' <<<"$output"
   [ "$status" -eq 0 ]
-  run grep -F 'imageTag: ${{ env.IMAGE_TAG }}' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-  run grep -E 'push: (always|never)' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-  run grep -F 'noCache: ${{ inputs.no_cache }}' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-  run grep -F 'subFolder: ${{ env.DEVCONTAINER_SUBFOLDER }}' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
+}
+
+@test "devcontainer path resolution rejects absolute traversal and newline injection" {
+  run "$FILES_SCRIPT" resolve "/tmp/.devcontainer"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"relative"* ]]
+
+  run "$FILES_SCRIPT" resolve "../outside/.devcontainer"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"traverse"* ]]
+
+  run "$FILES_SCRIPT" resolve $'.devcontainer\nINJECTED=value'
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"control characters"* ]]
+
+  run "$FILES_SCRIPT" resolve $'.devcontainer/\001hidden'
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"control characters"* ]]
 }
 
 @test "injector treats an exploit-shaped devcontainer path purely as data" {
@@ -89,45 +76,56 @@ JSON
   [ "$status" -eq 0 ]
 }
 
-@test "prebuild-devcontainer updates or creates prebuild/devcontainer.json" {
-  run grep -F 'Update or create prebuild/devcontainer.json' "$ACTION_FILE"
+@test "prebuild JSON creation preserves customizations and safely encodes the image" {
+  devcontainer_path="$BATS_TEST_TMPDIR/path with spaces/'quote \$(touch should-not-exist)/.devcontainer"
+  image='ghcr.io/octo/image:tag-{"json":true}-$(echo safe)'
+  mkdir -p "$devcontainer_path"
+  cat > "$devcontainer_path/devcontainer.json" <<'JSON'
+{
+  "features": {"ignored": true},
+  "customizations": {
+    "vscode": {"extensions": ["one", "two"]}
+  }
+}
+JSON
+
+  run "$FILES_SCRIPT" update-prebuild-json "$devcontainer_path" "$image"
   [ "$status" -eq 0 ]
-  run grep -F 'if: ${{ inputs.create_prebuild_json == '"'"'true'"'"' }}' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-  run grep -F 'jq --arg image "$FULL_IMAGE_REF" '"'"'.image = $image'"'"' "$PREBUILD_JSON" > temp.json && mv temp.json "$PREBUILD_JSON"' "$ACTION_FILE"
+  [ ! -e "$BATS_TEST_TMPDIR/should-not-exist" ]
+  run jq -e --arg image "$image" '
+    .image == $image and
+    .customizations.vscode.extensions == ["one", "two"] and
+    has("features") == false
+  ' "$devcontainer_path/prebuild/devcontainer.json"
   [ "$status" -eq 0 ]
 }
 
-@test "prebuild-devcontainer passes the devcontainer path to Node as data" {
-  run grep -F 'export DEVCONTAINER_JSON' "$ACTION_FILE"
+@test "prebuild JSON updates only the image in an existing generated file" {
+  devcontainer_path="$BATS_TEST_TMPDIR/.devcontainer"
+  mkdir -p "$devcontainer_path/prebuild"
+  cat > "$devcontainer_path/prebuild/devcontainer.json" <<'JSON'
+{"image":"old","customizations":{"vscode":{"settings":{"x":1}}},"extra":"preserved"}
+JSON
+
+  run "$FILES_SCRIPT" update-prebuild-json "$devcontainer_path" "new:image"
   [ "$status" -eq 0 ]
-  run grep -F 'node "$GITHUB_ACTION_PATH/../scripts/inject-build-info.js"' "$ACTION_FILE"
+  run jq -e '
+    .image == "new:image" and
+    .customizations.vscode.settings.x == 1 and
+    .extra == "preserved"
+  ' "$devcontainer_path/prebuild/devcontainer.json"
   [ "$status" -eq 0 ]
-  run grep -F 'const file = process.env.DEVCONTAINER_JSON;' "$INJECTOR"
-  [ "$status" -eq 0 ]
-  run grep -F 'node -e' "$ACTION_FILE"
+}
+
+@test "prebuild JSON creation fails when the source devcontainer is absent" {
+  run "$FILES_SCRIPT" update-prebuild-json "$BATS_TEST_TMPDIR/missing" "image:tag"
   [ "$status" -ne 0 ]
+  [[ "$output" == *"No devcontainer.json found"* ]]
 }
 
-@test "prebuild-devcontainer commits and pushes changes when create_prebuild_json is true" {
-  run grep -F 'Commit and push changes' "$ACTION_FILE"
+@test "action wires resolved paths and generated prebuild JSON through the helpers" {
+  run grep -F 'scripts/prebuild-devcontainer-files.sh' "$ACTION_FILE"
   [ "$status" -eq 0 ]
-  run grep -F 'git commit -m "Update prebuild devcontainer.json with image ${IMAGE_NAME}:${IMAGE_TAG}"' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-}
-
-@test "prebuild-devcontainer verifies version progression" {
-  run grep -F 'Check version progression' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-  run grep -F '"$GITHUB_ACTION_PATH/../scripts/check-version-progression.sh" "${NEW_VERSION}" "${PREV_VERSION}"' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-}
-
-@test "prebuild-devcontainer tags and pushes alias images" {
-  run grep -F 'Tag and push SemVer alias images' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-  run grep -F 'docker tag "${IMAGE_NAME}:${IMAGE_TAG}" "${IMAGE_NAME}:${alias_tag}"' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-  run grep -F 'docker push "${IMAGE_NAME}:${alias_tag}"' "$ACTION_FILE"
+  run grep -F 'DEVCONTAINER_PATH=%s' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 }

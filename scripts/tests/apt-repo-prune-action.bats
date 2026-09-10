@@ -1,9 +1,40 @@
 #!/usr/bin/env bats
 
-# Structural tests for apt-repo-prune/action.yml
-
 ACTION_FILE="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/apt-repo-prune/action.yml"
 SELECT_SCRIPT="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)/apt-prune-select-versions.sh"
+PLAN_SCRIPT="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)/apt-prune-plan.sh"
+
+setup() {
+  TEST_ROOT="$(mktemp -d)"
+  MOCK_BIN="$TEST_ROOT/bin"
+  mkdir -p "$MOCK_BIN"
+  cat > "$MOCK_BIN/dpkg-deb" <<'EOF'
+#!/usr/bin/env bash
+base="$(basename "$2" .deb)"
+IFS=_ read -r name version arch <<<"$base"
+case "$3" in
+  Package) printf '%s\n' "$name" ;;
+  Version) printf '%s\n' "$version" ;;
+  Architecture) printf '%s\n' "$arch" ;;
+esac
+EOF
+  chmod +x "$MOCK_BIN/dpkg-deb"
+  export PATH="$MOCK_BIN:$PATH"
+  export GITHUB_OUTPUT="$TEST_ROOT/output"
+  export RUNNER_TEMP="$TEST_ROOT"
+  : > "$GITHUB_OUTPUT"
+}
+
+teardown() {
+  rm -rf "$TEST_ROOT"
+}
+
+make_deb() {
+  local repo_dir="$1"
+  local version="$2"
+  mkdir -p "$repo_dir/pool/main/d/demo"
+  touch "$repo_dir/pool/main/d/demo/demo_${version}_amd64.deb"
+}
 
 @test "apt-repo-prune action.yml exists" {
   [ -f "$ACTION_FILE" ]
@@ -58,24 +89,6 @@ SELECT_SCRIPT="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)/apt-prune-sele
   [ "$status" -eq 0 ]
 }
 
-@test "apt-repo-prune checks pool/main and exits 0 (not 1) when absent" {
-  run grep -F 'pool/main' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-  # When pool/main is absent the repo has no packages: must use exit 0, not exit 1.
-  run awk '
-    /pool\/main/ { in_block=1; next }
-    in_block && /exit 1/ { bad=1; exit 0 }
-    in_block && /exit 0/ { good=1; in_block=0; next }
-    END { exit (good && !bad) ? 0 : 1 }
-  ' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-}
-
-@test "apt-repo-prune validates expected dists/stable structure" {
-  run grep -F 'dists/stable' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-}
-
 @test "apt-repo-prune uses git filter-repo for history rewrite" {
   run grep -F 'git filter-repo' "$ACTION_FILE"
   [ "$status" -eq 0 ]
@@ -91,8 +104,8 @@ SELECT_SCRIPT="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)/apt-prune-sele
   [ "$status" -eq 0 ]
 }
 
-@test "apt-repo-prune calls the apt-prune-select-versions.sh script" {
-  run grep -F 'apt-prune-select-versions.sh' "$ACTION_FILE"
+@test "apt-repo-prune delegates plan decisions to the behavioural helper" {
+  run grep -F 'apt-prune-plan.sh' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 }
 
@@ -102,6 +115,55 @@ SELECT_SCRIPT="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)/apt-prune-sele
 
 @test "apt-prune-select-versions.sh has valid bash syntax" {
   bash -n "$SELECT_SCRIPT"
+}
+
+@test "plan treats an empty repository as a successful no-op and cleans the clone" {
+  repo_dir="$TEST_ROOT/empty repo"
+  mkdir -p "$repo_dir"
+
+  run "$PLAN_SCRIPT" latest "$repo_dir" "octo/apt repo" main
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"repository has no packages"* ]]
+  [ "$(cat "$GITHUB_OUTPUT")" = "should_prune=false" ]
+  [ ! -d "$repo_dir" ]
+}
+
+@test "plan rejects package pools without dists metadata and cleans the clone" {
+  repo_dir="$TEST_ROOT/missing metadata"
+  make_deb "$repo_dir" 1.0.0
+
+  run "$PLAN_SCRIPT" latest "$repo_dir" "octo/apt repo" main
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"expected dists/stable"* ]]
+  [ ! -d "$repo_dir" ]
+}
+
+@test "plan reports no pruning when retention is already satisfied" {
+  repo_dir="$TEST_ROOT/current"
+  make_deb "$repo_dir" 1.0.0
+  mkdir -p "$repo_dir/dists/stable"
+
+  run "$PLAN_SCRIPT" latest "$repo_dir" "octo/apt" main
+  [ "$status" -eq 0 ]
+  [ "$(cat "$GITHUB_OUTPUT")" = "should_prune=false" ]
+  [ ! -d "$repo_dir" ]
+}
+
+@test "plan returns retained clone and exact removal file when pruning is required" {
+  repo_dir="$TEST_ROOT/prune"
+  make_deb "$repo_dir" 1.0.0
+  make_deb "$repo_dir" 2.0.0
+  mkdir -p "$repo_dir/dists/stable"
+
+  run "$PLAN_SCRIPT" latest "$repo_dir" "octo/apt" release
+  [ "$status" -eq 0 ]
+  grep -Fxq "should_prune=true" "$GITHUB_OUTPUT"
+  grep -Fxq "apt_repo_dir=$repo_dir" "$GITHUB_OUTPUT"
+  grep -Fxq "default_branch=release" "$GITHUB_OUTPUT"
+  paths_file="$(sed -n 's/^paths_to_remove_file=//p' "$GITHUB_OUTPUT")"
+  [ -f "$paths_file" ]
+  [ "$(cat "$paths_file")" = "pool/main/d/demo/demo_1.0.0_amd64.deb" ]
+  [ -d "$repo_dir" ]
 }
 
 @test "apt-repo-prune uses temporary askpass authentication with token-free remotes" {
@@ -170,15 +232,6 @@ SELECT_SCRIPT="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)/apt-prune-sele
     in_step && /^    - name:/ { in_step=0 }
     END { exit found ? 0 : 1 }
   ' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-}
-
-@test "apt-repo-prune plan step writes should_prune to GITHUB_OUTPUT" {
-  run grep -F 'should_prune' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-  run grep -F 'should_prune=true' "$ACTION_FILE"
-  [ "$status" -eq 0 ]
-  run grep -F 'should_prune=false' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 }
 

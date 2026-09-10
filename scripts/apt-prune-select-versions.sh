@@ -33,7 +33,7 @@ case "$RETENTION" in
 esac
 
 # ── Build package inventory ──────────────────────────────────────────────────
-# Each line: <pkg>\t<version>\t<arch>\t<relpath>
+# Each line: <pkg>\t<version>\t<upstream-version>\t<arch>\t<relpath>
 TMP_DATA="$(mktemp)"
 cleanup() {
   rm -f "$TMP_DATA"
@@ -52,60 +52,60 @@ while IFS= read -r -d '' FILE; do
   [ -n "$VER" ]  || continue
   [ -n "$ARCH" ] || continue
 
-  # Strip epoch (e.g. "1:2.3.4" → "2.3.4") and debian revision (e.g. "2.3.4-1" → "2.3.4")
+  # Strip epoch but retain the Debian revision so 1.0.0-2 sorts after 1.0.0-1.
   VER="${VER##*:}"
-  VER="${VER%%-*}"
-  # Strip optional leading 'v'
   VER="${VER#v}"
+  UPSTREAM_VER="${VER%%-*}"
 
-  # Only handle plain semver X.Y.Z
-  [[ "$VER" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || continue
+  # Handle semver X.Y.Z with an optional Debian revision.
+  [[ "$VER" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.+~]+)?$ ]] || continue
 
-  printf '%s\t%s\t%s\t%s\n' "$PKG" "$VER" "$ARCH" "$REL_PATH" >> "$TMP_DATA"
+  printf '%s\t%s\t%s\t%s\t%s\n' \
+    "$PKG" "$VER" "$UPSTREAM_VER" "$ARCH" "$REL_PATH" >> "$TMP_DATA"
 done < <(find "${REPO_DIR}/pool" -type f -name '*.deb' -print0 2>/dev/null | sort -z)
 
 [ -s "$TMP_DATA" ] || exit 0
 
 # ── Process each (pkg, arch) group ──────────────────────────────────────────
 
+# GNU sort -V does not implement Debian's version ordering for all valid
+# revisions, so compare package versions with dpkg itself.
+version_is_newer() {
+  dpkg --compare-versions "$1" gt "$2"
+}
+
 while IFS=$'\t' read -r COMBO_PKG COMBO_ARCH; do
-  # Versions for this group, sorted from oldest to newest
-  mapfile -t SORTED_VERS < <(
+  mapfile -t VERSIONS < <(
     awk -F'\t' -v p="$COMBO_PKG" -v a="$COMBO_ARCH" \
-      '$1==p && $3==a { print $2 }' "$TMP_DATA" | sort -V | uniq
+      '$1==p && $4==a { print $2 }' "$TMP_DATA" | sort -u
   )
 
-  [ "${#SORTED_VERS[@]}" -eq 0 ] && continue
+  [ "${#VERSIONS[@]}" -eq 0 ] && continue
 
-  # Determine which versions to keep
+  # Determine which versions to keep using Debian's comparison algorithm.
   declare -a _KEEP=()
+  declare -A _BEST_BY_SERIES=()
+  for V in "${VERSIONS[@]}"; do
+    UPSTREAM_VER="${V%%-*}"
+    case "$RETENTION" in
+      latest)
+        SERIES_KEY="all"
+        ;;
+      latest-per-minor)
+        SERIES_KEY="${UPSTREAM_VER%.*}"
+        ;;
+      latest-per-major)
+        SERIES_KEY="${UPSTREAM_VER%%.*}"
+        ;;
+    esac
 
-  case "$RETENTION" in
-    latest)
-      _KEEP=("${SORTED_VERS[-1]}")
-      ;;
-
-    latest-per-minor)
-      # For each MAJOR.MINOR keep the highest PATCH.
-      # Iterating in ascending version order means the last assignment wins.
-      declare -A _MINOR_BEST=()
-      for V in "${SORTED_VERS[@]}"; do
-        _MINOR_BEST["${V%.*}"]="$V"
-      done
-      mapfile -t _KEEP < <(printf '%s\n' "${_MINOR_BEST[@]}")
-      unset _MINOR_BEST
-      ;;
-
-    latest-per-major)
-      # For each MAJOR keep the highest MINOR.PATCH.
-      declare -A _MAJOR_BEST=()
-      for V in "${SORTED_VERS[@]}"; do
-        _MAJOR_BEST["${V%%.*}"]="$V"
-      done
-      mapfile -t _KEEP < <(printf '%s\n' "${_MAJOR_BEST[@]}")
-      unset _MAJOR_BEST
-      ;;
-  esac
+    CURRENT_BEST="${_BEST_BY_SERIES["$SERIES_KEY"]-}"
+    if [[ -z "$CURRENT_BEST" ]] || version_is_newer "$V" "$CURRENT_BEST"; then
+      _BEST_BY_SERIES["$SERIES_KEY"]="$V"
+    fi
+  done
+  _KEEP=("${_BEST_BY_SERIES[@]}")
+  unset _BEST_BY_SERIES
 
   # Build a quick-lookup set of kept versions
   declare -A _KEEP_SET=()
@@ -114,7 +114,7 @@ while IFS=$'\t' read -r COMBO_PKG COMBO_ARCH; do
   done
 
   # Output paths of files whose version is NOT in the keep-set
-  while IFS=$'\t' read -r _P _V _A _PATH; do
+  while IFS=$'\t' read -r _P _V _UPSTREAM _A _PATH; do
     [ "$_P" = "$COMBO_PKG" ]  || continue
     [ "$_A" = "$COMBO_ARCH" ] || continue
     if [ -z "${_KEEP_SET["$_V"]+x}" ]; then
@@ -124,4 +124,4 @@ while IFS=$'\t' read -r COMBO_PKG COMBO_ARCH; do
 
   unset _KEEP _KEEP_SET
 
-done < <(awk -F'\t' '{ print $1 "\t" $3 }' "$TMP_DATA" | sort -u)
+done < <(awk -F'\t' '{ print $1 "\t" $4 }' "$TMP_DATA" | sort -u)

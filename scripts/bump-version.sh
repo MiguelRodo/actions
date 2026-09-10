@@ -23,11 +23,11 @@ fi
 
 # Extract the major and minor versions
 # e.g., if VERSION=v1.2.3, MAJOR_VERSION=v1 and MINOR_VERSION=v1.2
-MAJOR_VERSION=$(echo "$VERSION" | cut -d'.' -f1)
-MINOR_VERSION=$(echo "$VERSION" | cut -d'.' -f1,2)
+MAJOR_VERSION="${VERSION%%.*}"
+MINOR_VERSION="${VERSION%.*}"
 
 # Format the actions array into a readable comma-separated string
-ACTIONS_LIST=$(IFS=, ; echo "${ACTIONS[*]}")
+ACTIONS_LIST=$(IFS=, ; printf '%s' "${ACTIONS[*]}")
 MESSAGE="Release $VERSION updating: $ACTIONS_LIST"
 
 echo "🔖 Creating specific tag: $VERSION"

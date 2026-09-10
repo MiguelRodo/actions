@@ -53,6 +53,7 @@ runs:
         GH_TOKEN: ${{ inputs.gh_token }}
       run: |
         set -euo pipefail
+        source "$GITHUB_ACTION_PATH/../scripts/setup-project-files.sh"
 
         echo "::group::Phase 1: Workspace Tracking & Initialization"
 
@@ -60,40 +61,29 @@ runs:
         BUILDER_REPO="${BUILDER_REPO_INPUT:-$WORKING_REPO_INPUT}"
         CONFIG_REPO="${CONFIG_REPO_INPUT:-$WORKING_REPO_INPUT}"
 
-        # Parse owner/repo@branch syntax
-        parse_repo_string() {
-          local input="$1"
-          local repo="${input%%@*}"
-          local branch="${input##*@}"
-          if [ "$branch" = "$input" ]; then
-            branch=""
-          fi
-          echo "$repo|$branch"
-        }
-
         # working repo parts
-        WORKING_PARTS=$(parse_repo_string "$WORKING_REPO_INPUT")
-        WORKING_REPO="${WORKING_PARTS%%|*}"
-        WORKING_BRANCH="${WORKING_PARTS##*|}"
+        parse_repo_ref "$WORKING_REPO_INPUT"
+        WORKING_REPO="$PARSED_REPO"
+        WORKING_BRANCH="$PARSED_BRANCH"
         WORKING_OWNER="${WORKING_REPO%%/*}"
         WORKING_NAME="${WORKING_REPO##*/}"
 
         # template repo parts
-        TEMPLATE_PARTS=$(parse_repo_string "$TEMPLATE_REPO_INPUT")
-        TEMPLATE_REPO="${TEMPLATE_PARTS%%|*}"
-        TEMPLATE_BRANCH="${TEMPLATE_PARTS##*|}"
+        parse_repo_ref "$TEMPLATE_REPO_INPUT"
+        TEMPLATE_REPO="$PARSED_REPO"
+        TEMPLATE_BRANCH="$PARSED_BRANCH"
 
         # builder repo parts
-        BUILDER_PARTS=$(parse_repo_string "$BUILDER_REPO")
-        BUILDER_REPO_STR="${BUILDER_PARTS%%|*}"
-        BUILDER_BRANCH="${BUILDER_PARTS##*|}"
+        parse_repo_ref "$BUILDER_REPO"
+        BUILDER_REPO_STR="$PARSED_REPO"
+        BUILDER_BRANCH="$PARSED_BRANCH"
         BUILDER_OWNER="${BUILDER_REPO_STR%%/*}"
         BUILDER_NAME="${BUILDER_REPO_STR##*/}"
 
         # config repo parts
-        CONFIG_PARTS=$(parse_repo_string "$CONFIG_REPO")
-        CONFIG_REPO_STR="${CONFIG_PARTS%%|*}"
-        CONFIG_BRANCH="${CONFIG_PARTS##*|}"
+        parse_repo_ref "$CONFIG_REPO"
+        CONFIG_REPO_STR="$PARSED_REPO"
+        CONFIG_BRANCH="$PARSED_BRANCH"
 
         # Setup authentication
         git config --global user.name "github-actions[bot]"
@@ -176,29 +166,8 @@ runs:
         DEVCONTAINER_JSON="$BUILDER_DIR/.devcontainer/devcontainer.json"
         if [ -f "$DEVCONTAINER_JSON" ]; then
           echo "Updating renv-cache feature in builder devcontainer.json..."
-          sed -i -E 's/(^|[^:])\/\/.*/\1/g' "$DEVCONTAINER_JSON"
-
           if [ -n "$RENV_PKGS_INPUT" ] || [ -n "$RENV_REPOS_INPUT" ]; then
-            PKGS_ARRAY=$("$GITHUB_ACTION_PATH/../scripts/parse-delimited-json.sh" "$RENV_PKGS_INPUT")
-            REPOS_ARRAY=$("$GITHUB_ACTION_PATH/../scripts/parse-delimited-json.sh" "$RENV_REPOS_INPUT")
-
-            jq --argjson pkgs "$PKGS_ARRAY" \
-               --argjson repos "$REPOS_ARRAY" \
-               'if .features then
-                  if .features | has("ghcr.io/miguelrodo/devcontainers/renv-cache:latest") then
-                    .features["ghcr.io/miguelrodo/devcontainers/renv-cache:latest"].pkg = $pkgs |
-                    .features["ghcr.io/miguelrodo/devcontainers/renv-cache:latest"].repos = $repos
-                  else
-                    .features["ghcr.io/miguelrodo/devcontainers/renv-cache:latest"] = { "pkg": $pkgs, "repos": $repos }
-                  end
-                else
-                  .features = {
-                    "ghcr.io/miguelrodo/devcontainers/renv-cache:latest": {
-                      "pkg": $pkgs,
-                      "repos": $repos
-                    }
-                  }
-                end' "$DEVCONTAINER_JSON" > "${DEVCONTAINER_JSON}.tmp" && mv "${DEVCONTAINER_JSON}.tmp" "$DEVCONTAINER_JSON"
+            update_renv_cache "$DEVCONTAINER_JSON" "$RENV_PKGS_INPUT" "$RENV_REPOS_INPUT"
           fi
         fi
 
@@ -206,26 +175,7 @@ runs:
         if [ "$BUILDER_REPO_STR" != "$WORKING_REPO" ]; then
           echo "Builder repo is distinct from working repo."
           echo "Injecting devcontainer-build.yml workflow into builder repo..."
-          mkdir -p "$BUILDER_DIR/.github/workflows"
-          # Use line by line echo to avoid YAML syntax errors in the enclosing action.yml
-          echo 'name: Pre-build Dev Container' > "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
-          echo 'on:' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
-          echo '  push:' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
-          echo '    branches:' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
-          echo '      - "**"' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
-          echo '  workflow_dispatch:' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
-          echo 'jobs:' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
-          echo '  build:' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
-          echo '    runs-on: ubuntu-latest' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
-          echo '    permissions:' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
-          echo '      contents: write' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
-          echo '      packages: write' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
-          echo '    steps:' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
-          echo '      - uses: actions/checkout@v4' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
-          echo '      - uses: MiguelRodo/actions/prebuild-devcontainer@v2' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
-          echo '        with:' >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
-          DOLLAR='$'
-          echo "          github_token: ${DOLLAR}{{ secrets.GITHUB_TOKEN }}" >> "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
+          write_builder_workflow "$BUILDER_DIR/.github/workflows/devcontainer-build.yml"
 
           # Cross-Repo Image Linkage
           echo "Linking config repo devcontainer to builder GHCR image..."
@@ -235,9 +185,7 @@ runs:
           IMAGE_URL="ghcr.io/${BUILDER_OWNER}/${BUILDER_NAME}-${IMAGE_TAG}:latest"
           IMAGE_URL=$(echo "$IMAGE_URL" | tr '[:upper:]' '[:lower:]')
 
-          echo '{' > "$CONFIG_DIR/.devcontainer/devcontainer.json"
-          echo '  "image": "'${IMAGE_URL}'"' >> "$CONFIG_DIR/.devcontainer/devcontainer.json"
-          echo '}' >> "$CONFIG_DIR/.devcontainer/devcontainer.json"
+          write_config_devcontainer "$CONFIG_DIR/.devcontainer/devcontainer.json" "$IMAGE_URL"
         fi
 
         echo "::endgroup::"
@@ -255,12 +203,7 @@ runs:
         # repos.list Provisioning
         if [ -n "$REPOS_LIST_INPUT" ]; then
           echo "Provisioning repos.list..."
-          # Split by semicolon or comma and write line-by-line
-          echo "$REPOS_LIST_INPUT" | sed 's/[,;]/\n/g' | while read -r repo_item; do
-            if [ -n "$repo_item" ]; then
-              echo "$repo_item" >> repos.list
-            fi
-          done
+          append_repos_list "repos.list" "$REPOS_LIST_INPUT"
         fi
 
         # Workspace Generation
