@@ -33,7 +33,7 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
   run grep -F 'go_version:' "$ACTION_FILE"
 #  [ "$status" -eq 0 ]
 
-  run grep -F 'default: "1.22"' "$ACTION_FILE"
+  run grep -F 'default: "1.27"' "$ACTION_FILE"
 #  [ "$status" -eq 0 ]
 
   run grep -F 'apt_repo:' "$ACTION_FILE"
@@ -71,13 +71,13 @@ ACTION_README="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/go-version-
 }
 
 @test "action sets up Go and runs GoReleaser native publishing" {
-  run grep -F 'uses: actions/setup-go@v5' "$ACTION_FILE"
+  run grep -F 'uses: actions/setup-go@v7' "$ACTION_FILE"
 #  [ "$status" -eq 0 ]
 
-  run grep -F 'go-version: ${{ inputs.go_version || '"'"'1.22'"'"' }}' "$ACTION_FILE"
+  run grep -F 'go-version: ${{ inputs.go_version || '"'"'1.27'"'"' }}' "$ACTION_FILE"
 #  [ "$status" -eq 0 ]
 
-  run grep -F 'uses: goreleaser/goreleaser-action@v5' "$ACTION_FILE"
+  run grep -F 'uses: goreleaser/goreleaser-action@v7' "$ACTION_FILE"
 #  [ "$status" -eq 0 ]
 
   run grep -F 'args: release --clean --skip=announce' "$ACTION_FILE"

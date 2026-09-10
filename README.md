@@ -220,7 +220,7 @@ on:
         description: 'Component to bump: major | minor | patch. Cannot be used with version.'
         required: false
       go_version:
-        description: 'Go version to install (defaults to 1.22).'
+        description: 'Go version to install (defaults to 1.27).'
         required: false
       goreleaser_config:
         description: 'Optional path to the GoReleaser config file.'
