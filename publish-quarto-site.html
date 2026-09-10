@@ -142,6 +142,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">Add Issues to Project</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="./setup-project-infrastructure.html"> 
+<span class="menu-text">Setup Project Infrastructure</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="./version-release.html"> 
 <span class="menu-text">Version and Release</span></a>
   </li>  
@@ -152,6 +156,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li class="nav-item">
     <a class="nav-link" href="./go-version-release.html"> 
 <span class="menu-text">Go Version and Release</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./rust-version-release.html"> 
+<span class="menu-text">Rust Version and Release</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./apt-repo-prune.html"> 
@@ -237,33 +245,60 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> MiguelRodo/actions/publish-quarto-site@v2</span></span>
 <span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">with</span><span class="kw">:</span></span>
 <span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">github_token</span><span class="kw">:</span><span class="at"> ${{ secrets.GITHUB_TOKEN }}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<!-- action-inputs:start -->
+<!-- Generated from publish-quarto-site/action.yml by scripts/generate-action-docs.py. Do not edit this block manually. -->
 </section>
 <section id="inputs" class="level2">
 <h2 class="anchored" data-anchor-id="inputs">Inputs</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 25%">
-<col style="width: 25%">
-<col style="width: 25%">
-<col style="width: 25%">
+<col style="width: 21%">
+<col style="width: 21%">
+<col style="width: 35%">
+<col style="width: 21%">
 </colgroup>
 <thead>
 <tr class="header">
 <th>Input</th>
 <th>Description</th>
-<th>Required</th>
+<th style="text-align: center;">Required</th>
 <th>Default</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td><code>github_token</code></td>
-<td>Token used to push to the <code>gh-pages</code> branch. Use <code>${{ secrets.GITHUB_TOKEN }}</code>.</td>
-<td><strong>Yes</strong></td>
+<td>GitHub token used to push to the gh-pages branch.</td>
+<td style="text-align: center;">Yes</td>
 <td>—</td>
+</tr>
+<tr class="even">
+<td><code>path</code></td>
+<td>Path to the Quarto project to publish.</td>
+<td style="text-align: center;">No</td>
+<td><code>.</code></td>
+</tr>
+<tr class="odd">
+<td><code>setup_r</code></td>
+<td>Whether to install R and set up R dependencies before rendering.</td>
+<td style="text-align: center;">No</td>
+<td><code>false</code></td>
+</tr>
+<tr class="even">
+<td><code>renv_restore</code></td>
+<td>Deprecated. renv is now restored automatically by r-lib/actions/setup-r-dependencies when a renv.lock file is present.</td>
+<td style="text-align: center;">No</td>
+<td><code>true</code></td>
+</tr>
+<tr class="odd">
+<td><code>setup_python</code></td>
+<td>Whether to install Python and set up Python dependencies before rendering.</td>
+<td style="text-align: center;">No</td>
+<td><code>false</code></td>
 </tr>
 </tbody>
 </table>
+<!-- action-inputs:end -->
 </section>
 <section id="how-it-works" class="level2">
 <h2 class="anchored" data-anchor-id="how-it-works">How It Works</h2>

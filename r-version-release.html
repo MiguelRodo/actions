@@ -143,6 +143,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">Add Issues to Project</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="./setup-project-infrastructure.html"> 
+<span class="menu-text">Setup Project Infrastructure</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="./version-release.html"> 
 <span class="menu-text">Version and Release</span></a>
   </li>  
@@ -153,6 +157,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li class="nav-item">
     <a class="nav-link" href="./go-version-release.html"> 
 <span class="menu-text">Go Version and Release</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./rust-version-release.html"> 
+<span class="menu-text">Rust Version and Release</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./apt-repo-prune.html"> 
@@ -257,72 +265,78 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">version</span><span class="kw">:</span><span class="at"> ${{ inputs.version }}</span></span>
 <span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">bump_type</span><span class="kw">:</span><span class="at"> ${{ inputs.bump_type }}</span></span>
 <span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">version_force</span><span class="kw">:</span><span class="at"> ${{ inputs.version_force }}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<!-- action-inputs:start -->
+<!-- Generated from r-version-release/action.yml by scripts/generate-action-docs.py. Do not edit this block manually. -->
 </section>
 <section id="inputs" class="level2">
 <h2 class="anchored" data-anchor-id="inputs">Inputs</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 25%">
-<col style="width: 25%">
-<col style="width: 25%">
-<col style="width: 25%">
+<col style="width: 21%">
+<col style="width: 21%">
+<col style="width: 35%">
+<col style="width: 21%">
 </colgroup>
 <thead>
 <tr class="header">
-<th style="text-align: left;">Input</th>
-<th style="text-align: left;">Required</th>
-<th style="text-align: left;">Default</th>
-<th style="text-align: left;">Description</th>
+<th>Input</th>
+<th>Description</th>
+<th style="text-align: center;">Required</th>
+<th>Default</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;"><code>github_token</code></td>
-<td style="text-align: left;"><strong>Yes</strong></td>
-<td style="text-align: left;">N/A</td>
-<td style="text-align: left;">GitHub token (<code>${{ secrets.GITHUB_TOKEN }}</code>) for pushing tags and creating releases.</td>
+<td><code>github_token</code></td>
+<td>GitHub token for pushing tags and publishing releases.</td>
+<td style="text-align: center;">Yes</td>
+<td>—</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;"><code>version</code></td>
-<td style="text-align: left;">No</td>
-<td style="text-align: left;"><code>""</code></td>
-<td style="text-align: left;">Exact version to set (e.g.&nbsp;<code>v1.2.3</code>). Cannot be set together with <code>bump_type</code>. Whitespace is ignored and case is insensitive.</td>
+<td><code>version</code></td>
+<td>Exact version to set (e.g.&nbsp;v1.2.3). Cannot be set together with bump_type. Whitespace is ignored and case is insensitive.</td>
+<td style="text-align: center;">No</td>
+<td><code>""</code></td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;"><code>bump_type</code></td>
-<td style="text-align: left;">No</td>
-<td style="text-align: left;"><code>""</code></td>
-<td style="text-align: left;">Version component to bump (<code>major</code> | <code>minor</code> | <code>patch</code>). Cannot be set together with <code>version</code>. Whitespace is ignored and case is insensitive.</td>
+<td><code>bump_type</code></td>
+<td>Version component to bump (major | minor | patch). Cannot be set together with version. Whitespace is ignored and case is insensitive.</td>
+<td style="text-align: center;">No</td>
+<td><code>""</code></td>
 </tr>
 <tr class="even">
-<td style="text-align: left;"><code>version_force</code></td>
-<td style="text-align: left;">No</td>
-<td style="text-align: left;"><code>"false"</code></td>
-<td style="text-align: left;">When <code>"true"</code>, skip strict version progression checks (e.g., allowing downgrades or large version jumps).</td>
+<td><code>version_force</code></td>
+<td>When true (the default is false), skip strict version progression checks (e.g., allowing downgrades or large version jumps).</td>
+<td style="text-align: center;">No</td>
+<td><code>false</code></td>
 </tr>
 </tbody>
 </table>
+<!-- action-inputs:end -->
+<!-- action-outputs:start -->
+<!-- Generated from r-version-release/action.yml by scripts/generate-action-docs.py. Do not edit this block manually. -->
 </section>
 <section id="outputs" class="level2">
 <h2 class="anchored" data-anchor-id="outputs">Outputs</h2>
 <table class="caption-top table">
 <thead>
 <tr class="header">
-<th style="text-align: left;">Output</th>
-<th style="text-align: left;">Description</th>
+<th>Output</th>
+<th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;"><code>version</code></td>
-<td style="text-align: left;">Released version without a leading v (e.g.&nbsp;<code>1.2.3</code>).</td>
+<td><code>version</code></td>
+<td>Released version without a leading v (e.g.&nbsp;1.2.3).</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;"><code>tag</code></td>
-<td style="text-align: left;">Git tag that was created (e.g.&nbsp;<code>v1.2.3</code>).</td>
+<td><code>tag</code></td>
+<td>Git tag that was created (e.g.&nbsp;v1.2.3).</td>
 </tr>
 </tbody>
 </table>
+<!-- action-outputs:end -->
 
 
 </section>

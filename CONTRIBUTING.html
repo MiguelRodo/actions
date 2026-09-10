@@ -142,6 +142,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">Add Issues to Project</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="./setup-project-infrastructure.html"> 
+<span class="menu-text">Setup Project Infrastructure</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="./version-release.html"> 
 <span class="menu-text">Version and Release</span></a>
   </li>  
@@ -152,6 +156,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li class="nav-item">
     <a class="nav-link" href="./go-version-release.html"> 
 <span class="menu-text">Go Version and Release</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./rust-version-release.html"> 
+<span class="menu-text">Rust Version and Release</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./apt-repo-prune.html"> 
@@ -225,7 +233,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>Keep all logic inside <code>action.yml</code>. Avoid adding separate shell scripts unless the complexity makes inline scripts unreadable.</li>
 <li>Use <code>$GITHUB_OUTPUT</code> (not <code>::set-output</code>) for outputs and <code>$GITHUB_ENV</code> for inter-step environment variables.</li>
 <li>Every new input must have a <code>description</code> and a <code>required</code> field. Provide a <code>default</code> for optional inputs.</li>
-<li>Every new output must be declared in the <code>outputs:</code> block of <code>action.yml</code> and documented in the action’s <code>README.md</code>.</li>
+<li>Every new output must be declared in the <code>outputs:</code> block of <code>action.yml</code>.</li>
 </ul>
 </section>
 <section id="shell-scripts" class="level3">
@@ -240,9 +248,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="documentation" class="level3">
 <h3 class="anchored" data-anchor-id="documentation">Documentation</h3>
 <ul>
-<li>Each action has its own <code>README.md</code>. Keep the Inputs, Outputs, Permissions, and example workflow sections up to date.</li>
-<li>The root <code>README.md</code> provides a concise overview and quick-start snippet for each action. Update it when adding or removing an action.</li>
-<li>Complete, copy-paste-ready workflow files live in the <code>examples/</code> directory.</li>
+<li><p>Each action has its own <code>README.md</code> containing hand-written usage, permissions and operational guidance.</p></li>
+<li><p><code>action.yml</code> is the canonical source for an action’s machine-readable name, description, inputs and outputs.</p></li>
+<li><p>After changing that metadata, regenerate the reference tables and action catalogues with:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> scripts/generate-action-docs.py <span class="at">--write</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p>Do not hand-edit content inside <code>action-inputs</code>, <code>action-outputs</code> or <code>action-catalogue</code> marker blocks. CI runs <code>python3 scripts/generate-action-docs.py --check</code> and fails when those sections are stale.</p></li>
+<li><p>Keep narrative guidance and examples outside generated blocks up to date when behaviour changes.</p></li>
+<li><p>The root <code>README.md</code> is intentionally a concise catalogue rather than a second copy of each action’s documentation.</p></li>
+<li><p>Complete, copy-paste-ready workflow files live in the <code>examples/</code> directory.</p></li>
 </ul>
 </section>
 <section id="releases" class="level3">
@@ -256,10 +269,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>Consumers of these actions should pin to a floating tag (e.g.&nbsp;<code>@v2</code> or <code>@v2.17</code>) or a specific tag (e.g.&nbsp;<code>@v2.17.0</code>), not to a Release object.</li>
 </ul>
 <p>To verify what commit a floating tag resolves to:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Show the commit a tag points to</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> ls-remote <span class="at">--tags</span> https://github.com/MiguelRodo/actions <span class="st">"refs/tags/v2"</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># or, in a local clone:</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> rev-list <span class="at">-n</span> 1 refs/tags/v2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Show the commit a tag points to</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> ls-remote <span class="at">--tags</span> https://github.com/MiguelRodo/actions <span class="st">"refs/tags/v2"</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># or, in a local clone:</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> rev-list <span class="at">-n</span> 1 refs/tags/v2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 </section>
 </section>

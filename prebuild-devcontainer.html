@@ -142,6 +142,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">Add Issues to Project</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="./setup-project-infrastructure.html"> 
+<span class="menu-text">Setup Project Infrastructure</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="./version-release.html"> 
 <span class="menu-text">Version and Release</span></a>
   </li>  
@@ -152,6 +156,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li class="nav-item">
     <a class="nav-link" href="./go-version-release.html"> 
 <span class="menu-text">Go Version and Release</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./rust-version-release.html"> 
+<span class="menu-text">Rust Version and Release</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./apt-repo-prune.html"> 
@@ -186,6 +194,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul>
   <li><a href="#quick-start" id="toc-quick-start" class="nav-link active" data-scroll-target="#quick-start">Quick Start</a></li>
   <li><a href="#inputs" id="toc-inputs" class="nav-link" data-scroll-target="#inputs">Inputs</a></li>
+  <li><a href="#outputs" id="toc-outputs" class="nav-link" data-scroll-target="#outputs">Outputs</a></li>
   <li><a href="#semver-alias-tags" id="toc-semver-alias-tags" class="nav-link" data-scroll-target="#semver-alias-tags">SemVer Alias Tags</a></li>
   <li><a href="#examples" id="toc-examples" class="nav-link" data-scroll-target="#examples">Examples</a>
   <ul class="collapse">
@@ -250,21 +259,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">with</span><span class="kw">:</span></span>
 <span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">github_token</span><span class="kw">:</span><span class="at"> ${{ secrets.GITHUB_TOKEN }}</span></span>
 <span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">tag</span><span class="kw">:</span><span class="at"> ${{ github.event.inputs.tag }}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<!-- action-inputs:start -->
+<!-- Generated from prebuild-devcontainer/action.yml by scripts/generate-action-docs.py. Do not edit this block manually. -->
 </section>
 <section id="inputs" class="level2">
 <h2 class="anchored" data-anchor-id="inputs">Inputs</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 25%">
-<col style="width: 25%">
-<col style="width: 25%">
-<col style="width: 25%">
+<col style="width: 21%">
+<col style="width: 21%">
+<col style="width: 35%">
+<col style="width: 21%">
 </colgroup>
 <thead>
 <tr class="header">
 <th>Input</th>
 <th>Description</th>
-<th>Required</th>
+<th style="text-align: center;">Required</th>
 <th>Default</th>
 </tr>
 </thead>
@@ -272,53 +283,120 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tr class="odd">
 <td><code>github_token</code></td>
 <td>Token for logging into the container registry and pushing commits.</td>
-<td><strong>Yes</strong></td>
+<td style="text-align: center;">Yes</td>
 <td>—</td>
 </tr>
 <tr class="even">
+<td><code>target_branch</code></td>
+<td>Branch to use for image naming and pushing. Overrides the triggering branch if provided.</td>
+<td style="text-align: center;">No</td>
+<td><code>""</code></td>
+</tr>
+<tr class="odd">
 <td><code>no_cache</code></td>
-<td>Disable Docker cache during build (<code>true</code>/<code>false</code>).</td>
-<td>No</td>
+<td>Disable Docker cache during build (true/false).</td>
+<td style="text-align: center;">No</td>
+<td><code>false</code></td>
+</tr>
+<tr class="even">
+<td><code>create_prebuild_json</code></td>
+<td>Generate, commit, and push the prebuild devcontainer.json (true/false).</td>
+<td style="text-align: center;">No</td>
 <td><code>false</code></td>
 </tr>
 <tr class="odd">
-<td><code>create_prebuild_json</code></td>
-<td>Generate and commit a <code>prebuild/devcontainer.json</code> (<code>true</code>/<code>false</code>).</td>
-<td>No</td>
-<td><code>true</code></td>
-</tr>
-<tr class="even">
 <td><code>devcontainer_path</code></td>
-<td>Path to the <code>.devcontainer</code> directory, relative to the repo root.</td>
-<td>No</td>
+<td>Path to the .devcontainer directory, relative to the repo root.</td>
+<td style="text-align: center;">No</td>
 <td><code>.devcontainer</code></td>
 </tr>
-<tr class="odd">
-<td><code>image_name</code></td>
-<td>Full image name without tag (e.g.&nbsp;<code>ghcr.io/myorg/myimage</code>). Defaults to <code>{registry}/{repo}-{branch}</code>.</td>
-<td>No</td>
-<td><code>{registry}/{repo}-{branch}</code></td>
-</tr>
 <tr class="even">
-<td><code>tag</code></td>
-<td>Git tag used as the primary container image tag. Auto-detected from <code>GITHUB_REF</code> on tag push; falls back to <code>latest</code>.</td>
-<td>No</td>
+<td><code>image_name</code></td>
+<td>Full image name without tag (e.g.&nbsp;‘ghcr.io/myorg/myimage’). Defaults to ‘{registry}/{repo}-{branch}’.</td>
+<td style="text-align: center;">No</td>
 <td><code>""</code></td>
 </tr>
 <tr class="odd">
 <td><code>registry</code></td>
 <td>Container registry URL.</td>
-<td>No</td>
+<td style="text-align: center;">No</td>
 <td><code>ghcr.io</code></td>
 </tr>
 <tr class="even">
 <td><code>registry_username</code></td>
-<td>Username for registry login.</td>
-<td>No</td>
-<td>Repository owner</td>
+<td>Username for registry login. Defaults to the repository owner.</td>
+<td style="text-align: center;">No</td>
+<td><code>""</code></td>
+</tr>
+<tr class="odd">
+<td><code>version_force</code></td>
+<td>When ‘true’, skip the version progression check and push the specified version as-is, even if it is more than one increment ahead of (or behind) the previous image version.</td>
+<td style="text-align: center;">No</td>
+<td><code>false</code></td>
+</tr>
+<tr class="even">
+<td><code>tag</code></td>
+<td>Git tag to use as the primary container image tag. (Deprecated, use ‘version’)</td>
+<td style="text-align: center;">No</td>
+<td><code>""</code></td>
+</tr>
+<tr class="odd">
+<td><code>version</code></td>
+<td>Exact version to set (e.g.&nbsp;v1.2.3 or main-v1.2.3). Cannot be set together with bump_type. Whitespace is ignored and case is insensitive.</td>
+<td style="text-align: center;">No</td>
+<td><code>""</code></td>
+</tr>
+<tr class="even">
+<td><code>bump_type</code></td>
+<td>Version component to bump (major | minor | patch). Cannot be set together with version. Whitespace is ignored and case is insensitive.</td>
+<td style="text-align: center;">No</td>
+<td><code>""</code></td>
+</tr>
+<tr class="odd">
+<td><code>inject_build_info</code></td>
+<td>Inject imageVersion into the MiguelRodo/DevContainerFeatures/build-info feature if it is present in devcontainer.json (true/false).</td>
+<td style="text-align: center;">No</td>
+<td><code>true</code></td>
 </tr>
 </tbody>
 </table>
+<!-- action-inputs:end -->
+<!-- action-outputs:start -->
+<!-- Generated from prebuild-devcontainer/action.yml by scripts/generate-action-docs.py. Do not edit this block manually. -->
+</section>
+<section id="outputs" class="level2">
+<h2 class="anchored" data-anchor-id="outputs">Outputs</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Output</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>image_name</code></td>
+<td>Full image name without tag (e.g.&nbsp;‘ghcr.io/owner/repo-main’).</td>
+</tr>
+<tr class="even">
+<td><code>image_tag</code></td>
+<td>Primary image tag that was built and pushed (e.g.&nbsp;‘v1.2.3’).</td>
+</tr>
+<tr class="odd">
+<td><code>image_ref</code></td>
+<td>Full image reference including tag (e.g.&nbsp;‘ghcr.io/owner/repo-main:v1.2.3’).</td>
+</tr>
+<tr class="even">
+<td><code>alias_tags</code></td>
+<td>Comma-separated list of SemVer alias tags that were also pushed (e.g.&nbsp;‘v1.2,v1’).</td>
+</tr>
+</tbody>
+</table>
+<!-- action-outputs:end -->
 </section>
 <section id="semver-alias-tags" class="level2">
 <h2 class="anchored" data-anchor-id="semver-alias-tags">SemVer Alias Tags</h2>

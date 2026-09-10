@@ -142,6 +142,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">Add Issues to Project</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="./setup-project-infrastructure.html"> 
+<span class="menu-text">Setup Project Infrastructure</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link active" href="./version-release.html" aria-current="page"> 
 <span class="menu-text">Version and Release</span></a>
   </li>  
@@ -152,6 +156,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li class="nav-item">
     <a class="nav-link" href="./go-version-release.html"> 
 <span class="menu-text">Go Version and Release</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./rust-version-release.html"> 
+<span class="menu-text">Rust Version and Release</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./apt-repo-prune.html"> 
@@ -261,50 +269,68 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">bump_type</span><span class="kw">:</span><span class="at"> ${{ inputs.bump_type }}</span></span>
 <span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">python_version</span><span class="kw">:</span><span class="at"> ${{ inputs.python_version }}</span></span>
 <span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">r_version</span><span class="kw">:</span><span class="at"> ${{ inputs.r_version }}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<!-- action-inputs:start -->
+<!-- Generated from version-release/action.yml by scripts/generate-action-docs.py. Do not edit this block manually. -->
 </section>
 <section id="inputs" class="level2">
 <h2 class="anchored" data-anchor-id="inputs">Inputs</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 33%">
-<col style="width: 33%">
-<col style="width: 33%">
+<col style="width: 21%">
+<col style="width: 21%">
+<col style="width: 35%">
+<col style="width: 21%">
 </colgroup>
 <thead>
 <tr class="header">
 <th>Input</th>
 <th>Description</th>
-<th>Required</th>
+<th style="text-align: center;">Required</th>
+<th>Default</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td><code>github_token</code></td>
-<td>Token for pushing tags and creating releases.</td>
-<td><strong>Yes</strong></td>
+<td>GitHub token for pushing tags and creating releases.</td>
+<td style="text-align: center;">Yes</td>
+<td>—</td>
 </tr>
 <tr class="even">
 <td><code>version</code></td>
-<td>Exact version to apply to all packages (e.g.&nbsp;<code>1.2.3</code>). Cannot be used with <code>bump_type</code>.</td>
-<td>No</td>
+<td>Exact version to apply to all packages (e.g.&nbsp;1.2.3). Overridden per-package by python_version or r_version. Cannot be set together with bump_type.</td>
+<td style="text-align: center;">No</td>
+<td><code>""</code></td>
 </tr>
 <tr class="odd">
 <td><code>bump_type</code></td>
-<td>Version component to bump: <code>major</code>, <code>minor</code>, or <code>patch</code>. Cannot be used with <code>version</code>.</td>
-<td>No</td>
+<td>Version component to bump (major | minor | patch). The new version is derived by bumping the most recent semver git tag. Cannot be set together with version.</td>
+<td style="text-align: center;">No</td>
+<td><code>""</code></td>
 </tr>
 <tr class="even">
 <td><code>python_version</code></td>
-<td>Per-package override: exact version for the Python package.</td>
-<td>No</td>
+<td>Override: exact version to set for the Python package (e.g.&nbsp;1.2.3).</td>
+<td style="text-align: center;">No</td>
+<td><code>""</code></td>
 </tr>
 <tr class="odd">
 <td><code>r_version</code></td>
-<td>Per-package override: exact version for the R package.</td>
-<td>No</td>
+<td>Override: exact version to set for the R package (e.g.&nbsp;1.2.3).</td>
+<td style="text-align: center;">No</td>
+<td><code>""</code></td>
+</tr>
+<tr class="even">
+<td><code>version_force</code></td>
+<td>When true (the default is false), skip strict version progression checks (e.g., allowing downgrades or large version jumps).</td>
+<td style="text-align: center;">No</td>
+<td><code>false</code></td>
 </tr>
 </tbody>
 </table>
+<!-- action-inputs:end -->
+<!-- action-outputs:start -->
+<!-- Generated from version-release/action.yml by scripts/generate-action-docs.py. Do not edit this block manually. -->
 </section>
 <section id="outputs" class="level2">
 <h2 class="anchored" data-anchor-id="outputs">Outputs</h2>
@@ -318,14 +344,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td><code>version</code></td>
-<td>Released version without a leading <code>v</code> (e.g.&nbsp;<code>1.2.3</code>).</td>
+<td>Released version without a leading v (e.g.&nbsp;1.2.3).</td>
 </tr>
 <tr class="even">
 <td><code>tag</code></td>
-<td>Git tag that was created (e.g.&nbsp;<code>v1.2.3</code>).</td>
+<td>Git tag that was created (e.g.&nbsp;v1.2.3).</td>
 </tr>
 </tbody>
 </table>
+<!-- action-outputs:end -->
 </section>
 <section id="how-it-works" class="level2">
 <h2 class="anchored" data-anchor-id="how-it-works">How It Works</h2>

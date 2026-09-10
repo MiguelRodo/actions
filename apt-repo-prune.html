@@ -142,6 +142,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">Add Issues to Project</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="./setup-project-infrastructure.html"> 
+<span class="menu-text">Setup Project Infrastructure</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="./version-release.html"> 
 <span class="menu-text">Version and Release</span></a>
   </li>  
@@ -152,6 +156,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li class="nav-item">
     <a class="nav-link" href="./go-version-release.html"> 
 <span class="menu-text">Go Version and Release</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./rust-version-release.html"> 
+<span class="menu-text">Rust Version and Release</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link active" href="./apt-repo-prune.html" aria-current="page"> 
@@ -189,10 +197,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#with-an-encrypted-gpg-signing-key" id="toc-with-an-encrypted-gpg-signing-key" class="nav-link" data-scroll-target="#with-an-encrypted-gpg-signing-key">With an encrypted GPG signing key</a></li>
   <li><a href="#with-an-unencrypted-gpg-signing-key-no-passphrase" id="toc-with-an-unencrypted-gpg-signing-key-no-passphrase" class="nav-link" data-scroll-target="#with-an-unencrypted-gpg-signing-key-no-passphrase">With an unencrypted GPG signing key (no passphrase)</a></li>
   </ul></li>
-  <li><a href="#inputs" id="toc-inputs" class="nav-link" data-scroll-target="#inputs">Inputs</a>
-  <ul class="collapse">
-  <li><a href="#retention-policies" id="toc-retention-policies" class="nav-link" data-scroll-target="#retention-policies">Retention policies</a></li>
-  </ul></li>
+  <li><a href="#inputs" id="toc-inputs" class="nav-link" data-scroll-target="#inputs">Inputs</a></li>
   <li><a href="#how-it-works" id="toc-how-it-works" class="nav-link" data-scroll-target="#how-it-works">How it works</a></li>
   <li><a href="#notes" id="toc-notes" class="nav-link" data-scroll-target="#notes">Notes</a></li>
   </ul>
@@ -282,82 +287,55 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">retention</span><span class="kw">:</span><span class="at"> ${{ inputs.retention || 'latest-per-major' }}</span></span>
 <span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">apt_signing_key</span><span class="kw">:</span><span class="at"> ${{ secrets.APT_SIGNING_KEY }}</span></span>
 <span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="co">          # apt_signing_key_passphrase is omitted — unencrypted keys do not need it</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<!-- action-inputs:start -->
+<!-- Generated from apt-repo-prune/action.yml by scripts/generate-action-docs.py. Do not edit this block manually. -->
 </section>
 </section>
 <section id="inputs" class="level2">
 <h2 class="anchored" data-anchor-id="inputs">Inputs</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 25%">
-<col style="width: 25%">
-<col style="width: 25%">
-<col style="width: 25%">
+<col style="width: 21%">
+<col style="width: 21%">
+<col style="width: 35%">
+<col style="width: 21%">
 </colgroup>
 <thead>
 <tr class="header">
 <th>Input</th>
 <th>Description</th>
-<th>Required</th>
+<th style="text-align: center;">Required</th>
 <th>Default</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td><code>token</code></td>
-<td>GitHub token with <code>contents: write</code> permission on the current repository.</td>
-<td><strong>Yes</strong></td>
+<td>GitHub token with contents: write permission on the current repository.</td>
+<td style="text-align: center;">Yes</td>
 <td>—</td>
 </tr>
 <tr class="even">
 <td><code>retention</code></td>
-<td>Version retention policy (case-insensitive, see below).</td>
-<td>No</td>
+<td>Version retention policy (case-insensitive). ‘latest’ – keep only the newest version per (package, arch) pair. ‘latest-per-minor’ – keep the highest patch release for each major.minor series. ‘latest-per-major’ (default) – keep the highest minor.patch release for each major series.</td>
+<td style="text-align: center;">No</td>
 <td><code>latest-per-major</code></td>
 </tr>
 <tr class="odd">
 <td><code>apt_signing_key</code></td>
-<td>ASCII-armored GPG private key for signing regenerated apt metadata. When omitted, only the unsigned <code>Release</code> file is written and any stale <code>InRelease</code> / <code>Release.gpg</code> files are removed.</td>
-<td>No</td>
+<td>Optional ASCII-armored GPG private key for signing the regenerated apt metadata. When omitted only the unsigned Release file is written and any stale InRelease / Release.gpg files are removed.</td>
+<td style="text-align: center;">No</td>
 <td><code>""</code></td>
 </tr>
 <tr class="even">
 <td><code>apt_signing_key_passphrase</code></td>
-<td>Passphrase for <code>apt_signing_key</code>. Only required when the GPG private key is encrypted. Leave blank (or omit) for unencrypted keys.</td>
-<td>No</td>
+<td>Optional passphrase for apt_signing_key.</td>
+<td style="text-align: center;">No</td>
 <td><code>""</code></td>
 </tr>
 </tbody>
 </table>
-<section id="retention-policies" class="level3">
-<h3 class="anchored" data-anchor-id="retention-policies">Retention policies</h3>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 50%">
-<col style="width: 50%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Policy</th>
-<th>What is kept</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><code>latest</code></td>
-<td>The newest version per <code>(package, arch)</code> pair.</td>
-</tr>
-<tr class="even">
-<td><code>latest-per-minor</code></td>
-<td>The highest patch release for each <code>MAJOR.MINOR</code> series (e.g.&nbsp;keeps <code>1.0.5</code>, <code>1.1.3</code>, <code>2.0.1</code> but removes <code>1.0.4</code>, <code>1.1.2</code>).</td>
-</tr>
-<tr class="odd">
-<td><code>latest-per-major</code></td>
-<td>The highest <code>MINOR.PATCH</code> release for each <code>MAJOR</code> series (e.g.&nbsp;keeps <code>1.2.3</code> and <code>2.1.0</code> but removes <code>1.1.5</code>, <code>1.2.2</code>). <strong>This is the default.</strong></td>
-</tr>
-</tbody>
-</table>
-<p>The policy is applied independently per <code>(package-name, architecture)</code> pair so that each arch is pruned consistently. All policy names are case-insensitive.</p>
-</section>
+<!-- action-inputs:end -->
 </section>
 <section id="how-it-works" class="level2">
 <h2 class="anchored" data-anchor-id="how-it-works">How it works</h2>

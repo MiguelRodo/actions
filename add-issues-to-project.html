@@ -142,6 +142,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">Add Issues to Project</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="./setup-project-infrastructure.html"> 
+<span class="menu-text">Setup Project Infrastructure</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="./version-release.html"> 
 <span class="menu-text">Version and Release</span></a>
   </li>  
@@ -152,6 +156,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li class="nav-item">
     <a class="nav-link" href="./go-version-release.html"> 
 <span class="menu-text">Go Version and Release</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./rust-version-release.html"> 
+<span class="menu-text">Rust Version and Release</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./apt-repo-prune.html"> 
@@ -186,6 +194,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul>
   <li><a href="#quick-start" id="toc-quick-start" class="nav-link active" data-scroll-target="#quick-start">Quick Start</a></li>
   <li><a href="#inputs" id="toc-inputs" class="nav-link" data-scroll-target="#inputs">Inputs</a></li>
+  <li><a href="#outputs" id="toc-outputs" class="nav-link" data-scroll-target="#outputs">Outputs</a></li>
   <li><a href="#how-it-works" id="toc-how-it-works" class="nav-link" data-scroll-target="#how-it-works">How It Works</a></li>
   <li><a href="#advanced-example" id="toc-advanced-example" class="nav-link" data-scroll-target="#advanced-example">Advanced Example</a></li>
   <li><a href="#troubleshooting" id="toc-troubleshooting" class="nav-link" data-scroll-target="#troubleshooting">Troubleshooting</a></li>
@@ -239,63 +248,90 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">ADD_ISSUES_TO_PROJECT_TOKEN</span><span class="kw">:</span><span class="at"> ${{ secrets.ADD_ISSUES_TO_PROJECT_TOKEN }}</span></span>
 <span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co">          # project_name: "My Custom Project Board"</span></span>
 <span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co">          # is_project_owner_org: "true"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<!-- action-inputs:start -->
+<!-- Generated from add-issues-to-project/action.yml by scripts/generate-action-docs.py. Do not edit this block manually. -->
 </section>
 <section id="inputs" class="level2">
 <h2 class="anchored" data-anchor-id="inputs">Inputs</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 25%">
-<col style="width: 25%">
-<col style="width: 25%">
-<col style="width: 25%">
+<col style="width: 21%">
+<col style="width: 21%">
+<col style="width: 35%">
+<col style="width: 21%">
 </colgroup>
 <thead>
 <tr class="header">
 <th>Input</th>
 <th>Description</th>
-<th>Required</th>
+<th style="text-align: center;">Required</th>
 <th>Default</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td><code>ADD_ISSUES_TO_PROJECT_TOKEN</code></td>
-<td>PAT with permissions to read the source repo and write to the target project.</td>
-<td><strong>Yes</strong></td>
+<td><code>project_name</code></td>
+<td>Project name. Defaults to repository name.</td>
+<td style="text-align: center;">No</td>
 <td>—</td>
 </tr>
 <tr class="even">
-<td><code>project_name</code></td>
-<td>Name of the target GitHub Project.</td>
-<td>No</td>
-<td>Current repository name</td>
-</tr>
-<tr class="odd">
 <td><code>project_owner</code></td>
-<td>Username or organization owning the target project.</td>
-<td>No</td>
-<td>Current repository owner</td>
-</tr>
-<tr class="even">
-<td><code>is_project_owner_org</code></td>
-<td>Set to <code>"true"</code> if the project owner is an organization.</td>
-<td>No</td>
-<td><code>"false"</code></td>
+<td>Project owner. Defaults to repository owner.</td>
+<td style="text-align: center;">No</td>
+<td>—</td>
 </tr>
 <tr class="odd">
-<td><code>source_repo_name</code></td>
-<td>Repository to pull issues from.</td>
-<td>No</td>
-<td>Current repository name</td>
+<td><code>is_project_owner_org</code></td>
+<td>Whether the project owner is an organization. Defaults to <code>false</code>.</td>
+<td style="text-align: center;">No</td>
+<td><code>false</code></td>
 </tr>
 <tr class="even">
+<td><code>source_repo_name</code></td>
+<td>Repository name. Defaults to current repository.</td>
+<td style="text-align: center;">No</td>
+<td>—</td>
+</tr>
+<tr class="odd">
 <td><code>source_repo_owner</code></td>
-<td>Owner of the source repository.</td>
-<td>No</td>
-<td>Current GitHub user</td>
+<td>Repository owner. Defaults to current GitHub user.</td>
+<td style="text-align: center;">No</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td><code>ADD_ISSUES_TO_PROJECT_TOKEN</code></td>
+<td>GitHub token with correct access for accessing issues and writing to projects</td>
+<td style="text-align: center;">Yes</td>
+<td>—</td>
 </tr>
 </tbody>
 </table>
+<!-- action-inputs:end -->
+<!-- action-outputs:start -->
+<!-- Generated from add-issues-to-project/action.yml by scripts/generate-action-docs.py. Do not edit this block manually. -->
+</section>
+<section id="outputs" class="level2">
+<h2 class="anchored" data-anchor-id="outputs">Outputs</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Output</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>issues_added</code></td>
+<td>Number of issues that were newly added to the project.</td>
+</tr>
+</tbody>
+</table>
+<!-- action-outputs:end -->
 </section>
 <section id="how-it-works" class="level2">
 <h2 class="anchored" data-anchor-id="how-it-works">How It Works</h2>

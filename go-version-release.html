@@ -142,6 +142,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">Add Issues to Project</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="./setup-project-infrastructure.html"> 
+<span class="menu-text">Setup Project Infrastructure</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="./version-release.html"> 
 <span class="menu-text">Version and Release</span></a>
   </li>  
@@ -152,6 +156,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li class="nav-item">
     <a class="nav-link active" href="./go-version-release.html" aria-current="page"> 
 <span class="menu-text">Go Version and Release</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./rust-version-release.html"> 
+<span class="menu-text">Rust Version and Release</span></a>
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./apt-repo-prune.html"> 
@@ -283,85 +291,104 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>[!IMPORTANT] Use <code>fetch-depth: 0</code> on checkout so the action can inspect existing tags.</p>
 <p>This action currently supports Linux runners only. Use a Linux runner such as <code>ubuntu-latest</code>.</p>
 </blockquote>
+<!-- action-inputs:start -->
+<!-- Generated from go-version-release/action.yml by scripts/generate-action-docs.py. Do not edit this block manually. -->
 </section>
 <section id="inputs" class="level2">
 <h2 class="anchored" data-anchor-id="inputs">Inputs</h2>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 33%">
-<col style="width: 33%">
-<col style="width: 33%">
+<col style="width: 21%">
+<col style="width: 21%">
+<col style="width: 35%">
+<col style="width: 21%">
 </colgroup>
 <thead>
 <tr class="header">
 <th>Input</th>
 <th>Description</th>
-<th>Required</th>
+<th style="text-align: center;">Required</th>
+<th>Default</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td><code>github_token</code></td>
 <td>GitHub token for pushing tags and publishing releases.</td>
-<td><strong>Yes</strong></td>
-</tr>
-<tr class="even">
-<td><code>version</code></td>
-<td>Exact version (e.g.&nbsp;<code>1.2.3</code>). Cannot be used with <code>bump_type</code>.</td>
-<td>No</td>
-</tr>
-<tr class="odd">
-<td><code>bump_type</code></td>
-<td>Version component to bump: <code>major</code>, <code>minor</code>, or <code>patch</code>. Cannot be used with <code>version</code>.</td>
-<td>No</td>
-</tr>
-<tr class="even">
-<td><code>version_force</code></td>
-<td>When <code>true</code> (the default is false), skip strict version progression checks (e.g., allowing downgrades or large version jumps).</td>
-<td>No</td>
-</tr>
-<tr class="odd">
-<td><code>go_version</code></td>
-<td>Go version for <code>actions/setup-go</code> (default <code>1.27</code>).</td>
-<td>No</td>
-</tr>
-<tr class="even">
-<td><code>goreleaser_config</code></td>
-<td>Path to the GoReleaser configuration file (default <code>.goreleaser.yml</code>).</td>
-<td>No</td>
-</tr>
-<tr class="odd">
-<td><code>apt_repo</code></td>
-<td>Optional GitHub repository in <code>owner/name</code> form. When set, generated <code>.deb</code> artifacts from <code>dist/</code> are published to that repo’s <code>main</code> branch using a structured apt layout (<code>pool/</code> and <code>dists/stable/main/binary-*</code>).</td>
-<td>No</td>
+<td style="text-align: center;">Yes</td>
+<td>—</td>
 </tr>
 <tr class="even">
 <td><code>apt_repo_token</code></td>
-<td>Optional token used only for <code>apt_repo</code> clone/push operations. If omitted, the action falls back to <code>github_token</code>.</td>
-<td>No</td>
+<td>Optional GitHub token used only for cloning/fetching/pushing apt_repo. Falls back to github_token when omitted.</td>
+<td style="text-align: center;">No</td>
+<td><code>""</code></td>
 </tr>
 <tr class="odd">
 <td><code>apt_signing_key</code></td>
-<td>Optional ASCII-armored GPG private key for signing apt repository metadata. When set, the action imports the key and generates signed <code>InRelease</code> and <code>Release.gpg</code> files alongside <code>Release</code>. Store this as a GitHub secret (e.g.&nbsp;<code>APT_SIGNING_KEY</code>).</td>
-<td>No</td>
+<td>Optional ASCII-armored GPG private key for signing apt repository metadata. When set, the action imports the key and generates signed InRelease and Release.gpg files alongside the unsigned Release file.</td>
+<td style="text-align: center;">No</td>
+<td><code>""</code></td>
 </tr>
 <tr class="even">
 <td><code>apt_signing_key_passphrase</code></td>
-<td>Optional passphrase for <code>apt_signing_key</code>. When set, GPG uses it via <code>--passphrase-file</code> (written to a secure temp file) so passphrase-protected private keys work. Store as a GitHub secret (e.g.&nbsp;<code>APT_SIGNING_KEY_PASSPHRASE</code>).</td>
-<td>No</td>
+<td>Optional passphrase for the apt_signing_key. When set, it is written to a secure temporary file and passed to GPG via –passphrase-file so passphrase-protected private keys can be used for signing.</td>
+<td style="text-align: center;">No</td>
+<td><code>""</code></td>
+</tr>
+<tr class="odd">
+<td><code>version</code></td>
+<td>Exact version to apply (e.g.&nbsp;1.2.3). Cannot be used with bump_type.</td>
+<td style="text-align: center;">No</td>
+<td><code>""</code></td>
+</tr>
+<tr class="even">
+<td><code>bump_type</code></td>
+<td>Version component to bump (major | minor | patch). Cannot be used with version.</td>
+<td style="text-align: center;">No</td>
+<td><code>""</code></td>
+</tr>
+<tr class="odd">
+<td><code>version_force</code></td>
+<td>When true (the default is false), skip strict version progression checks (e.g., allowing downgrades or large version jumps).</td>
+<td style="text-align: center;">No</td>
+<td><code>false</code></td>
+</tr>
+<tr class="even">
+<td><code>go_version</code></td>
+<td>Go version to install with actions/setup-go.</td>
+<td style="text-align: center;">No</td>
+<td><code>1.27</code></td>
+</tr>
+<tr class="odd">
+<td><code>apt_repo</code></td>
+<td>Optional target GitHub repository in owner/name form for publishing generated .deb artifacts as an apt repository.</td>
+<td style="text-align: center;">No</td>
+<td><code>""</code></td>
+</tr>
+<tr class="even">
+<td><code>goreleaser_config</code></td>
+<td>Optional path to the GoReleaser config file.</td>
+<td style="text-align: center;">No</td>
+<td><code>.goreleaser.yml</code></td>
 </tr>
 <tr class="odd">
 <td><code>scoop_token</code></td>
 <td>Optional token for pushing Scoop manifests to an external tap repository.</td>
-<td>No</td>
+<td style="text-align: center;">No</td>
+<td><code>""</code></td>
 </tr>
 <tr class="even">
 <td><code>homebrew_token</code></td>
 <td>Optional token for pushing Homebrew formulas to an external tap repository.</td>
-<td>No</td>
+<td style="text-align: center;">No</td>
+<td><code>""</code></td>
 </tr>
 </tbody>
 </table>
+<!-- action-inputs:end -->
+<!-- action-outputs:start -->
+<!-- Generated from go-version-release/action.yml by scripts/generate-action-docs.py. Do not edit this block manually. -->
 </section>
 <section id="outputs" class="level2">
 <h2 class="anchored" data-anchor-id="outputs">Outputs</h2>
@@ -375,14 +402,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td><code>version</code></td>
-<td>Released version without leading <code>v</code> (e.g.&nbsp;<code>1.2.3</code>).</td>
+<td>Released version without a leading v (e.g.&nbsp;1.2.3).</td>
 </tr>
 <tr class="even">
 <td><code>tag</code></td>
-<td>Released git tag with leading <code>v</code> (e.g.&nbsp;<code>v1.2.3</code>).</td>
+<td>Git tag that was created or reused (e.g.&nbsp;v1.2.3).</td>
 </tr>
 </tbody>
 </table>
+<!-- action-outputs:end -->
 </section>
 <section id="version-resolution" class="level2">
 <h2 class="anchored" data-anchor-id="version-resolution">Version resolution</h2>
