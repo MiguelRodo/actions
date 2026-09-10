@@ -17,7 +17,7 @@ Each action lives in its own subdirectory (e.g. `prebuild-devcontainer/`). The e
 - Keep all logic inside `action.yml`. Avoid adding separate shell scripts unless the complexity makes inline scripts unreadable.
 - Use `$GITHUB_OUTPUT` (not `::set-output`) for outputs and `$GITHUB_ENV` for inter-step environment variables.
 - Every new input must have a `description` and a `required` field. Provide a `default` for optional inputs.
-- Every new output must be declared in the `outputs:` block of `action.yml` and documented in the action's `README.md`.
+- Every new output must be declared in the `outputs:` block of `action.yml`.
 
 ### Shell scripts
 
@@ -29,8 +29,17 @@ Inline `run:` blocks are linted by **actionlint** (which delegates to **shellche
 
 ### Documentation
 
-- Each action has its own `README.md`. Keep the Inputs, Outputs, Permissions, and example workflow sections up to date.
-- The root `README.md` provides a concise overview and quick-start snippet for each action. Update it when adding or removing an action.
+- Each action has its own `README.md` containing hand-written usage, permissions and operational guidance.
+- `action.yml` is the canonical source for an action's machine-readable name, description, inputs and outputs.
+- After changing that metadata, regenerate the reference tables and action catalogues with:
+
+  ```bash
+  python3 scripts/generate-action-docs.py --write
+  ```
+
+- Do not hand-edit content inside `action-inputs`, `action-outputs` or `action-catalogue` marker blocks. CI runs `python3 scripts/generate-action-docs.py --check` and fails when those sections are stale.
+- Keep narrative guidance and examples outside generated blocks up to date when behaviour changes.
+- The root `README.md` is intentionally a concise catalogue rather than a second copy of each action's documentation.
 - Complete, copy-paste-ready workflow files live in the `examples/` directory.
 
 ### Releases
