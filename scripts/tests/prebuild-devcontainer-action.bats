@@ -1,6 +1,8 @@
 #!/usr/bin/env bats
 
-ACTION_FILE="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/prebuild-devcontainer/action.yml"
+ROOT_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)"
+ACTION_FILE="$ROOT_DIR/prebuild-devcontainer/action.yml"
+INJECTOR="$ROOT_DIR/scripts/inject-build-info.js"
 
 @test "prebuild-devcontainer action exists and is a composite action" {
   [ -f "$ACTION_FILE" ]
@@ -56,11 +58,35 @@ ACTION_FILE="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/prebuild-devc
   [ "$status" -eq 0 ]
 }
 
-@test "environment transport preserves awkward devcontainer paths" {
-  path='tmp/quoted "path"/back\\slash/devcontainer.json'
-  run env DEVCONTAINER_JSON="$path" node -e 'process.stdout.write(process.env.DEVCONTAINER_JSON)'
+@test "injector treats an exploit-shaped devcontainer path purely as data" {
+  devcontainer_dir="$BATS_TEST_TMPDIR/path with spaces/quote '; throw new Error(\"injected\"); //back\\slash"
+  devcontainer_json="$devcontainer_dir/devcontainer.json"
+  mkdir -p "$devcontainer_dir"
+  cat > "$devcontainer_json" <<'JSON'
+{
+  "features": {
+    "ghcr.io/MiguelRodo/DevContainerFeatures/build-info:1": {
+      "existing": "preserved"
+    },
+    "other-feature": {
+      "value": 42
+    }
+  }
+}
+JSON
+
+  run env DEVCONTAINER_JSON="$devcontainer_json" IMAGE_VERSION="v9.8.7" node "$INJECTOR"
   [ "$status" -eq 0 ]
-  [ "$output" = "$path" ]
+  [[ "$output" == *"$devcontainer_json"* ]]
+
+  run jq -e '
+    .features["ghcr.io/MiguelRodo/DevContainerFeatures/build-info:1"] == {
+      "existing": "preserved",
+      "imageVersion": "v9.8.7"
+    }
+    and .features["other-feature"].value == 42
+  ' "$devcontainer_json"
+  [ "$status" -eq 0 ]
 }
 
 @test "prebuild-devcontainer updates or creates prebuild/devcontainer.json" {
@@ -75,9 +101,11 @@ ACTION_FILE="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/prebuild-devc
 @test "prebuild-devcontainer passes the devcontainer path to Node as data" {
   run grep -F 'export DEVCONTAINER_JSON' "$ACTION_FILE"
   [ "$status" -eq 0 ]
-  run grep -F 'const file = process.env.DEVCONTAINER_JSON;' "$ACTION_FILE"
+  run grep -F 'node "$GITHUB_ACTION_PATH/../scripts/inject-build-info.js"' "$ACTION_FILE"
   [ "$status" -eq 0 ]
-  run grep -F "const file = '\$DEVCONTAINER_JSON';" "$ACTION_FILE"
+  run grep -F 'const file = process.env.DEVCONTAINER_JSON;' "$INJECTOR"
+  [ "$status" -eq 0 ]
+  run grep -F 'node -e' "$ACTION_FILE"
   [ "$status" -ne 0 ]
 }
 
