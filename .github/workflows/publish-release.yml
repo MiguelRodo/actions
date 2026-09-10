@@ -1,15 +1,10 @@
 name: Publish Release and Bump Floating Tags
 
+# repository_dispatch always loads this workflow from the default branch.
+# A tag push must never select release machinery from the tagged commit.
 on:
-  push:
-    tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+' # Trigger on full semver tags
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version tag to create (must be format vX.Y.Z)'
-        required: true
-        type: string
+  repository_dispatch:
+    types: [release]
 
 jobs:
   release:
@@ -19,25 +14,20 @@ jobs:
       checks: read # Needed to verify required CI succeeded for the release commit
 
     steps:
-      - name: Checkout Code
+      - name: Checkout trusted release commit
         uses: actions/checkout@v6
         with:
-          # Manual releases always operate on main so that a dispatch from an
-          # arbitrary branch cannot silently create tags off that branch.
-          ref: ${{ github.event_name == 'workflow_dispatch' && 'main' || github.ref }}
+          # For repository_dispatch, github.sha is the default branch HEAD at
+          # event creation. Pinning it keeps validation and tagging deterministic.
+          ref: ${{ github.sha }}
           fetch-depth: 0 # Required to fetch all tags for moving them
 
       - name: Determine and Validate Version
         id: vars
         env:
-          INPUT_VERSION: ${{ inputs.version }}
+          REQUESTED_VERSION: ${{ github.event.client_payload.version }}
         run: |
-          # Determine version based on trigger type
-          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
-            VERSION="${INPUT_VERSION}"
-          else
-            VERSION="${GITHUB_REF_NAME}"
-          fi
+          VERSION="${REQUESTED_VERSION}"
 
           # Validate version format
           if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -83,8 +73,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Create Base Tag (Manual Trigger)
-        if: github.event_name == 'workflow_dispatch'
+      - name: Create or Validate Version Tag
         env:
           VERSION: ${{ steps.vars.outputs.version }}
           RELEASE_SHA: ${{ steps.vars.outputs.release_sha }}

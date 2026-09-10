@@ -1,0 +1,50 @@
+name: Disable Legacy Tag-Push Release Workflow
+
+# Deleting a workflow from the default branch does not make historical copies
+# safe: a tag push can load the workflow file from the tagged commit. Disable
+# the legacy workflow identity after this migration reaches main.
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/release.yml
+      - .github/workflows/publish-release.yml
+      - .github/workflows/disable-legacy-release.yml
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  disable-legacy-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disable legacy release workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # Existing workflow identity for .github/workflows/release.yml.
+          LEGACY_WORKFLOW_ID: "242013088"
+        run: |
+          if ! metadata=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/${LEGACY_WORKFLOW_ID}" 2>/dev/null); then
+            echo "Legacy release workflow no longer exists."
+            exit 0
+          fi
+
+          legacy_path=$(jq -r '.path' <<< "$metadata")
+          legacy_state=$(jq -r '.state' <<< "$metadata")
+
+          if [ "$legacy_path" != ".github/workflows/release.yml" ]; then
+            echo "Refusing to disable unexpected workflow path: $legacy_path" >&2
+            exit 1
+          fi
+
+          if [ "$legacy_state" != "active" ]; then
+            echo "Legacy release workflow is already disabled."
+            exit 0
+          fi
+
+          echo "Disabling legacy release workflow ${LEGACY_WORKFLOW_ID}..."
+          gh api --method PUT \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/${LEGACY_WORKFLOW_ID}/disable"

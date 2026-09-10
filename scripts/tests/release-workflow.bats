@@ -8,7 +8,9 @@ ROOT_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)"
 ANCESTRY="$ROOT_DIR/scripts/check-release-ancestry.sh"
 REQUIRED_CI="$ROOT_DIR/scripts/check-required-ci.sh"
 TAG_GUARD="$ROOT_DIR/scripts/check-release-tag.sh"
-WORKFLOW="$ROOT_DIR/.github/workflows/release.yml"
+WORKFLOW="$ROOT_DIR/.github/workflows/publish-release.yml"
+LEGACY_WORKFLOW="$ROOT_DIR/.github/workflows/release.yml"
+CLEANUP_WORKFLOW="$ROOT_DIR/.github/workflows/disable-legacy-release.yml"
 
 setup() {
   REPO_DIR="$BATS_TEST_TMPDIR/repo"
@@ -129,7 +131,7 @@ setup() {
 # Existing version tag guard
 # ---------------------------------------------------------------------------
 
-@test "manual release can reuse an annotated tag on the validated commit" {
+@test "dispatched release can reuse an annotated tag on the validated commit" {
   git tag -a v1.2.3 -m "Release v1.2.3" "$MAIN_SHA"
 
   run "$TAG_GUARD" v1.2.3 "$MAIN_SHA"
@@ -137,7 +139,7 @@ setup() {
   [[ "$output" == *"already points to the validated release commit"* ]]
 }
 
-@test "manual release rejects an annotated tag on an off-main commit" {
+@test "dispatched release rejects an annotated tag on an off-main commit" {
   git tag -a v1.2.3 -m "Unsafe release" "$FEATURE_SHA"
 
   run "$TAG_GUARD" v1.2.3 "$MAIN_SHA"
@@ -164,8 +166,31 @@ setup() {
 # Workflow wiring
 # ---------------------------------------------------------------------------
 
-@test "release workflow checks out main for manual dispatch" {
-  run grep -F "ref: \${{ github.event_name == 'workflow_dispatch' && 'main' || github.ref }}" "$WORKFLOW"
+@test "release workflow uses only a default-branch repository dispatch trigger" {
+  [ ! -e "$LEGACY_WORKFLOW" ]
+  run grep -F 'repository_dispatch:' "$WORKFLOW"
+  [ "$status" -eq 0 ]
+  run grep -F 'types: [release]' "$WORKFLOW"
+  [ "$status" -eq 0 ]
+  run grep -E '^  (push|workflow_dispatch):' "$WORKFLOW"
+  [ "$status" -ne 0 ]
+}
+
+@test "release workflow pins checkout to the default-branch event commit" {
+  run grep -F 'ref: ${{ github.sha }}' "$WORKFLOW"
+  [ "$status" -eq 0 ]
+  run grep -F 'REQUESTED_VERSION: ${{ github.event.client_payload.version }}' "$WORKFLOW"
+  [ "$status" -eq 0 ]
+}
+
+@test "migration workflow disables the historical tag-push workflow identity" {
+  run grep -F 'actions: write' "$CLEANUP_WORKFLOW"
+  [ "$status" -eq 0 ]
+  run grep -F 'LEGACY_WORKFLOW_ID: "242013088"' "$CLEANUP_WORKFLOW"
+  [ "$status" -eq 0 ]
+  run grep -F 'if [ "$legacy_path" != ".github/workflows/release.yml" ]; then' "$CLEANUP_WORKFLOW"
+  [ "$status" -eq 0 ]
+  run grep -F '${LEGACY_WORKFLOW_ID}/disable' "$CLEANUP_WORKFLOW"
   [ "$status" -eq 0 ]
 }
 
@@ -198,7 +223,7 @@ setup() {
   [ "$ci_line" -lt "$tag_line" ]
 }
 
-@test "manual release validates an existing version tag before reuse" {
+@test "dispatched release validates an existing version tag before reuse" {
   run grep -F './scripts/check-release-tag.sh "$VERSION" "$RELEASE_SHA"' "$WORKFLOW"
   [ "$status" -eq 0 ]
 }
