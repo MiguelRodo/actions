@@ -57,16 +57,16 @@ APT_REPO_OWNER="${APT_REPO_INPUT%%/*}"
 APT_REPO_NAME="${APT_REPO_INPUT##*/}"
 
 APT_REPO_DIR=""
-ASKPASS_SCRIPT=""
 GPG_PASSPHRASE_FILE=""
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/git-auth-askpass.sh
+source "$SCRIPT_DIR/git-auth-askpass.sh"
 cleanup() {
   if [ -n "$APT_REPO_DIR" ]; then
     rm -rf "$APT_REPO_DIR"
   fi
 
-  if [ -n "$ASKPASS_SCRIPT" ]; then
-    rm -f "$ASKPASS_SCRIPT"
-  fi
+  cleanup_git_askpass
 
   if [ -n "$GNUPGHOME" ]; then
     rm -rf "$GNUPGHOME"
@@ -79,21 +79,8 @@ cleanup() {
 trap cleanup EXIT
 
 APT_REPO_DIR="$(mktemp -d "${RUNNER_TEMP:-/tmp}/apt-repo-XXXXXX")"
-ASKPASS_SCRIPT="$(mktemp "${RUNNER_TEMP:-/tmp}/git-askpass-XXXXXX")"
-# These are literal lines for the generated askpass script; expansion occurs when Git runs it.
-# shellcheck disable=SC2016
-printf '%s\n' \
-  '#!/usr/bin/env bash' \
-  'case "$1" in' \
-  '  Username\ for\ *) printf '\''%s\n'\'' "x-access-token" ;;' \
-  '  Password\ for\ *) printf '\''%s\n'\'' "$GIT_TOKEN_FOR_ASKPASS" ;;' \
-  '  *) exit 1 ;;' \
-  'esac' > "$ASKPASS_SCRIPT"
-# mktemp creates the file with private permissions; add owner execute permission so Git can run it.
-chmod u+x "$ASKPASS_SCRIPT"
-export GIT_TERMINAL_PROMPT=0
-export GIT_ASKPASS="$ASKPASS_SCRIPT"
 export GIT_TOKEN_FOR_ASKPASS="$APT_PUSH_TOKEN"
+setup_git_askpass
 
 git clone \
   --branch main \

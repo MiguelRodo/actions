@@ -85,11 +85,12 @@ runs:
         RETENTION="${RETENTION_RAW,,}"
 
         # ── Configure Secure Git Authentication ───────────────────────────────
-        # Use git config instead of embedding the token in the remote URL to prevent
-        # the token from being written to .git/config.
-        SERVER_URL="${GITHUB_SERVER_URL}"
-        git config --global url."${SERVER_URL/https:\/\//https:\/\/x-access-token:${PUSH_TOKEN}@}/".insteadOf "${SERVER_URL}/"
+        source "$GITHUB_ACTION_PATH/../scripts/git-auth-askpass.sh"
+        export GIT_TOKEN_FOR_ASKPASS="$PUSH_TOKEN"
+        trap cleanup_git_askpass EXIT
+        setup_git_askpass
 
+        SERVER_URL="${GITHUB_SERVER_URL}"
         REMOTE_URL="${SERVER_URL}/${REPO_INPUT}.git"
 
         # ── Clone the apt repository with its full history ────────────────────
@@ -165,6 +166,7 @@ runs:
         SIGNING_KEY_FINGERPRINT=""
         GNUPGHOME=""
         GPG_PASSPHRASE_FILE=""
+        source "$GITHUB_ACTION_PATH/../scripts/git-auth-askpass.sh"
 
         if [ -n "$APT_SIGNING_KEY" ]; then
           if ! command -v gpg >/dev/null 2>&1; then
@@ -198,15 +200,15 @@ runs:
           [ -n "$PATHS_TO_REMOVE_FILE" ] && rm -f  "$PATHS_TO_REMOVE_FILE"
           [ -n "$GNUPGHOME" ]            && rm -rf "$GNUPGHOME"
           [ -n "$GPG_PASSPHRASE_FILE" ]  && rm -f  "$GPG_PASSPHRASE_FILE"
+          cleanup_git_askpass
         }
         trap cleanup EXIT
 
         # ── Configure Secure Git Authentication ───────────────────────────────
-        # Use git config instead of embedding the token in the remote URL to prevent
-        # the token from being written to .git/config.
-        SERVER_URL="${GITHUB_SERVER_URL}"
-        git config --global url."${SERVER_URL/https:\/\//https:\/\/x-access-token:${PUSH_TOKEN}@}/".insteadOf "${SERVER_URL}/"
+        export GIT_TOKEN_FOR_ASKPASS="$PUSH_TOKEN"
+        setup_git_askpass
 
+        SERVER_URL="${GITHUB_SERVER_URL}"
         REMOTE_URL="${SERVER_URL}/${REPO_INPUT}.git"
 
         # ── Warn when any file to remove exists in the root commit ────────────

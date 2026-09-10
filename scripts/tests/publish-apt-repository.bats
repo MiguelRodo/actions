@@ -7,6 +7,7 @@ setup() {
   export TEST_ROOT="$BATS_TEST_TMPDIR/work"
   export FAKE_BIN="$BATS_TEST_TMPDIR/bin"
   export FAKE_GIT_LOG="$BATS_TEST_TMPDIR/git.log"
+  export FAKE_ASKPASS_PATH="$BATS_TEST_TMPDIR/askpass-path"
   export TEST_SNAPSHOT="$BATS_TEST_TMPDIR/published-repository"
   mkdir -p "$TEST_ROOT" "$FAKE_BIN"
 
@@ -35,6 +36,11 @@ set -euo pipefail
 printf '%s\n' "$*" >> "$FAKE_GIT_LOG"
 case "$1" in
   clone)
+    [ -x "$GIT_ASKPASS" ]
+    [ "$(stat -c '%a' "$GIT_ASKPASS")" = "700" ]
+    [ "$($GIT_ASKPASS 'Username for https://github.com')" = "x-access-token" ]
+    [ "$($GIT_ASKPASS 'Password for https://github.com')" = "apt-token" ]
+    printf '%s\n' "$GIT_ASKPASS" > "$FAKE_ASKPASS_PATH"
     destination="${*: -1}"
     mkdir -p "$destination/.git"
     ;;
@@ -107,6 +113,24 @@ run_publisher() {
   [ ! -e "$TEST_SNAPSHOT/dists/stable/InRelease" ]
   grep -q '^commit -m Publish Debian packages for v1.2.3$' "$FAKE_GIT_LOG"
   grep -q '^push origin HEAD:main$' "$FAKE_GIT_LOG"
+  grep -q '^clone --branch main --single-branch https://github.com/owner/packages.git ' "$FAKE_GIT_LOG"
+  ! grep -q 'apt-token\|github-token' "$FAKE_GIT_LOG"
+  [ ! -e "$(dirname "$(cat "$FAKE_ASKPASS_PATH")")" ]
+}
+
+@test "shared publisher uses the common temporary askpass helper" {
+  run grep -F 'source "$SCRIPT_DIR/git-auth-askpass.sh"' "$SCRIPT"
+  [ "$status" -eq 0 ]
+  run awk '
+    /trap cleanup EXIT/ { trap_line=NR }
+    /setup_git_askpass/ { setup_line=NR }
+    END { exit (trap_line && setup_line && trap_line < setup_line) ? 0 : 1 }
+  ' "$SCRIPT"
+  [ "$status" -eq 0 ]
+  run grep -F 'cleanup_git_askpass' "$SCRIPT"
+  [ "$status" -eq 0 ]
+  run grep -F 'ASKPASS_SCRIPT=' "$SCRIPT"
+  [ "$status" -ne 0 ]
 }
 
 @test "Go and Rust release actions call the shared publisher through environment data" {
