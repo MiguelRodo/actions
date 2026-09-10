@@ -16,11 +16,15 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write # Needed to push tags and create releases
+      checks: read # Needed to verify required CI succeeded for the release commit
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v6
         with:
+          # Manual releases always operate on main so that a dispatch from an
+          # arbitrary branch cannot silently create tags off that branch.
+          ref: ${{ github.event_name == 'workflow_dispatch' && 'main' || github.ref }}
           fetch-depth: 0 # Required to fetch all tags for moving them
 
       - name: Determine and Validate Version
@@ -41,15 +45,8 @@ jobs:
             exit 1
           fi
 
-          # For tag-push triggers, ensure the tag points to a commit on main
-          if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
-            COMMIT_SHA="${GITHUB_SHA}"
-            if ! git merge-base --is-ancestor "$COMMIT_SHA" origin/main 2>/dev/null && \
-               ! git merge-base --is-ancestor origin/main "$COMMIT_SHA" 2>/dev/null; then
-              echo "❌ Error: Tagged commit is not on the main branch. Releases must originate from main."
-              exit 1
-            fi
-          fi
+          # Resolve the commit that will be released and tagged
+          RELEASE_SHA=$(git rev-parse HEAD)
 
           # Extract major and minor versions
           MAJOR_VERSION=$(echo "$VERSION" | cut -d'.' -f1)
@@ -60,7 +57,23 @@ jobs:
             echo "version=$VERSION"
             echo "major=$MAJOR_VERSION"
             echo "minor=$MINOR_VERSION"
+            echo "release_sha=$RELEASE_SHA"
           } >> "$GITHUB_OUTPUT"
+
+      - name: Verify Release Commit Is On main
+        env:
+          RELEASE_SHA: ${{ steps.vars.outputs.release_sha }}
+        run: |
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          ./scripts/check-release-ancestry.sh "$RELEASE_SHA" origin/main
+
+      - name: Verify Required CI Succeeded
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ steps.vars.outputs.release_sha }}
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY}/commits/${RELEASE_SHA}/check-runs?per_page=100" \
+            | ./scripts/check-required-ci.sh "BATS unit tests (shell scripts)"
 
       - name: Configure Git
         run: |
@@ -81,25 +94,29 @@ jobs:
             git push origin "$VERSION"
           fi
 
-      - name: Update Floating Major and Minor Tags
-        env:
-          VERSION: ${{ steps.vars.outputs.version }}
-          MAJOR: ${{ steps.vars.outputs.major }}
-          MINOR: ${{ steps.vars.outputs.minor }}
-        run: |
-          echo "Moving floating tags to point to $VERSION..."
-
-          # Force create/update the floating tags on the current commit
-          git tag -f "$MINOR"
-          git tag -f "$MAJOR"
-
-          # Force push the updated tags
-          git push origin "refs/tags/$MINOR" --force
-          git push origin "refs/tags/$MAJOR" --force
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.vars.outputs.version }}
+          target_commitish: ${{ steps.vars.outputs.release_sha }}
           generate_release_notes: true
           make_latest: true
+
+      # Floating tags move last so downstream consumers only ever follow a
+      # commit whose ancestry, CI status and release creation all succeeded.
+      - name: Update Floating Major and Minor Tags
+        env:
+          MAJOR: ${{ steps.vars.outputs.major }}
+          MINOR: ${{ steps.vars.outputs.minor }}
+          RELEASE_SHA: ${{ steps.vars.outputs.release_sha }}
+          VERSION: ${{ steps.vars.outputs.version }}
+        run: |
+          echo "Moving floating tags to point to $VERSION..."
+
+          # Force create/update the floating tags on the validated commit
+          git tag -f "$MINOR" "$RELEASE_SHA"
+          git tag -f "$MAJOR" "$RELEASE_SHA"
+
+          # Force push the updated tags
+          git push origin "refs/tags/$MINOR" --force
+          git push origin "refs/tags/$MAJOR" --force
