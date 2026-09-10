@@ -32,6 +32,17 @@ jobs:
       - name: Run shellcheck on standalone shell scripts
         run: find . -name '*.sh' -not -path './.git/*' -print0 | xargs -0 -r shellcheck
 
+  docs:
+    name: Generated action documentation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Verify generated action references are current
+        run: python3 scripts/generate-action-docs.py --check
+
   bats:
     name: BATS unit tests (shell scripts)
     runs-on: ubuntu-latest
