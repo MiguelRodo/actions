@@ -41,7 +41,7 @@ inputs:
   go_version:
     description: "Go version to install with actions/setup-go."
     required: false
-    default: "1.22"
+    default: "1.27"
   apt_repo:
     description: "Optional target GitHub repository in owner/name form for publishing generated .deb artifacts as an apt repository."
     required: false
@@ -209,12 +209,12 @@ runs:
         git push origin "refs/tags/latest" --force
 
     - name: Setup Go
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@v7
       with:
-        go-version: ${{ inputs.go_version || '1.22' }}
+        go-version: ${{ inputs.go_version || '1.27' }}
 
     - name: Run GoReleaser
-      uses: goreleaser/goreleaser-action@v5
+      uses: goreleaser/goreleaser-action@v7
       with:
         args: release --clean --skip=announce --config "${{ inputs.goreleaser_config }}"
       env:
