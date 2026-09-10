@@ -176,11 +176,8 @@ runs:
           sed -i -E 's/(^|[^:])\/\/.*/\1/g' "$DEVCONTAINER_JSON"
 
           if [ -n "$RENV_PKGS_INPUT" ] || [ -n "$RENV_REPOS_INPUT" ]; then
-            PKGS_ARRAY=$(echo "[\"$(echo "$RENV_PKGS_INPUT" | sed 's/[,;]/\" , \"/g')\"]" | sed 's/\"\"//g')
-            REPOS_ARRAY=$(echo "[\"$(echo "$RENV_REPOS_INPUT" | sed 's/[,;]/\" , \"/g')\"]" | sed 's/\"\"//g')
-
-            if [ "$PKGS_ARRAY" = '[""]' ]; then PKGS_ARRAY="[]"; fi
-            if [ "$REPOS_ARRAY" = '[""]' ]; then REPOS_ARRAY="[]"; fi
+            PKGS_ARRAY=$("$GITHUB_ACTION_PATH/../scripts/parse-delimited-json.sh" "$RENV_PKGS_INPUT")
+            REPOS_ARRAY=$("$GITHUB_ACTION_PATH/../scripts/parse-delimited-json.sh" "$RENV_REPOS_INPUT")
 
             jq --argjson pkgs "$PKGS_ARRAY" \
                --argjson repos "$REPOS_ARRAY" \
