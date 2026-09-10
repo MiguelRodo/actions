@@ -93,12 +93,8 @@ jobs:
           # points at the validated release commit. GitHub ignores
           # target_commitish when a tag already exists.
           if git show-ref --tags --verify --quiet "refs/tags/$VERSION"; then
-            EXISTING_TAG_SHA=$(git rev-parse "$VERSION^{commit}")
-            if [ "$EXISTING_TAG_SHA" != "$RELEASE_SHA" ]; then
-              echo "❌ Error: tag $VERSION already points to $EXISTING_TAG_SHA, not the validated release commit $RELEASE_SHA." >&2
-              exit 1
-            fi
-            echo "Tag $VERSION already points to the validated release commit. Reusing it."
+            ./scripts/check-release-tag.sh "$VERSION" "$RELEASE_SHA"
+            echo "Reusing existing tag $VERSION."
           else
             echo "🔖 Creating specific tag: $VERSION"
             git tag -a "$VERSION" -m "Release $VERSION"

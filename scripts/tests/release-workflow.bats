@@ -7,6 +7,7 @@
 ROOT_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)"
 ANCESTRY="$ROOT_DIR/scripts/check-release-ancestry.sh"
 REQUIRED_CI="$ROOT_DIR/scripts/check-required-ci.sh"
+TAG_GUARD="$ROOT_DIR/scripts/check-release-tag.sh"
 WORKFLOW="$ROOT_DIR/.github/workflows/release.yml"
 
 setup() {
@@ -98,15 +99,17 @@ setup() {
   [[ "$output" == *"test-prebuild-devcontainer"* ]]
 }
 
-@test "required CI guard fails when the required check failed" {
-  run bash -c 'echo "{\"check_runs\":[{\"name\":\"BATS unit tests (shell scripts)\",\"status\":\"completed\",\"conclusion\":\"failure\"}]}" | "'"$REQUIRED_CI"'" "BATS unit tests (shell scripts)"'
+@test "required CI guard fails when one of all required checks failed" {
+  run bash -c 'echo "{\"check_runs\":[{\"name\":\"Lint workflow and action files (actionlint + shellcheck)\",\"status\":\"completed\",\"conclusion\":\"success\"},{\"name\":\"BATS unit tests (shell scripts)\",\"status\":\"completed\",\"conclusion\":\"success\"},{\"name\":\"test-prebuild-devcontainer\",\"status\":\"completed\",\"conclusion\":\"failure\"}]}" | "'"$REQUIRED_CI"'" "Lint workflow and action files (actionlint + shellcheck)" "BATS unit tests (shell scripts)" "test-prebuild-devcontainer"'
   [ "$status" -eq 1 ]
+  [[ "$output" == *"test-prebuild-devcontainer"* ]]
   [[ "$output" == *"did not succeed"* ]]
 }
 
-@test "required CI guard fails when the required check is still running" {
-  run bash -c 'echo "{\"check_runs\":[{\"name\":\"BATS unit tests (shell scripts)\",\"status\":\"in_progress\",\"conclusion\":null}]}" | "'"$REQUIRED_CI"'" "BATS unit tests (shell scripts)"'
+@test "required CI guard fails when one of all required checks is still running" {
+  run bash -c 'echo "{\"check_runs\":[{\"name\":\"Lint workflow and action files (actionlint + shellcheck)\",\"status\":\"in_progress\",\"conclusion\":null},{\"name\":\"BATS unit tests (shell scripts)\",\"status\":\"completed\",\"conclusion\":\"success\"},{\"name\":\"test-prebuild-devcontainer\",\"status\":\"completed\",\"conclusion\":\"success\"}]}" | "'"$REQUIRED_CI"'" "Lint workflow and action files (actionlint + shellcheck)" "BATS unit tests (shell scripts)" "test-prebuild-devcontainer"'
   [ "$status" -eq 1 ]
+  [[ "$output" == *"Lint workflow and action files (actionlint + shellcheck)"* ]]
   [[ "$output" == *"did not succeed"* ]]
 }
 
@@ -120,6 +123,41 @@ setup() {
   run bash -c 'echo "not json" | "'"$REQUIRED_CI"'" "BATS unit tests (shell scripts)"'
   [ "$status" -eq 1 ]
   [[ "$output" == *"could not read check runs"* ]]
+}
+
+# ---------------------------------------------------------------------------
+# Existing version tag guard
+# ---------------------------------------------------------------------------
+
+@test "manual release can reuse an annotated tag on the validated commit" {
+  git tag -a v1.2.3 -m "Release v1.2.3" "$MAIN_SHA"
+
+  run "$TAG_GUARD" v1.2.3 "$MAIN_SHA"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"already points to the validated release commit"* ]]
+}
+
+@test "manual release rejects an annotated tag on an off-main commit" {
+  git tag -a v1.2.3 -m "Unsafe release" "$FEATURE_SHA"
+
+  run "$TAG_GUARD" v1.2.3 "$MAIN_SHA"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"already points to $FEATURE_SHA"* ]]
+  [[ "$output" == *"not the validated release commit $MAIN_SHA"* ]]
+}
+
+@test "existing tag guard rejects an unresolvable release commit" {
+  git tag v1.2.3 "$MAIN_SHA"
+
+  run "$TAG_GUARD" v1.2.3 "0000000000000000000000000000000000000000"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"cannot be resolved"* ]]
+}
+
+@test "existing tag guard requires both arguments" {
+  run "$TAG_GUARD" v1.2.3
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Usage"* ]]
 }
 
 # ---------------------------------------------------------------------------
@@ -160,10 +198,8 @@ setup() {
   [ "$ci_line" -lt "$tag_line" ]
 }
 
-@test "manual release rejects an existing version tag on another commit" {
-  run grep -F 'EXISTING_TAG_SHA=$(git rev-parse "$VERSION^{commit}")' "$WORKFLOW"
-  [ "$status" -eq 0 ]
-  run grep -F 'if [ "$EXISTING_TAG_SHA" != "$RELEASE_SHA" ]; then' "$WORKFLOW"
+@test "manual release validates an existing version tag before reuse" {
+  run grep -F './scripts/check-release-tag.sh "$VERSION" "$RELEASE_SHA"' "$WORKFLOW"
   [ "$status" -eq 0 ]
 }
 
