@@ -104,9 +104,24 @@ SELECT_SCRIPT="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)/apt-prune-sele
   bash -n "$SELECT_SCRIPT"
 }
 
-@test "apt-repo-prune uses authenticated remote URL with x-access-token" {
-  run grep -F 'x-access-token' "$ACTION_FILE"
+@test "apt-repo-prune uses temporary askpass authentication with token-free remotes" {
+  run grep -F 'scripts/git-auth-askpass.sh' "$ACTION_FILE"
   [ "$status" -eq 0 ]
+  run grep -F 'setup_git_askpass' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+  run grep -F 'cleanup_git_askpass' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+  run awk '
+    /Configure Secure Git Authentication/ { in_auth=1 }
+    in_auth && /trap cleanup_git_askpass EXIT/ { trap_seen=1 }
+    in_auth && /setup_git_askpass/ { valid=trap_seen; exit }
+    END { exit valid ? 0 : 1 }
+  ' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+  run grep -F 'git config --global url.' "$ACTION_FILE"
+  [ "$status" -ne 0 ]
+  run grep -E 'git remote (add|set-url).*x-access-token' "$ACTION_FILE"
+  [ "$status" -ne 0 ]
 }
 
 @test "apt-repo-prune uses github.repository context instead of repo input" {

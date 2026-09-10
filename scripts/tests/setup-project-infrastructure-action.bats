@@ -34,3 +34,18 @@
   run grep "repos workspace" setup-project-infrastructure/action.yml
   [ "$status" -eq 0 ]
 }
+
+@test "setup-project-infrastructure uses temporary askpass authentication" {
+  run grep -F 'scripts/git-auth-askpass.sh' setup-project-infrastructure/action.yml
+  [ "$status" -eq 0 ]
+  run awk '
+    /trap cleanup_git_askpass EXIT/ { trap_line=NR }
+    /setup_git_askpass/ { setup_line=NR }
+    END { exit (trap_line && setup_line && trap_line < setup_line) ? 0 : 1 }
+  ' setup-project-infrastructure/action.yml
+  [ "$status" -eq 0 ]
+  run grep -F '${GITHUB_SERVER_URL}/${repo_str}.git' setup-project-infrastructure/action.yml
+  [ "$status" -eq 0 ]
+  run grep -F 'git config --global url.' setup-project-infrastructure/action.yml
+  [ "$status" -ne 0 ]
+}
