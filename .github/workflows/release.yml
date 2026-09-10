@@ -73,7 +73,10 @@ jobs:
           RELEASE_SHA: ${{ steps.vars.outputs.release_sha }}
         run: |
           gh api "repos/${GITHUB_REPOSITORY}/commits/${RELEASE_SHA}/check-runs?per_page=100" \
-            | ./scripts/check-required-ci.sh "BATS unit tests (shell scripts)"
+            | ./scripts/check-required-ci.sh \
+                "Lint workflow and action files (actionlint + shellcheck)" \
+                "BATS unit tests (shell scripts)" \
+                "test-prebuild-devcontainer"
 
       - name: Configure Git
         run: |
@@ -84,10 +87,18 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         env:
           VERSION: ${{ steps.vars.outputs.version }}
+          RELEASE_SHA: ${{ steps.vars.outputs.release_sha }}
         run: |
-          # Check if tag already exists to prevent errors
+          # An existing version tag is safe to reuse only when it already
+          # points at the validated release commit. GitHub ignores
+          # target_commitish when a tag already exists.
           if git show-ref --tags --verify --quiet "refs/tags/$VERSION"; then
-            echo "Tag $VERSION already exists. Skipping base tag creation."
+            EXISTING_TAG_SHA=$(git rev-parse "$VERSION^{commit}")
+            if [ "$EXISTING_TAG_SHA" != "$RELEASE_SHA" ]; then
+              echo "❌ Error: tag $VERSION already points to $EXISTING_TAG_SHA, not the validated release commit $RELEASE_SHA." >&2
+              exit 1
+            fi
+            echo "Tag $VERSION already points to the validated release commit. Reusing it."
           else
             echo "🔖 Creating specific tag: $VERSION"
             git tag -a "$VERSION" -m "Release $VERSION"

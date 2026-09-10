@@ -84,10 +84,18 @@ setup() {
 # Required CI guard
 # ---------------------------------------------------------------------------
 
-@test "required CI guard passes when the required check succeeded" {
-  run bash -c 'echo "{\"check_runs\":[{\"name\":\"BATS unit tests (shell scripts)\",\"status\":\"completed\",\"conclusion\":\"success\"}]}" | "'"$REQUIRED_CI"'" "BATS unit tests (shell scripts)"'
+@test "required CI guard passes when all required checks succeeded" {
+  run bash -c 'echo "{\"check_runs\":[{\"name\":\"Lint workflow and action files (actionlint + shellcheck)\",\"status\":\"completed\",\"conclusion\":\"success\"},{\"name\":\"BATS unit tests (shell scripts)\",\"status\":\"completed\",\"conclusion\":\"success\"},{\"name\":\"test-prebuild-devcontainer\",\"status\":\"completed\",\"conclusion\":\"success\"}]}" | "'"$REQUIRED_CI"'" "Lint workflow and action files (actionlint + shellcheck)" "BATS unit tests (shell scripts)" "test-prebuild-devcontainer"'
   [ "$status" -eq 0 ]
-  [[ "$output" == *"succeeded for the release commit"* ]]
+  [[ "$output" == *"Lint workflow and action files (actionlint + shellcheck)' succeeded"* ]]
+  [[ "$output" == *"BATS unit tests (shell scripts)' succeeded"* ]]
+  [[ "$output" == *"test-prebuild-devcontainer' succeeded"* ]]
+}
+
+@test "required CI guard fails when any required check is missing" {
+  run bash -c 'echo "{\"check_runs\":[{\"name\":\"Lint workflow and action files (actionlint + shellcheck)\",\"status\":\"completed\",\"conclusion\":\"success\"},{\"name\":\"BATS unit tests (shell scripts)\",\"status\":\"completed\",\"conclusion\":\"success\"}]}" | "'"$REQUIRED_CI"'" "Lint workflow and action files (actionlint + shellcheck)" "BATS unit tests (shell scripts)" "test-prebuild-devcontainer"'
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"test-prebuild-devcontainer"* ]]
 }
 
 @test "required CI guard fails when the required check failed" {
@@ -139,12 +147,24 @@ setup() {
   [ "$status" -ne 0 ]
 }
 
-@test "release workflow verifies required CI before moving floating tags" {
+@test "release workflow verifies all required CI before moving floating tags" {
   ci_line=$(grep -n 'check-required-ci.sh' "$WORKFLOW" | head -n 1 | cut -d: -f1)
+  lint_line=$(grep -n 'Lint workflow and action files (actionlint + shellcheck)' "$WORKFLOW" | head -n 1 | cut -d: -f1)
+  bats_line=$(grep -n 'BATS unit tests (shell scripts)' "$WORKFLOW" | head -n 1 | cut -d: -f1)
+  prebuild_line=$(grep -n 'test-prebuild-devcontainer' "$WORKFLOW" | head -n 1 | cut -d: -f1)
   tag_line=$(grep -n 'Update Floating Major and Minor Tags' "$WORKFLOW" | head -n 1 | cut -d: -f1)
   [ -n "$ci_line" ]
-  [ -n "$tag_line" ]
+  [ "$lint_line" -gt "$ci_line" ]
+  [ "$bats_line" -gt "$ci_line" ]
+  [ "$prebuild_line" -gt "$ci_line" ]
   [ "$ci_line" -lt "$tag_line" ]
+}
+
+@test "manual release rejects an existing version tag on another commit" {
+  run grep -F 'EXISTING_TAG_SHA=$(git rev-parse "$VERSION^{commit}")' "$WORKFLOW"
+  [ "$status" -eq 0 ]
+  run grep -F 'if [ "$EXISTING_TAG_SHA" != "$RELEASE_SHA" ]; then' "$WORKFLOW"
+  [ "$status" -eq 0 ]
 }
 
 @test "release workflow moves floating tags after the release is created" {

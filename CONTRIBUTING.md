@@ -52,7 +52,7 @@ The workflow refuses to release a commit that is not on `main`:
 
 - The release commit must be **reachable from `origin/main`** (`scripts/check-release-ancestry.sh`). A commit that only exists on a feature branch — even one ahead of `main` — is rejected.
 - Manual `workflow_dispatch` runs always check out `main`, so dispatching from another branch cannot silently tag that branch.
-- The required BATS check must have **succeeded for the release commit** (`scripts/check-required-ci.sh`) before any tag is moved.
+- All required checks must have **succeeded for the release commit** (`scripts/check-required-ci.sh`) before any tag is moved: actionlint/shellcheck, BATS, and the prebuild-devcontainer integration test.
 - Floating `vX` / `vX.Y` tags are updated **last**, only after ancestry, CI status and release creation have all passed, and are pinned to the validated commit.
 
 #### Tag vs. Release
