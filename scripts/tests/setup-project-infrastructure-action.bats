@@ -73,14 +73,35 @@ JSON
   [ "$status" -eq 0 ]
 }
 
-@test "builder workflow and config devcontainer are generated as valid files" {
+@test "builder workflow and config devcontainer are generated as expected" {
   workflow="$BATS_TEST_TMPDIR/generated/.github/workflows/devcontainer-build.yml"
+  expected_workflow="$BATS_TEST_TMPDIR/expected-devcontainer-build.yml"
   config="$BATS_TEST_TMPDIR/config path/.devcontainer/devcontainer.json"
   image='ghcr.io/octo/image-quote'"'"'-{"json":true}:latest'
 
+  cat > "$expected_workflow" <<'YAML'
+name: Pre-build Dev Container
+on:
+  push:
+    branches:
+      - "**"
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: MiguelRodo/actions/prebuild-devcontainer@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+YAML
+
   run "$FILES_SCRIPT" write-builder-workflow "$workflow"
   [ "$status" -eq 0 ]
-  run actionlint "$workflow"
+  run diff -u "$expected_workflow" "$workflow"
   [ "$status" -eq 0 ]
 
   run "$FILES_SCRIPT" write-config-devcontainer "$config" "$image"

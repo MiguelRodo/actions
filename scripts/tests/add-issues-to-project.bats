@@ -308,6 +308,7 @@ JSON
 
 @test "fails when GraphQL pagination cannot fetch the next project page" {
   write_projects_json "test-project" "project-123"
+  write_issues_json 1 "source-issue"
   cat > "$GH_GRAPHQL_PAGE_DIR/graphql-page-1.json" <<'JSON'
 {"data":{"node":{"items":{"pageInfo":{"hasNextPage":true,"endCursor":"cursor-1"},"nodes":[{"content":{"__typename":"Issue","id":"existing-1"}}]}}}}
 JSON
@@ -323,6 +324,7 @@ JSON
 
 @test "fails on a success-shaped GraphQL response containing provider errors" {
   write_projects_json "test-project" "project-123"
+  write_issues_json 1 "source-issue"
   cat > "$GH_GRAPHQL_PAGE_DIR/graphql-page-1.json" <<'JSON'
 {"data":{"node":null},"errors":[{"message":"permission denied"}]}
 JSON
@@ -336,6 +338,7 @@ JSON
 
 @test "fails when pagination claims another page without a cursor" {
   write_projects_json "test-project" "project-123"
+  write_issues_json 1 "source-issue"
   cat > "$GH_GRAPHQL_PAGE_DIR/graphql-page-1.json" <<'JSON'
 {"data":{"node":{"items":{"pageInfo":{"hasNextPage":true,"endCursor":null},"nodes":[]}}}}
 JSON
