@@ -56,6 +56,13 @@ ACTION_FILE="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/prebuild-devc
   [ "$status" -eq 0 ]
 }
 
+@test "environment transport preserves awkward devcontainer paths" {
+  path='tmp/quoted "path"/back\\slash/devcontainer.json'
+  run env DEVCONTAINER_JSON="$path" node -e 'process.stdout.write(process.env.DEVCONTAINER_JSON)'
+  [ "$status" -eq 0 ]
+  [ "$output" = "$path" ]
+}
+
 @test "prebuild-devcontainer updates or creates prebuild/devcontainer.json" {
   run grep -F 'Update or create prebuild/devcontainer.json' "$ACTION_FILE"
   [ "$status" -eq 0 ]
@@ -63,6 +70,15 @@ ACTION_FILE="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/prebuild-devc
   [ "$status" -eq 0 ]
   run grep -F 'jq --arg image "$FULL_IMAGE_REF" '"'"'.image = $image'"'"' "$PREBUILD_JSON" > temp.json && mv temp.json "$PREBUILD_JSON"' "$ACTION_FILE"
   [ "$status" -eq 0 ]
+}
+
+@test "prebuild-devcontainer passes the devcontainer path to Node as data" {
+  run grep -F 'export DEVCONTAINER_JSON' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+  run grep -F 'const file = process.env.DEVCONTAINER_JSON;' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+  run grep -F "const file = '\$DEVCONTAINER_JSON';" "$ACTION_FILE"
+  [ "$status" -ne 0 ]
 }
 
 @test "prebuild-devcontainer commits and pushes changes when create_prebuild_json is true" {
