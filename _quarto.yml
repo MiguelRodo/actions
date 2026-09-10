@@ -14,12 +14,16 @@ website:
         text: Pre-build Dev Container
       - href: add-issues-to-project.qmd
         text: Add Issues to Project
+      - href: setup-project-infrastructure.qmd
+        text: Setup Project Infrastructure
       - href: version-release.qmd
         text: Version and Release
       - href: r-version-release.qmd
         text: R Version and Release
       - href: go-version-release.qmd
         text: Go Version and Release
+      - href: rust-version-release.qmd
+        text: Rust Version and Release
       - href: apt-repo-prune.qmd
         text: APT Repository Prune
       - href: publish-quarto-site.qmd

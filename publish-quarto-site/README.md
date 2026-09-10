@@ -55,13 +55,18 @@ permissions:
 
 ---
 
+<!-- action-inputs:start -->
+<!-- Generated from publish-quarto-site/action.yml by scripts/generate-action-docs.py. Do not edit this block manually. -->
 ## 🔧 Inputs
 
 | Input | Description | Required | Default |
-| --- | --- | --- | --- |
-| `github_token` | GitHub token used to push to the `gh-pages` branch. Use `${{ secrets.GITHUB_TOKEN }}`. | **Yes** | — |
-
----
+| --- | --- | :---: | --- |
+| `github_token` | GitHub token used to push to the gh-pages branch. | Yes | — |
+| `path` | Path to the Quarto project to publish. | No | `.` |
+| `setup_r` | Whether to install R and set up R dependencies before rendering. | No | `false` |
+| `renv_restore` | Deprecated. renv is now restored automatically by r-lib/actions/setup-r-dependencies when a renv.lock file is present. | No | `true` |
+| `setup_python` | Whether to install Python and set up Python dependencies before rendering. | No | `false` |
+<!-- action-inputs:end -->
 
 ## ⚙️ How It Works
 
