@@ -37,7 +37,8 @@ preinstalled by `.github/workflows/copilot-setup-steps.yml`.
 - Every input needs `description` and `required`; optional inputs need a
   `default`. Every output must be declared in `action.yml`.
 - Bash: prefer `[[ ... ]]`, quote expansions, and keep scripts shellcheck-clean.
-- Pin third-party and official actions to a major tag (e.g. `actions/checkout@v6`).
+- In `.github/workflows/`, pin third-party and official actions to full 40-character commit SHAs with a readable version comment (for example, `actions/checkout@<sha> # v6.0.2`). Dependabot maintains these pins monthly.
+- Published composite actions and consumer-facing examples may use readable major tags where compatibility and automatic patch uptake are preferable.
 - After changing an action's `name`, `description`, inputs or outputs, run
   `python3 scripts/generate-action-docs.py --write`. Do not hand-edit content
   inside `action-inputs`, `action-outputs` or `action-catalogue` marker blocks.
@@ -46,7 +47,7 @@ preinstalled by `.github/workflows/copilot-setup-steps.yml`.
 
 ## Do not
 
-- Do not create or move git tags; releases are handled by
-  `.github/workflows/release.yml` from `main`.
+- Do not create or move git tags directly; releases are handled by
+  `.github/workflows/publish-release.yml` from the trusted default-branch dispatch path.
 - Do not add new linters, test frameworks or dependencies without a clear need.
 - Do not commit secrets or tokens; pass them as action inputs.

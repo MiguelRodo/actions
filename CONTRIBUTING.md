@@ -42,6 +42,14 @@ Inline `run:` blocks are linted by **actionlint** (which delegates to **shellche
 - The root `README.md` is intentionally a concise catalogue rather than a second copy of each action's documentation.
 - Complete, copy-paste-ready workflow files live in the `examples/` directory.
 
+### Workflow dependency security
+
+Repository-owned workflows under `.github/workflows/` may receive privileged tokens, publish artifacts or enforce CI. Their third-party actions are therefore pinned to full immutable commit SHAs, with the corresponding release version retained as an inline comment. Dependabot updates these SHA pins monthly and groups routine GitHub Actions updates into one low-noise PR; updates still require the normal protected-branch CI before merge.
+
+Published composite actions and copy-paste consumer examples may instead use readable major tags such as `@v2`. Those surfaces prioritize consumer compatibility and automatic patch uptake, while this repository's own privileged execution path uses stricter immutable pins.
+
+`actionlint` is installed by `scripts/install-actionlint.sh` from a fixed release archive whose SHA-256 digest is pinned to the checksum published with that upstream release. It is updated manually when needed rather than through a separate recurring version-check workflow.
+
 ### Releases
 
 Releases are managed by `.github/workflows/publish-release.yml`. Release requests use a `repository_dispatch` event so GitHub always loads the privileged workflow from the default branch, never from the commit being tagged.

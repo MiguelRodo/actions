@@ -15,7 +15,7 @@ jobs:
 
     steps:
       - name: Checkout trusted release commit
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           # For repository_dispatch, github.sha is the default branch HEAD at
           # event creation. Pinning it keeps validation and tagging deterministic.
@@ -91,7 +91,7 @@ jobs:
           fi
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           tag_name: ${{ steps.vars.outputs.version }}
           target_commitish: ${{ steps.vars.outputs.release_sha }}
