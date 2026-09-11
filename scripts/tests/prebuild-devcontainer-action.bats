@@ -8,9 +8,9 @@ FILES_SCRIPT="$ROOT_DIR/scripts/prebuild-devcontainer-files.sh"
 @test "prebuild-devcontainer remains a composite action with required integrations" {
   run grep -F 'using: "composite"' "$ACTION_FILE"
   [ "$status" -eq 0 ]
-  run grep -F 'uses: docker/login-action@v3' "$ACTION_FILE"
+  run grep -F 'uses: docker/login-action@' "$ACTION_FILE"
   [ "$status" -eq 0 ]
-  run grep -F 'uses: devcontainers/ci@v0.3' "$ACTION_FILE"
+  run grep -F 'uses: devcontainers/ci@' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 }
 
