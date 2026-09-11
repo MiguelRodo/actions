@@ -209,7 +209,7 @@ runs:
         git push origin "refs/tags/latest" --force
 
     - name: Setup Rust
-      uses: dtolnay/rust-toolchain@master
+      uses: dtolnay/rust-toolchain@d1031067263f94b142dd6c0ce24c5eb9d02d52a0 # master
       with:
         toolchain: ${{ inputs.rust_version || 'stable' }}
 
@@ -220,7 +220,7 @@ runs:
         cargo deb --output dist/
 
     - name: Publish GitHub Release
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
       with:
         tag_name: ${{ steps.get_version.outputs.tag }}
         files: dist/*
