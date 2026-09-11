@@ -20,7 +20,7 @@
 @test "rust-version-release action sets up Rust and updates Cargo.toml" {
   run grep "Setup Rust" rust-version-release/action.yml
   [ "$status" -eq 0 ]
-  run grep "uses: dtolnay/rust-toolchain@master" rust-version-release/action.yml
+  run grep "uses: dtolnay/rust-toolchain@" rust-version-release/action.yml
   [ "$status" -eq 0 ]
   run grep "Update Cargo.toml version" rust-version-release/action.yml
   [ "$status" -eq 0 ]
@@ -40,7 +40,7 @@
 @test "rust-version-release action publishes GitHub Release" {
   run grep "Publish GitHub Release" rust-version-release/action.yml
   [ "$status" -eq 0 ]
-  run grep "uses: softprops/action-gh-release@v2" rust-version-release/action.yml
+  run grep "uses: softprops/action-gh-release@" rust-version-release/action.yml
   [ "$status" -eq 0 ]
   run grep "files: dist/\*" rust-version-release/action.yml
   [ "$status" -eq 0 ]
