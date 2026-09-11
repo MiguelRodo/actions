@@ -98,7 +98,7 @@ runs:
         echo "BRANCH_NAME=$branch" >> $GITHUB_ENV
 
     - name: Login to container registry
-      uses: docker/login-action@v3
+      uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
       with:
         registry: ${{ inputs.registry }}
         username: ${{ inputs.registry_username != '' && inputs.registry_username || github.repository_owner }}
@@ -381,7 +381,7 @@ runs:
         node "$GITHUB_ACTION_PATH/../scripts/inject-build-info.js"
 
     - name: Pre-build dev container image
-      uses: devcontainers/ci@v0.3
+      uses: devcontainers/ci@513af61f4de4f75d37e4438f184ba4358f0fc1ca # v0.3.1900000450
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
         GITHUB_PAT: ${{ inputs.github_token }}
