@@ -62,14 +62,17 @@ jobs:
 
 ```
 
+<!-- action-outputs:start -->
+<!-- Generated from prebuild-devcontainer/action.yml by scripts/generate-action-docs.py. Do not edit this block manually. -->
 ## Outputs
 
 | Output | Description |
 | --- | --- |
-| `image_name` | Full image name without tag (e.g. `ghcr.io/owner/repo-main`). |
-| `image_tag` | Primary image tag that was built and pushed (e.g. `v1.2.3`). |
-| `image_ref` | Full image reference including tag (e.g. `ghcr.io/owner/repo-main:v1.2.3`). |
-| `alias_tags` | Comma-separated list of SemVer alias tags also pushed (e.g. `v1.2,v1`). |
+| `image_name` | Full image name without tag (e.g. 'ghcr.io/owner/repo-main'). |
+| `image_tag` | Primary image tag that was built and pushed (e.g. 'v1.2.3'). |
+| `image_ref` | Full image reference including tag (e.g. 'ghcr.io/owner/repo-main:v1.2.3'). |
+| `alias_tags` | Comma-separated list of SemVer alias tags that were also pushed (e.g. 'v1.2,v1'). |
+<!-- action-outputs:end -->
 
 ## Permissions
 
@@ -95,20 +98,26 @@ permissions:
 > 
 > 
 
+<!-- action-inputs:start -->
+<!-- Generated from prebuild-devcontainer/action.yml by scripts/generate-action-docs.py. Do not edit this block manually. -->
 ## Inputs
 
 | Input | Description | Required | Default |
-| --- | --- | --- | --- |
-| `github_token` | Token for logging into the container registry and pushing commits. | **Yes** | — |
-| `bump_type` | Version component to bump (`major`, `minor`, `patch`). Calculates the next version automatically based on git tags. Cannot be set together with `version`. | No | `""` |
-| `version` | Exact version to set (e.g. `v1.2.3` or `main-v1.2.3`). Cannot be set together with `bump_type`. Auto-detected from `GITHUB_REF` on tag push. Falls back to `latest` if no inputs or tags are found. | No | `""` |
-| `no_cache` | Disable Docker cache during build (`true`/`false`). | No | `false` |
-| `create_prebuild_json` | Generate and commit a `prebuild/devcontainer.json` (`true`/`false`). | No | `true` |
-| `devcontainer_path` | Path to the `.devcontainer` directory, relative to the repo root. | No | `.devcontainer` |
-| `image_name` | Full image name without tag (e.g. `ghcr.io/myorg/myimage`). Defaults to `{registry}/{repo}-{branch}` where `{branch}` is the current branch name (e.g. `ghcr.io/owner/myrepo-main`). The branch name is always used for the image name even when tagging with SemVer. | No | `{registry}/{repo}-{branch}` |
+| --- | --- | :---: | --- |
+| `github_token` | Token for logging into the container registry and pushing commits. | Yes | — |
+| `target_branch` | Branch to use for image naming and pushing. Overrides the triggering branch if provided. | No | `""` |
+| `no_cache` | Disable Docker cache during build (true/false). | No | `false` |
+| `create_prebuild_json` | Generate, commit, and push the prebuild devcontainer.json (true/false). | No | `false` |
+| `devcontainer_path` | Path to the .devcontainer directory, relative to the repo root. | No | `.devcontainer` |
+| `image_name` | Full image name without tag (e.g. 'ghcr.io/myorg/myimage'). Defaults to '{registry}/{repo}-{branch}'. | No | `""` |
 | `registry` | Container registry URL. | No | `ghcr.io` |
-| `registry_username` | Username for registry login. | No | Repository owner |
-| `version_force` | When `'true'`, skip the version progression check and push the specified version as-is. Useful when jumping more than one increment at a time or when no previous image exists and you want an explicit override. | No | `false` |
+| `registry_username` | Username for registry login. Defaults to the repository owner. | No | `""` |
+| `version_force` | When 'true', skip the version progression check and push the specified version as-is, even if it is more than one increment ahead of (or behind) the previous image version. | No | `false` |
+| `tag` | Git tag to use as the primary container image tag. (Deprecated, use 'version') | No | `""` |
+| `version` | Exact version to set (e.g. v1.2.3 or main-v1.2.3). Cannot be set together with bump_type. Whitespace is ignored and case is insensitive. | No | `""` |
+| `bump_type` | Version component to bump (major \| minor \| patch). Cannot be set together with version. Whitespace is ignored and case is insensitive. | No | `""` |
+| `inject_build_info` | Inject imageVersion into the MiguelRodo/DevContainerFeatures/build-info feature if it is present in devcontainer.json (true/false). | No | `true` |
+<!-- action-inputs:end -->
 
 ## Outputs
 

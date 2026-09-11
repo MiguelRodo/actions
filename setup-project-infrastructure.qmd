@@ -1,4 +1,9 @@
-# Setup Project Infrastructure
+---
+title: "Setup Project Infrastructure"
+---
+
+<!-- generated-from-action-readme -->
+<!-- This page is generated from setup-project-infrastructure/README.md. -->
 
 Bootstraps new multi-repo workspaces by linking the working repository, container build pipelines, package caches, and tracking logic automatically.
 

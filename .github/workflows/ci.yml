@@ -30,7 +30,24 @@ jobs:
         run: actionlint
 
       - name: Run shellcheck on standalone shell scripts
-        run: find . -name '*.sh' -not -path './.git/*' -print0 | xargs -0 -r shellcheck
+        # The github-projects directory is a canonical vendored skill bundle;
+        # lint its source upstream rather than modifying the installed copy here.
+        run: >-
+          find . -name '*.sh'
+          -not -path './.git/*'
+          -not -path './.agents/skills/github-projects/*'
+          -print0 | xargs -0 -r shellcheck
+
+  docs:
+    name: Generated action documentation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Verify generated action references are current
+        run: python3 scripts/generate-action-docs.py --check
 
   bats:
     name: BATS unit tests (shell scripts)

@@ -48,22 +48,29 @@ jobs:
           r_version: ${{ inputs.r_version }}
 ```
 
+<!-- action-inputs:start -->
+<!-- Generated from version-release/action.yml by scripts/generate-action-docs.py. Do not edit this block manually. -->
 ## Inputs
 
-| Input | Description | Required |
-|---|---|---|
-| `github_token` | Token for pushing tags and creating releases. | **Yes** |
-| `version` | Exact version to apply to all packages (e.g. `1.2.3`). Cannot be used with `bump_type`. | No |
-| `bump_type` | Version component to bump: `major`, `minor`, or `patch`. Cannot be used with `version`. | No |
-| `python_version` | Per-package override: exact version for the Python package. | No |
-| `r_version` | Per-package override: exact version for the R package. | No |
+| Input | Description | Required | Default |
+| --- | --- | :---: | --- |
+| `github_token` | GitHub token for pushing tags and creating releases. | Yes | — |
+| `version` | Exact version to apply to all packages (e.g. 1.2.3). Overridden per-package by python_version or r_version. Cannot be set together with bump_type. | No | `""` |
+| `bump_type` | Version component to bump (major \| minor \| patch). The new version is derived by bumping the most recent semver git tag. Cannot be set together with version. | No | `""` |
+| `python_version` | Override: exact version to set for the Python package (e.g. 1.2.3). | No | `""` |
+| `r_version` | Override: exact version to set for the R package (e.g. 1.2.3). | No | `""` |
+| `version_force` | When true (the default is false), skip strict version progression checks (e.g., allowing downgrades or large version jumps). | No | `false` |
+<!-- action-inputs:end -->
 
+<!-- action-outputs:start -->
+<!-- Generated from version-release/action.yml by scripts/generate-action-docs.py. Do not edit this block manually. -->
 ## Outputs
 
 | Output | Description |
-|---|---|
-| `version` | Released version without a leading `v` (e.g. `1.2.3`). |
-| `tag` | Git tag that was created (e.g. `v1.2.3`). |
+| --- | --- |
+| `version` | Released version without a leading v (e.g. 1.2.3). |
+| `tag` | Git tag that was created (e.g. v1.2.3). |
+<!-- action-outputs:end -->
 
 ## How It Works
 
