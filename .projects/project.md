@@ -10,8 +10,6 @@
 | Project title | actions |
 | Routing | label:project:actions |
 | Privacy | public repository; public issue content only |
-| Issue write-up style | tidy |
-| Issue prose style | natural-direct |
 
 ## Field locations
 
