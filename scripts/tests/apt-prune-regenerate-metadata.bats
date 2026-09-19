@@ -2,6 +2,7 @@
 
 ROOT_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)"
 SCRIPT="$ROOT_DIR/scripts/apt-prune-regenerate-metadata.sh"
+ACTION_FILE="$ROOT_DIR/apt-repo-prune/action.yml"
 
 setup() {
   REPO_DIR="$BATS_TEST_TMPDIR/repo with spaces"
@@ -90,4 +91,12 @@ EOF
   [ ! -e "$REPO_DIR/dists/stable/Release" ]
   [ ! -e "$REPO_DIR/dists/stable/InRelease" ]
   [ ! -e "$REPO_DIR/dists/stable/Release.gpg" ]
+}
+
+@test "apt-repo-prune delegates metadata regeneration to the behavioural helper" {
+  run grep -F 'scripts/apt-prune-regenerate-metadata.sh' "$ACTION_FILE"
+  [ "$status" -eq 0 ]
+
+  run grep -F 'dpkg-scanpackages --multiversion' "$ACTION_FILE"
+  [ "$status" -ne 0 ]
 }
