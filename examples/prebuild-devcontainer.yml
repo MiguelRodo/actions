@@ -15,11 +15,24 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Exact version (e.g. v1.2.3). Leave blank if using bump_type.'
+        description: 'Exact image version (e.g. v1.2.3). Leave blank to bump a component.'
         required: false
+        type: string
       bump_type:
-        description: 'Version component to bump: major | minor | patch. Leave blank if using version.'
+        description: 'Component to bump. Choose none when entering an exact version.'
         required: false
+        type: choice
+        default: none
+        options:
+          - none
+          - patch
+          - minor
+          - major
+      version_force:
+        description: 'Allow a non-sequential version, such as a downgrade or skipped increment.'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   build:
@@ -43,7 +56,8 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           version: ${{ inputs.version }}
-          bump_type: ${{ inputs.bump_type }}
+          bump_type: ${{ inputs.bump_type != 'none' && inputs.bump_type || '' }}
+          version_force: ${{ inputs.version_force }}
           # Optional overrides:
           # target_branch: "main"
           # no_cache: "false"

@@ -13,37 +13,35 @@ inputs:
     description: "GitHub token for pushing tags and publishing releases."
     required: true
   apt_repo_token:
-    description: "Optional GitHub token used only for cloning/fetching/pushing apt_repo. Falls back to github_token when omitted."
+    description: "Token with write access to apt_repo; defaults to github_token."
     required: false
     default: ""
   apt_signing_key:
-    description: "Optional ASCII-armored GPG private key for signing apt repository metadata. When set, the action imports the key and generates signed InRelease and Release.gpg files alongside the unsigned Release file."
+    description: "ASCII-armoured GPG private key for signing APT metadata; leave blank for unsigned metadata."
     required: false
     default: ""
   apt_signing_key_passphrase:
-    description: "Optional passphrase for the apt_signing_key. When set, it is written to a secure temporary file and passed to GPG via --passphrase-file so passphrase-protected private keys can be used for signing."
+    description: "Passphrase for apt_signing_key; leave blank for an unencrypted key."
     required: false
     default: ""
   version:
-    description: "Exact version to apply (e.g. 1.2.3). Cannot be used with bump_type."
+    description: "Exact release version in X.Y.Z form (e.g. 1.2.3). Leave blank to use bump_type."
     required: false
     default: ""
   bump_type:
-    description: "Version component to bump (major | minor | patch). Cannot be used with version."
+    description: "Version component to bump: patch, minor, or major. Leave blank when version is set."
     required: false
     default: ""
   version_force:
-    description: >
-      When true (the default is false), skip strict version progression
-      checks (e.g., allowing downgrades or large version jumps).
+    description: "Set true to allow non-sequential versions (e.g. downgrades or skipped increments)."
     required: false
     default: "false"
   rust_version:
-    description: "Rust version to install with actions/setup-rust."
+    description: "Rust toolchain to install (e.g. stable or 1.80.0)."
     required: false
     default: "stable"
   apt_repo:
-    description: "Optional target GitHub repository in owner/name form for publishing generated .deb artifacts as an apt repository."
+    description: "APT target repository as owner/name; leave blank to skip APT publishing."
     required: false
     default: ""
 outputs:

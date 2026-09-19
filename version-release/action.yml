@@ -15,30 +15,24 @@ inputs:
     required: true
   version:
     description: >
-      Exact version to apply to all packages (e.g. 1.2.3).
-      Overridden per-package by python_version or r_version.
-      Cannot be set together with bump_type.
+      Exact release version in X.Y.Z form (e.g. 1.2.3). Leave blank to use
+      bump_type. Overridden per package by python_version or r_version.
     required: false
     default: ""
   bump_type:
-    description: >
-      Version component to bump (major | minor | patch).
-      The new version is derived by bumping the most recent semver git tag.
-      Cannot be set together with version.
+    description: "Version component to bump: patch, minor, or major. Leave blank when version is set."
     required: false
     default: ""
   python_version:
-    description: "Override: exact version to set for the Python package (e.g. 1.2.3)."
+    description: "Optional exact Python version in X.Y.Z form; overrides version."
     required: false
     default: ""
   r_version:
-    description: "Override: exact version to set for the R package (e.g. 1.2.3)."
+    description: "Optional exact R version in X.Y.Z form; overrides version."
     required: false
     default: ""
   version_force:
-    description: >
-      When true (the default is false), skip strict version progression
-      checks (e.g., allowing downgrades or large version jumps).
+    description: "Set true to allow non-sequential versions (e.g. downgrades or skipped increments)."
     required: false
     default: "false"
 

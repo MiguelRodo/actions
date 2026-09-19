@@ -11,24 +11,15 @@ inputs:
     description: "GitHub token for pushing tags and publishing releases."
     required: true
   version:
-    description: >
-      Exact version to set (e.g. v1.2.3).
-      Cannot be set together with bump_type.
-      Whitespace is ignored and case is insensitive.
+    description: "Exact release version in X.Y.Z form (e.g. 1.2.3). Leave blank to use bump_type."
     required: false
     default: ""
   bump_type:
-    description: >
-      Version component to bump (major | minor | patch).
-      Cannot be set together with version.
-      Whitespace is ignored and case is insensitive.
+    description: "Version component to bump: patch, minor, or major. Leave blank when version is set."
     required: false
     default: ""
   version_force:
-    description: >
-      When true (the default is false), skip strict version progression
-      checks (e.g., allowing downgrades or large version jumps).
-
+    description: "Set true to allow non-sequential versions (e.g. downgrades or skipped increments)."
     required: false
     default: "false"
 

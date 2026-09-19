@@ -22,9 +22,14 @@ on:
   workflow_dispatch:
     inputs:
       retention:
-        description: 'Retention policy: latest | latest-per-minor | latest-per-major'
+        description: 'Versions to retain for each package and architecture.'
         required: false
+        type: choice
         default: latest-per-major
+        options:
+          - latest-per-major
+          - latest-per-minor
+          - latest
   schedule:
     - cron: '0 3 * * 0'   # weekly on Sunday at 03:00 UTC
 
@@ -51,9 +56,14 @@ on:
   workflow_dispatch:
     inputs:
       retention:
-        description: 'Retention policy: latest | latest-per-minor | latest-per-major'
+        description: 'Versions to retain for each package and architecture.'
         required: false
+        type: choice
         default: latest-per-major
+        options:
+          - latest-per-major
+          - latest-per-minor
+          - latest
   schedule:
     - cron: '0 3 * * 0'   # weekly on Sunday at 03:00 UTC
 
