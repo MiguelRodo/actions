@@ -220,7 +220,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <!-- generated-from-action-readme -->
 <!-- This page is generated from publish-quarto-site/README.md. -->
-<p>A composite GitHub Action that publishes a Quarto site to the <code>gh-pages</code> branch of your repository. It automatically creates the <code>gh-pages</code> branch if it does not already exist.</p>
+<p>A composite GitHub Action that publishes a Quarto site to the <code>gh-pages</code> branch of your repository. It only bootstraps a missing <code>gh-pages</code> branch; rendering and publishing stay delegated to Quarto.</p>
 <section id="tldr" class="level2">
 <h2 class="anchored" data-anchor-id="tldr">📋 TL;DR</h2>
 <p>Copy <a href="examples/publish-quarto-site.yml"><code>examples/publish-quarto-site.yml</code></a> into <code>.github/workflows/publish-quarto-site.yml</code> and adjust the optional inputs as needed.</p>
@@ -300,7 +300,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="even">
 <td><code>renv_restore</code></td>
-<td>Deprecated. renv is now restored automatically by r-lib/actions/setup-r-dependencies when a renv.lock file is present.</td>
+<td>Deprecated compatibility input. Ignored; setup-r-dependencies restores renv.lock automatically when setup_r is true.</td>
 <td style="text-align: center;">No</td>
 <td><code>true</code></td>
 </tr>
@@ -313,14 +313,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tbody>
 </table>
 <!-- action-inputs:end -->
+<p><code>renv_restore</code> is retained only for compatibility with the current major release and has no effect.</p>
 </section>
 <section id="how-it-works" class="level2">
 <h2 class="anchored" data-anchor-id="how-it-works">⚙️ How It Works</h2>
 <ol type="1">
-<li>Configures git with the <code>github-actions[bot]</code> identity.</li>
-<li>Checks whether the <code>gh-pages</code> branch already exists on the remote. If not, creates an empty orphan branch and pushes it.</li>
+<li>Creates a minimal empty <code>gh-pages</code> branch only when the remote does not already have one. Quarto’s non-interactive GitHub Actions path requires that branch to exist.</li>
+<li>Optionally installs R and R dependencies when <code>setup_r</code> is enabled.</li>
+<li>Optionally installs Python and project dependencies when <code>setup_python</code> is enabled.</li>
 <li>Installs Quarto via <a href="https://github.com/quarto-dev/quarto-actions"><code>quarto-dev/quarto-actions/setup@v2</code></a>.</li>
-<li>Publishes the rendered site to <code>gh-pages</code> via <a href="https://github.com/quarto-dev/quarto-actions"><code>quarto-dev/quarto-actions/publish@v2</code></a>.</li>
+<li>Publishes via <a href="https://github.com/quarto-dev/quarto-actions"><code>quarto-dev/quarto-actions/publish@v2</code></a>.</li>
 </ol>
 <hr>
 </section>

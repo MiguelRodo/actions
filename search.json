@@ -4,7 +4,7 @@
     "href": "publish-quarto-site.html",
     "title": "Publish Quarto Site",
     "section": "",
-    "text": "A composite GitHub Action that publishes a Quarto site to the gh-pages branch of your repository. It automatically creates the gh-pages branch if it does not already exist."
+    "text": "A composite GitHub Action that publishes a Quarto site to the gh-pages branch of your repository. It only bootstraps a missing gh-pages branch; rendering and publishing stay delegated to Quarto."
   },
   {
     "objectID": "publish-quarto-site.html#tldr",
@@ -25,14 +25,14 @@
     "href": "publish-quarto-site.html#inputs",
     "title": "Publish Quarto Site",
     "section": "🔧 Inputs",
-    "text": "🔧 Inputs\n\n\n\n\n\n\n\n\n\nInput\nDescription\nRequired\nDefault\n\n\n\n\ngithub_token\nGitHub token used to push to the gh-pages branch.\nYes\n—\n\n\npath\nPath to the Quarto project to publish.\nNo\n.\n\n\nsetup_r\nWhether to install R and set up R dependencies before rendering.\nNo\nfalse\n\n\nrenv_restore\nDeprecated. renv is now restored automatically by r-lib/actions/setup-r-dependencies when a renv.lock file is present.\nNo\ntrue\n\n\nsetup_python\nWhether to install Python and set up Python dependencies before rendering.\nNo\nfalse"
+    "text": "🔧 Inputs\n\n\n\n\n\n\n\n\n\nInput\nDescription\nRequired\nDefault\n\n\n\n\ngithub_token\nGitHub token used to push to the gh-pages branch.\nYes\n—\n\n\npath\nPath to the Quarto project to publish.\nNo\n.\n\n\nsetup_r\nWhether to install R and set up R dependencies before rendering.\nNo\nfalse\n\n\nrenv_restore\nDeprecated compatibility input. Ignored; setup-r-dependencies restores renv.lock automatically when setup_r is true.\nNo\ntrue\n\n\nsetup_python\nWhether to install Python and set up Python dependencies before rendering.\nNo\nfalse\n\n\n\n\nrenv_restore is retained only for compatibility with the current major release and has no effect."
   },
   {
     "objectID": "publish-quarto-site.html#how-it-works",
     "href": "publish-quarto-site.html#how-it-works",
     "title": "Publish Quarto Site",
     "section": "⚙️ How It Works",
-    "text": "⚙️ How It Works\n\nConfigures git with the github-actions[bot] identity.\nChecks whether the gh-pages branch already exists on the remote. If not, creates an empty orphan branch and pushes it.\nInstalls Quarto via quarto-dev/quarto-actions/setup@v2.\nPublishes the rendered site to gh-pages via quarto-dev/quarto-actions/publish@v2."
+    "text": "⚙️ How It Works\n\nCreates a minimal empty gh-pages branch only when the remote does not already have one. Quarto’s non-interactive GitHub Actions path requires that branch to exist.\nOptionally installs R and R dependencies when setup_r is enabled.\nOptionally installs Python and project dependencies when setup_python is enabled.\nInstalls Quarto via quarto-dev/quarto-actions/setup@v2.\nPublishes via quarto-dev/quarto-actions/publish@v2."
   },
   {
     "objectID": "publish-quarto-site.html#troubleshooting",
