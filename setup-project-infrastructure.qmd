@@ -5,9 +5,11 @@ title: "Setup Project Infrastructure"
 <!-- generated-from-action-readme -->
 <!-- This page is generated from setup-project-infrastructure/README.md. -->
 
-Bootstraps new multi-repo workspaces by linking the working repository, container build pipelines, package caches, and tracking logic automatically.
+Bootstraps new multi-repo workspaces by linking the working repository, container build pipeline, package caches, and repository workspace configuration.
 
-This action acts as a comprehensive scaffold for research projects or compendiums, cloning boilerplate structures, cross-linking container builds to a central registry, injecting continuous deployment GitHub Actions workflows, generating `repos.list` files for the `setupmjr` suite, and executing workspace provisioning entirely downstream.
+The action delegates repository cloning/branch creation plus workspace/Codespaces configuration to `repos`. The template repository is cloned through the same authenticated path, then its complete `.devcontainer/` is copied into the builder. `setupmjr` is used only for the prebuild workflow that it already owns. Interactive README scaffolding is deliberately left out of the unattended action.
+
+Required delegated operations fail closed. Rerunning the action is safe: requested `repos.list` entries are only added when absent, and unchanged repositories are not committed again.
 
 ## Usage
 
@@ -47,8 +49,9 @@ jobs:
 
 ## Outputs
 
-*   Branches automatically created or updated.
-*   `.devcontainer/` folders populated or redirected to GHCR.
-*   `repos.list` generated and tracked.
-*   `.github/workflows/devcontainer-build.yml` injected dynamically into remote builders.
-*   Job summary details written out to GitHub Actions UI.
+* Working, builder, config, and template repositories are cloned or have requested branches created by `repos`.
+* The full template `.devcontainer/`, including dotfiles, is copied into the builder.
+* `repos.list`, Codespaces permissions, and `entire-project.code-workspace` are managed by `repos`.
+* A separate builder receives `.github/workflows/prebuild-devcontainer.yml` via `setupmjr repo action prebuild-devcontainer`.
+* A separate config repository is pointed at the builder GHCR image.
+* Job summary details are written to the GitHub Actions UI.
