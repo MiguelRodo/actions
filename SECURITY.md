@@ -28,7 +28,6 @@ You can expect an initial response within **72 hours**. If a fix is warranted, a
 Each action documents the minimum token scopes it requires. Never grant broader scopes than necessary:
 
 - `prebuild-devcontainer` — `contents: write`, `packages: write`
-- `add-issues-to-project` — PAT with `repo`, `project`, `read:org` (org projects only)
 - `version-release` — `contents: write`
 - `publish-quarto-site` — `contents: write`, `pages: write`
 
