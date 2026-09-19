@@ -16,5 +16,11 @@ grep -q '^Version:' "$description" || {
   echo "Error: DESCRIPTION has no Version field: $description" >&2
   exit 1
 }
+package="$(sed -n 's/^Package:[[:space:]]*//p' "$description" | head -n 1 | tr -d '[:space:]')"
+[[ -n "$package" ]] || {
+  echo "Error: DESCRIPTION has no Package field: $description" >&2
+  exit 1
+}
 
 sed -i "s/^Version: .*/Version: ${version}/" "$description"
+printf '%s_%s.tar.gz\n' "$package" "$version"
