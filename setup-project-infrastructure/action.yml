@@ -59,4 +59,4 @@ runs:
         RENV_REPOS_INPUT: ${{ inputs.renv_repos }}
         REPOS_LIST_INPUT: ${{ inputs.repos_list }}
         GH_TOKEN: ${{ inputs.gh_token }}
-      run: "$GITHUB_ACTION_PATH/../scripts/setup-project-infrastructure.sh"
+      run: bash "$GITHUB_ACTION_PATH/../scripts/setup-project-infrastructure.sh"
