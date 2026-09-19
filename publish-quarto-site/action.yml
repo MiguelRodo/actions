@@ -32,23 +32,7 @@ runs:
   steps:
     - name: Create gh-pages branch if it doesn't exist
       shell: bash
-      run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
-
-        if git ls-remote --heads origin gh-pages | grep -q gh-pages; then
-          echo "gh-pages branch already exists"
-        else
-          echo "Creating gh-pages branch"
-          CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          git checkout --orphan gh-pages
-          git rm -rf .
-          echo "# GitHub Pages" > README.md
-          git add README.md
-          git commit -m "Initialize gh-pages branch"
-          git push origin gh-pages
-          git checkout "$CURRENT_BRANCH"
-        fi
+      run: bash "$GITHUB_ACTION_PATH/../scripts/ensure-gh-pages-branch.sh"
 
     - name: Set up R
       if: ${{ inputs.setup_r == 'true' }}
