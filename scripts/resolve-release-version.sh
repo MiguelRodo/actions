@@ -30,7 +30,7 @@ elif [ "$ALLOW_TAG_REF" = "true" ] && [ "${GITHUB_REF_TYPE:-}" = "tag" ]; then
   VERSION="$("$SCRIPT_DIR/normalize-action-input.sh" "${GITHUB_REF_NAME:-}")"
   VERSION="${VERSION#v}"
 else
-  echo "Error: provide one of 'version' or 'bump_type'${ALLOW_TAG_REF:+, or run from a tag ref}." >&2
+  echo "Error: could not resolve a release version from version, bump_type, or an allowed tag ref." >&2
   exit 1
 fi
 
