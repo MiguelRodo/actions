@@ -25,7 +25,7 @@
     "href": "publish-quarto-site.html#inputs",
     "title": "Publish Quarto Site",
     "section": "🔧 Inputs",
-    "text": "🔧 Inputs\n\n\n\n\n\n\n\n\n\nInput\nDescription\nRequired\nDefault\n\n\n\n\ngithub_token\nGitHub token used to push to the gh-pages branch.\nYes\n—\n\n\npath\nPath to the Quarto project to publish.\nNo\n.\n\n\nsetup_r\nWhether to install R and set up R dependencies before rendering.\nNo\nfalse\n\n\nrenv_restore\nDeprecated compatibility input. Ignored; setup-r-dependencies restores renv.lock automatically when setup_r is true.\nNo\ntrue\n\n\nsetup_python\nWhether to install Python and set up Python dependencies before rendering.\nNo\nfalse\n\n\n\n\nrenv_restore is retained only for compatibility with the current major release and has no effect."
+    "text": "🔧 Inputs\n\n\n\n\n\n\n\n\n\nInput\nDescription\nRequired\nDefault\n\n\n\n\ngithub_token\nGitHub token used to push to the gh-pages branch.\nYes\n—\n\n\npath\nPath to the Quarto project to publish.\nNo\n.\n\n\nsetup_r\nWhether to install R and set up R dependencies before rendering.\nNo\nfalse\n\n\nsetup_python\nWhether to install Python and set up Python dependencies before rendering.\nNo\nfalse"
   },
   {
     "objectID": "publish-quarto-site.html#how-it-works",
@@ -193,7 +193,14 @@
     "href": "index.html#usage",
     "title": "Custom GitHub Actions",
     "section": "Usage",
-    "text": "Usage\nReference any action directly in a workflow — no cloning required:\nuses: MiguelRodo/actions/&lt;action-folder-name&gt;@v2"
+    "text": "Usage\nReference any action directly in a workflow — no cloning required:\nuses: MiguelRodo/actions/&lt;action-folder-name&gt;@v3"
+  },
+  {
+    "objectID": "index.html#migrating-from-v2-to-v3",
+    "href": "index.html#migrating-from-v2-to-v3",
+    "title": "Custom GitHub Actions",
+    "section": "Migrating from v2 to v3",
+    "text": "Migrating from v2 to v3\n\nprebuild-devcontainer: replace the removed tag input with version.\npublish-quarto-site: remove the no-op renv_restore input; setup-r-dependencies restores renv.lock automatically when setup_r is enabled."
   },
   {
     "objectID": "index.html#releasing",
@@ -235,7 +242,7 @@
     "href": "prebuild-devcontainer.html#inputs",
     "title": "Pre-build Dev Container",
     "section": "Inputs",
-    "text": "Inputs\n\n\n\n\n\n\n\n\n\nInput\nDescription\nRequired\nDefault\n\n\n\n\ngithub_token\nToken for logging into the container registry and pushing commits.\nYes\n—\n\n\ntarget_branch\nBranch to use for image naming and pushing. Overrides the triggering branch if provided.\nNo\n\"\"\n\n\nno_cache\nDisable Docker cache during build (true/false).\nNo\nfalse\n\n\ncreate_prebuild_json\nGenerate, commit, and push the prebuild devcontainer.json (true/false).\nNo\nfalse\n\n\ndevcontainer_path\nPath to the .devcontainer directory, relative to the repo root.\nNo\n.devcontainer\n\n\nimage_name\nFull image name without tag (e.g. ‘ghcr.io/myorg/myimage’). Defaults to ‘{registry}/{repo}-{branch}’.\nNo\n\"\"\n\n\nregistry\nContainer registry URL.\nNo\nghcr.io\n\n\nregistry_username\nUsername for registry login. Defaults to the repository owner.\nNo\n\"\"\n\n\nversion_force\nWhen ‘true’, skip the version progression check and push the specified version as-is, even if it is more than one increment ahead of (or behind) the previous image version.\nNo\nfalse\n\n\ntag\nGit tag to use as the primary container image tag. (Deprecated, use ‘version’)\nNo\n\"\"\n\n\nversion\nExact version to set (e.g. v1.2.3 or main-v1.2.3). Cannot be set together with bump_type. Whitespace is ignored and case is insensitive.\nNo\n\"\"\n\n\nbump_type\nVersion component to bump (major | minor | patch). Cannot be set together with version. Whitespace is ignored and case is insensitive.\nNo\n\"\"\n\n\ninject_build_info\nInject imageVersion into the MiguelRodo/DevContainerFeatures/build-info feature if it is present in devcontainer.json (true/false).\nNo\ntrue"
+    "text": "Inputs\n\n\n\n\n\n\n\n\n\nInput\nDescription\nRequired\nDefault\n\n\n\n\ngithub_token\nToken for logging into the container registry and pushing commits.\nYes\n—\n\n\ntarget_branch\nBranch to use for image naming and pushing. Overrides the triggering branch if provided.\nNo\n\"\"\n\n\nno_cache\nDisable Docker cache during build (true/false).\nNo\nfalse\n\n\ncreate_prebuild_json\nGenerate, commit, and push the prebuild devcontainer.json (true/false).\nNo\nfalse\n\n\ndevcontainer_path\nPath to the .devcontainer directory, relative to the repo root.\nNo\n.devcontainer\n\n\nimage_name\nFull image name without tag (e.g. ‘ghcr.io/myorg/myimage’). Defaults to ‘{registry}/{repo}-{branch}’.\nNo\n\"\"\n\n\nregistry\nContainer registry URL.\nNo\nghcr.io\n\n\nregistry_username\nUsername for registry login. Defaults to the repository owner.\nNo\n\"\"\n\n\nversion_force\nWhen ‘true’, skip the version progression check and push the specified version as-is, even if it is more than one increment ahead of (or behind) the previous image version.\nNo\nfalse\n\n\nversion\nExact version to set (e.g. v1.2.3 or main-v1.2.3). Cannot be set together with bump_type. Whitespace is ignored and case is insensitive.\nNo\n\"\"\n\n\nbump_type\nVersion component to bump (major | minor | patch). Cannot be set together with version. Whitespace is ignored and case is insensitive.\nNo\n\"\"\n\n\ninject_build_info\nInject imageVersion into the MiguelRodo/DevContainerFeatures/build-info feature if it is present in devcontainer.json (true/false).\nNo\ntrue"
   },
   {
     "objectID": "prebuild-devcontainer.html#intelligent-caching",
