@@ -1,0 +1,140 @@
+#!/usr/bin/env bats
+
+ROOT_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)"
+SCRIPT="$ROOT_DIR/scripts/apt-repository-metadata.sh"
+PUBLISH_SCRIPT="$ROOT_DIR/scripts/publish-apt-repository.sh"
+PRUNE_SCRIPT="$ROOT_DIR/scripts/apt-repo-prune.sh"
+
+setup() {
+  REPO_DIR="$BATS_TEST_TMPDIR/repo with spaces"
+  MOCK_BIN="$BATS_TEST_TMPDIR/bin"
+  mkdir -p "$REPO_DIR/pool/main/d" "$MOCK_BIN"
+
+  cat > "$MOCK_BIN/dpkg-deb" <<'EOF'
+#!/usr/bin/env bash
+base="$(basename "$2" .deb)"
+arch="${base##*_}"
+case "$3" in
+  Architecture) printf '%s\n' "$arch" ;;
+  *) exit 1 ;;
+esac
+EOF
+
+  cat > "$MOCK_BIN/dpkg-scanpackages" <<'EOF'
+#!/usr/bin/env bash
+arch=""
+while [ "$#" -gt 0 ]; do
+  if [ "$1" = "-a" ]; then
+    arch="$2"
+    shift 2
+  else
+    shift
+  fi
+done
+printf 'Package: demo\nArchitecture: %s\n' "$arch"
+EOF
+
+  cat > "$MOCK_BIN/apt-ftparchive" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*"
+EOF
+
+  chmod +x "$MOCK_BIN"/*
+  export PATH="$MOCK_BIN:$PATH"
+}
+
+run_metadata() {
+  local empty_policy="${1:-error}"
+  local fingerprint="${2:-}"
+  run bash -c '
+    set -euo pipefail
+    source "$1"
+    SIGNING_KEY_FINGERPRINT="$2"
+    GPG_PASSPHRASE_FILE=""
+    apt_repository_regenerate_metadata "$3" owner packages "$4"
+  ' _ "$SCRIPT" "$fingerprint" "$REPO_DIR" "$empty_policy"
+}
+
+@test "shared helper regenerates unsigned metadata for every remaining architecture" {
+  touch "$REPO_DIR/pool/main/d/demo_1.0.0_amd64.deb"
+  touch "$REPO_DIR/pool/main/d/demo_1.0.0_arm64.deb"
+  mkdir -p "$REPO_DIR/dists/stable/main/binary-old"
+  touch "$REPO_DIR/dists/stable/main/binary-old/Packages"
+  touch "$REPO_DIR/Packages" "$REPO_DIR/Packages.gz" "$REPO_DIR/Release"
+  touch "$REPO_DIR/dists/stable/InRelease" "$REPO_DIR/dists/stable/Release.gpg"
+
+  run_metadata error
+  [ "$status" -eq 0 ]
+
+  for arch in amd64 arm64; do
+    [ -f "$REPO_DIR/dists/stable/main/binary-$arch/Packages" ]
+    [ -f "$REPO_DIR/dists/stable/main/binary-$arch/Packages.gz" ]
+    run grep -F "Architecture: $arch" "$REPO_DIR/dists/stable/main/binary-$arch/Packages"
+    [ "$status" -eq 0 ]
+  done
+
+  [ ! -d "$REPO_DIR/dists/stable/main/binary-old" ]
+  [ -f "$REPO_DIR/dists/stable/Release" ]
+  run grep -F 'APT::FTPArchive::Release::Origin=owner' "$REPO_DIR/dists/stable/Release"
+  [ "$status" -eq 0 ]
+  run grep -F 'APT::FTPArchive::Release::Label=packages' "$REPO_DIR/dists/stable/Release"
+  [ "$status" -eq 0 ]
+  run grep -F 'APT::FTPArchive::Release::Architectures=amd64 arm64' "$REPO_DIR/dists/stable/Release"
+  [ "$status" -eq 0 ]
+
+  [ ! -e "$REPO_DIR/Packages" ]
+  [ ! -e "$REPO_DIR/Packages.gz" ]
+  [ ! -e "$REPO_DIR/Release" ]
+  [ ! -e "$REPO_DIR/dists/stable/InRelease" ]
+  [ ! -e "$REPO_DIR/dists/stable/Release.gpg" ]
+}
+
+@test "prune mode clears metadata without trying to sign when no packages remain" {
+  mkdir -p "$REPO_DIR/dists/stable/main/binary-amd64"
+  touch "$REPO_DIR/dists/stable/main/binary-amd64/Packages"
+  touch "$REPO_DIR/dists/stable/main/binary-amd64/Packages.gz"
+  touch "$REPO_DIR/dists/stable/Release"
+  touch "$REPO_DIR/dists/stable/InRelease" "$REPO_DIR/dists/stable/Release.gpg"
+  cat > "$MOCK_BIN/gpg" <<'EOF'
+#!/usr/bin/env bash
+echo "gpg must not be called for an empty repository" >&2
+exit 99
+EOF
+  chmod +x "$MOCK_BIN/gpg"
+
+  run_metadata clear fingerprint
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"no .deb files remain after pruning"* ]]
+
+  [ ! -d "$REPO_DIR/dists/stable/main/binary-amd64" ]
+  [ ! -e "$REPO_DIR/dists/stable/Release" ]
+  [ ! -e "$REPO_DIR/dists/stable/InRelease" ]
+  [ ! -e "$REPO_DIR/dists/stable/Release.gpg" ]
+}
+
+@test "publisher mode rejects an empty repository" {
+  run_metadata error
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"no package architectures were detected"* ]]
+}
+
+@test "signing failure aborts metadata regeneration" {
+  touch "$REPO_DIR/pool/main/d/demo_1.0.0_amd64.deb"
+  cat > "$MOCK_BIN/gpg" <<'EOF'
+#!/usr/bin/env bash
+exit 23
+EOF
+  chmod +x "$MOCK_BIN/gpg"
+
+  run_metadata error fingerprint
+  [ "$status" -eq 23 ]
+}
+
+@test "publishing and pruning both use the shared metadata helper" {
+  for consumer in "$PUBLISH_SCRIPT" "$PRUNE_SCRIPT"; do
+    run grep -F 'apt-repository-metadata.sh' "$consumer"
+    [ "$status" -eq 0 ]
+    run grep -F 'apt_repository_regenerate_metadata' "$consumer"
+    [ "$status" -eq 0 ]
+  done
+}
