@@ -87,13 +87,14 @@ PYTHON
     "$REPO_ROOT/setup-project-infrastructure/action.yml"
     "$REPO_ROOT/scripts/setup-project-infrastructure.sh"
     "$REPO_ROOT/apt-repo-prune/action.yml"
+    "$REPO_ROOT/scripts/apt-repo-prune.sh"
     "$REPO_ROOT/go-version-release/action.yml"
     "$REPO_ROOT/rust-version-release/action.yml"
     "$REPO_ROOT/scripts/publish-apt-repository.sh"
   )
   helper_users=(
     "$REPO_ROOT/scripts/setup-project-infrastructure.sh"
-    "$REPO_ROOT/apt-repo-prune/action.yml"
+    "$REPO_ROOT/scripts/apt-repo-prune.sh"
     "$REPO_ROOT/scripts/publish-apt-repository.sh"
   )
 

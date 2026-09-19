@@ -9,7 +9,6 @@ DEFAULT_BRANCH="${4:?Usage: apt-prune-plan.sh RETENTION REPO_DIR REPO_LABEL DEFA
 : "${GITHUB_OUTPUT:?GITHUB_OUTPUT must be set}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-RETENTION="${RETENTION,,}"
 
 if [[ ! -d "$APT_REPO_DIR/pool/main" ]]; then
   printf "Nothing to prune: pool/main/ not found in '%s' - repository has no packages.\n" "$REPO_LABEL"
