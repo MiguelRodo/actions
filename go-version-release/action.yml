@@ -120,6 +120,7 @@ runs:
         args: release --clean --skip=announce --config "${{ inputs.goreleaser_config }}"
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
+        GORELEASER_CURRENT_TAG: ${{ steps.get_version.outputs.tag }}
         SCOOP_TAP_TOKEN: ${{ inputs.scoop_token }}
         HOMEBREW_TAP_TOKEN: ${{ inputs.homebrew_token }}
 
