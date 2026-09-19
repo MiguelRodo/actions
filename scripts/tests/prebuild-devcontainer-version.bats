@@ -28,7 +28,7 @@ MOCK
   export MOCK_SKOPEO_RESPONSE="$response"
   write_skopeo_mock
 
-  run bash -c 'PATH="$1:$PATH" "$2" registry.example/repo "" "" patch false refs/heads/main 2>"$3"' \
+  run bash -c 'PATH="$1:$PATH" "$2" registry.example/repo "" patch false refs/heads/main 2>"$3"' \
     _ "$MOCK_BIN" "$SCRIPT" "$BATS_TEST_TMPDIR/stderr"
   [ "$status" -eq 0 ]
   run jq -e '.image_tag == "v1.2.4" and .cache_from == "registry.example/repo:latest"' <<<"$output"
@@ -42,11 +42,11 @@ MOCK
   export MOCK_SKOPEO_RESPONSE="$response"
   write_skopeo_mock
 
-  run bash -c 'PATH="$1:$PATH" "$2" registry.example/repo v1.2.5 "" "" false refs/heads/main 2>/dev/null' \
+  run bash -c 'PATH="$1:$PATH" "$2" registry.example/repo v1.2.5 "" false refs/heads/main 2>/dev/null' \
     _ "$MOCK_BIN" "$SCRIPT"
   [ "$status" -ne 0 ]
 
-  run bash -c 'PATH="$1:$PATH" "$2" registry.example/repo v1.2.5 "" "" true refs/heads/main 2>/dev/null' \
+  run bash -c 'PATH="$1:$PATH" "$2" registry.example/repo v1.2.5 "" true refs/heads/main 2>/dev/null' \
     _ "$MOCK_BIN" "$SCRIPT"
   [ "$status" -eq 0 ]
   run jq -e '.image_tag == "v1.2.5" and .cache_from == "registry.example/repo:v1.2.3"' <<<"$output"
@@ -65,7 +65,7 @@ fi
 MOCK
   chmod +x "$MOCK_BIN/curl"
 
-  run bash -c 'PATH="$1:$PATH" INPUT_GITHUB_TOKEN=token "$2" ghcr.io/octo/pkg "" "" patch false refs/heads/main 2>/dev/null' \
+  run bash -c 'PATH="$1:$PATH" INPUT_GITHUB_TOKEN=token "$2" ghcr.io/octo/pkg "" patch false refs/heads/main 2>/dev/null' \
     _ "$MOCK_BIN" "$SCRIPT"
   [ "$status" -eq 0 ]
   run jq -e '.image_tag == "v2.0.1" and .cache_from == "ghcr.io/octo/pkg:latest"' <<<"$output"
@@ -75,18 +75,17 @@ MOCK
   grep -q '/user/packages/container/pkg/versions' "$MOCK_CURL_LOG"
 }
 
-@test "deprecated tag input remains compatible but is not the primary path" {
+@test "git tag trigger remains a version source" {
   response="$BATS_TEST_TMPDIR/skopeo.json"
   printf '%s\n' '{"Tags":[]}' > "$response"
   export MOCK_SKOPEO_RESPONSE="$response"
   write_skopeo_mock
 
-  run bash -c 'PATH="$1:$PATH" "$2" registry.example/repo "" latest "" false refs/heads/main 2>"$3"' \
-    _ "$MOCK_BIN" "$SCRIPT" "$BATS_TEST_TMPDIR/stderr"
+  run bash -c 'PATH="$1:$PATH" "$2" registry.example/repo "" "" false refs/tags/v3.0.0 2>/dev/null' \
+    _ "$MOCK_BIN" "$SCRIPT"
   [ "$status" -eq 0 ]
-  run jq -e '.image_tag == "latest"' <<<"$output"
+  run jq -e '.image_tag == "v3.0.0"' <<<"$output"
   [ "$status" -eq 0 ]
-  grep -q "Input 'tag' is deprecated" "$BATS_TEST_TMPDIR/stderr"
 }
 
 @test "composite action delegates registry and version decisions to one helper" {
