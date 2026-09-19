@@ -66,33 +66,28 @@ runs:
         RAW_VERSION: ${{ inputs.version }}
         RAW_BUMP: ${{ inputs.bump_type }}
       run: |
-        # Massage version (trim whitespace, lowercase)
         VERSION_INPUT=$("$GITHUB_ACTION_PATH/../scripts/normalize-action-input.sh" "$RAW_VERSION")
         if [ "$RAW_VERSION" != "$VERSION_INPUT" ] && [ -n "$RAW_VERSION" ]; then
           echo "Note: Massaged version input from '$RAW_VERSION' to '$VERSION_INPUT'"
         fi
 
-        # Massage bump_type (trim whitespace, lowercase)
         BUMP_INPUT=$("$GITHUB_ACTION_PATH/../scripts/normalize-action-input.sh" "$RAW_BUMP")
         if [ "$RAW_BUMP" != "$BUMP_INPUT" ] && [ -n "$RAW_BUMP" ]; then
           echo "Note: Massaged bump_type input from '$RAW_BUMP' to '$BUMP_INPUT'"
         fi
 
         if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
-          # version and bump_type are mutually exclusive
           if [ -n "$VERSION_INPUT" ] && [ -n "$BUMP_INPUT" ]; then
             echo "Error: cannot set both 'version' and 'bump_type'." >&2
             exit 1
           fi
 
-          # Must provide at least one
           if [ -z "$VERSION_INPUT" ] && [ -z "$BUMP_INPUT" ]; then
             echo "Error: provide one of 'version' or 'bump_type'. Valid bump_type values: major, minor, patch." >&2
             exit 1
           fi
 
           if [ -n "$BUMP_INPUT" ]; then
-            # Bump mode: derive next version from the most recent semver tag
             PREV_TAG=$(git tag --sort=version:refname \
               | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
               | tail -1)
@@ -140,7 +135,6 @@ runs:
           exit 0
         fi
 
-        # Get the latest semver tag, ignoring the new tag if it already exists
         PREV_TAG=$(git tag --sort=version:refname \
           | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
           | grep -vxF "v${NEW_VERSION}" \
@@ -167,7 +161,6 @@ runs:
         else
           NEW_TAG="v${NEW_VERSION}"
 
-          # All full semver tags sorted by version, excluding the new one
           PREV_TAG=$(git tag --sort=version:refname \
             | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
             | grep -vxF "$NEW_TAG" \
@@ -292,30 +285,7 @@ runs:
       shell: bash
       env:
         TAG: ${{ steps.get_version.outputs.tag }}
-      run: |
-        if git show-ref --tags --verify --quiet "refs/tags/$TAG"; then
-          echo "Tag $TAG already exists."
-        else
-          echo "Creating tag $TAG"
-          git tag -a "$TAG" -m "Release $TAG"
-          git push origin "$TAG"
-        fi
-
-    - name: Update floating major, minor and latest tags
-      shell: bash
-      env:
-        TAG: ${{ steps.get_version.outputs.tag }}
-      run: |
-        MAJOR=$(echo "$TAG" | cut -d'.' -f1)
-        MINOR=$(echo "$TAG" | cut -d'.' -f1,2)
-
-        echo "Updating floating tags to $TAG..."
-        git tag -fa "$MINOR" -m "Update $MINOR to point to $TAG"
-        git tag -fa "$MAJOR" -m "Update $MAJOR to point to $TAG"
-        git tag -fa "latest" -m "Update latest to point to $TAG"
-        git push origin "$MINOR" --force
-        git push origin "$MAJOR" --force
-        git push origin "latest" --force
+      run: bash "$GITHUB_ACTION_PATH/../scripts/ensure-release-tag.sh" "$TAG"
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
@@ -324,3 +294,9 @@ runs:
         generate_release_notes: true
         make_latest: true
         token: ${{ inputs.github_token }}
+
+    - name: Update floating major, minor and latest tags
+      shell: bash
+      env:
+        TAG: ${{ steps.get_version.outputs.tag }}
+      run: bash "$GITHUB_ACTION_PATH/../scripts/update-floating-release-tags.sh" "$TAG"
