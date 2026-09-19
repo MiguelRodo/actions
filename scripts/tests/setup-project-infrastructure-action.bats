@@ -73,7 +73,7 @@ run_orchestrator() {
     REPOS_LIST_INPUT='octo/one@main;octo/two@dev' \
     GH_TOKEN='test-token' \
     "$@" \
-    "$ORCHESTRATOR"
+    bash "$ORCHESTRATOR"
 }
 
 @test "setup-project-infrastructure remains a composite action with its public inputs" {
@@ -87,7 +87,7 @@ run_orchestrator() {
 }
 
 @test "composite action is wiring while orchestration lives in one script" {
-  run grep -F 'scripts/setup-project-infrastructure.sh' "$ACTION_FILE"
+  run grep -F 'run: bash "$GITHUB_ACTION_PATH/../scripts/setup-project-infrastructure.sh"' "$ACTION_FILE"
   [ "$status" -eq 0 ]
   run grep -F 'sudo apt-get install -y setupmjr repos jq' "$ACTION_FILE"
   [ "$status" -eq 0 ]
