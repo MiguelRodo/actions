@@ -6,7 +6,7 @@ This makes it convenient for users to install that specific version (e.g. using 
 
 ## Usage
 
-You must provide exactly one of `version` or `bump_type`.
+For a manual run, either enter an exact `version` or choose a component to bump.
 
 ```yaml
 name: R Version and Release
@@ -18,15 +18,24 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Exact version (e.g. v1.2.3). Cannot be used with bump_type.'
+        description: 'Exact release version in X.Y.Z form (e.g. 1.2.3). Leave blank to bump a component.'
         required: false
+        type: string
       bump_type:
-        description: 'Component to bump: major | minor | patch. Cannot be used with version.'
+        description: 'Component to bump. Choose none when entering an exact version.'
         required: false
+        type: choice
+        default: none
+        options:
+          - none
+          - patch
+          - minor
+          - major
       version_force:
-        description: 'When true, skip strict version progression checks.'
+        description: 'Allow a non-sequential version, such as a downgrade or skipped increment.'
         required: false
         type: boolean
+        default: false
 
 jobs:
   release:
@@ -41,7 +50,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           version: ${{ inputs.version }}
-          bump_type: ${{ inputs.bump_type }}
+          bump_type: ${{ inputs.bump_type != 'none' && inputs.bump_type || '' }}
           version_force: ${{ inputs.version_force }}
 ```
 
@@ -52,9 +61,9 @@ jobs:
 | Input | Description | Required | Default |
 | --- | --- | :---: | --- |
 | `github_token` | GitHub token for pushing tags and publishing releases. | Yes | — |
-| `version` | Exact version to set (e.g. v1.2.3). Cannot be set together with bump_type. Whitespace is ignored and case is insensitive. | No | `""` |
-| `bump_type` | Version component to bump (major \| minor \| patch). Cannot be set together with version. Whitespace is ignored and case is insensitive. | No | `""` |
-| `version_force` | When true (the default is false), skip strict version progression checks (e.g., allowing downgrades or large version jumps). | No | `false` |
+| `version` | Exact release version in X.Y.Z form (e.g. 1.2.3). Leave blank to use bump_type. | No | `""` |
+| `bump_type` | Version component to bump: patch, minor, or major. Leave blank when version is set. | No | `""` |
+| `version_force` | Set true to allow non-sequential versions (e.g. downgrades or skipped increments). | No | `false` |
 <!-- action-inputs:end -->
 
 <!-- action-outputs:start -->

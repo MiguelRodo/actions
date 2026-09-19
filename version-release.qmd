@@ -42,11 +42,11 @@ permissions:
 | Input | Description | Required | Default |
 | --- | --- | :---: | --- |
 | `github_token` | GitHub token for pushing tags and creating releases. | Yes | — |
-| `version` | Exact version to apply to all packages (e.g. 1.2.3). Overridden per-package by python_version or r_version. Cannot be set together with bump_type. | No | `""` |
-| `bump_type` | Version component to bump (major \| minor \| patch). The new version is derived by bumping the most recent semver git tag. Cannot be set together with version. | No | `""` |
-| `python_version` | Override: exact version to set for the Python package (e.g. 1.2.3). | No | `""` |
-| `r_version` | Override: exact version to set for the R package (e.g. 1.2.3). | No | `""` |
-| `version_force` | When true (the default is false), skip strict version progression checks (e.g., allowing downgrades or large version jumps). | No | `false` |
+| `version` | Exact release version in X.Y.Z form (e.g. 1.2.3). Leave blank to use bump_type. Overridden per package by python_version or r_version. | No | `""` |
+| `bump_type` | Version component to bump: patch, minor, or major. Leave blank when version is set. | No | `""` |
+| `python_version` | Optional exact Python version in X.Y.Z form; overrides version. | No | `""` |
+| `r_version` | Optional exact R version in X.Y.Z form; overrides version. | No | `""` |
+| `version_force` | Set true to allow non-sequential versions (e.g. downgrades or skipped increments). | No | `false` |
 <!-- action-inputs:end -->
 
 <!-- action-outputs:start -->

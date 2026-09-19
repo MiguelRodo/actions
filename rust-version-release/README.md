@@ -16,26 +16,33 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Exact version (e.g. 1.2.3). Cannot be used with bump_type.'
+        description: 'Exact release version in X.Y.Z form (e.g. 1.2.3). Leave blank to bump a component.'
         required: false
+        type: string
       bump_type:
-        description: 'Component to bump: major | minor | patch. Cannot be used with version.'
+        description: 'Component to bump. Choose none when entering an exact version.'
         required: false
+        type: choice
+        default: none
+        options:
+          - none
+          - patch
+          - minor
+          - major
       version_force:
-        description: 'Run strict version progression checks (true/false).'
+        description: 'Allow a non-sequential version, such as a downgrade or skipped increment.'
         required: false
+        type: boolean
+        default: false
       rust_version:
-        description: 'Rust version to install.'
+        description: 'Rust toolchain to install (e.g. stable or 1.80.0).'
         required: false
+        type: string
+        default: stable
       apt_repo:
-        description: 'Optional target GitHub repository in owner/name form for publishing generated .deb artifacts.'
+        description: 'APT target repository as owner/name; leave blank to skip APT publishing.'
         required: false
-      apt_repo_token:
-        description: 'Optional token for apt_repo access when publishing to a different repository.'
-        required: false
-      apt_signing_key:
-        description: 'Optional ASCII-armored GPG private key for signing apt repository metadata.'
-        required: false
+        type: string
 
 jobs:
   release:
@@ -53,9 +60,10 @@ jobs:
           apt_signing_key: ${{ secrets.APT_SIGNING_KEY }}
           apt_signing_key_passphrase: ${{ secrets.APT_SIGNING_KEY_PASSPHRASE }}
           version: ${{ inputs.version }}
-          bump_type: ${{ inputs.bump_type }}
+          bump_type: ${{ inputs.bump_type != 'none' && inputs.bump_type || '' }}
           version_force: ${{ inputs.version_force }}
           rust_version: ${{ inputs.rust_version }}
+          apt_repo: ${{ inputs.apt_repo }}
 ```
 
 > [!IMPORTANT]
@@ -70,14 +78,14 @@ jobs:
 | Input | Description | Required | Default |
 | --- | --- | :---: | --- |
 | `github_token` | GitHub token for pushing tags and publishing releases. | Yes | — |
-| `apt_repo_token` | Optional GitHub token used only for cloning/fetching/pushing apt_repo. Falls back to github_token when omitted. | No | `""` |
-| `apt_signing_key` | Optional ASCII-armored GPG private key for signing apt repository metadata. When set, the action imports the key and generates signed InRelease and Release.gpg files alongside the unsigned Release file. | No | `""` |
-| `apt_signing_key_passphrase` | Optional passphrase for the apt_signing_key. When set, it is written to a secure temporary file and passed to GPG via --passphrase-file so passphrase-protected private keys can be used for signing. | No | `""` |
-| `version` | Exact version to apply (e.g. 1.2.3). Cannot be used with bump_type. | No | `""` |
-| `bump_type` | Version component to bump (major \| minor \| patch). Cannot be used with version. | No | `""` |
-| `version_force` | When true (the default is false), skip strict version progression checks (e.g., allowing downgrades or large version jumps). | No | `false` |
-| `rust_version` | Rust version to install with actions/setup-rust. | No | `stable` |
-| `apt_repo` | Optional target GitHub repository in owner/name form for publishing generated .deb artifacts as an apt repository. | No | `""` |
+| `apt_repo_token` | Token with write access to apt_repo; defaults to github_token. | No | `""` |
+| `apt_signing_key` | ASCII-armoured GPG private key for signing APT metadata; leave blank for unsigned metadata. | No | `""` |
+| `apt_signing_key_passphrase` | Passphrase for apt_signing_key; leave blank for an unencrypted key. | No | `""` |
+| `version` | Exact release version in X.Y.Z form (e.g. 1.2.3). Leave blank to use bump_type. | No | `""` |
+| `bump_type` | Version component to bump: patch, minor, or major. Leave blank when version is set. | No | `""` |
+| `version_force` | Set true to allow non-sequential versions (e.g. downgrades or skipped increments). | No | `false` |
+| `rust_version` | Rust toolchain to install (e.g. stable or 1.80.0). | No | `stable` |
+| `apt_repo` | APT target repository as owner/name; leave blank to skip APT publishing. | No | `""` |
 <!-- action-inputs:end -->
 
 <!-- action-outputs:start -->
@@ -103,8 +111,7 @@ Before creating the git tag, the action automatically updates `Cargo.toml` with 
 
 ## Version progression guard
 
-When `version_force: true`, the action validates the new version against the latest
-previous semver tag using `scripts/check-version-progression.sh`.
+By default the action validates the new version against the latest previous semver tag using `scripts/check-version-progression.sh`. Set `version_force: true` to skip that guard and allow a non-sequential version.
 
 ## Tag behavior
 
@@ -144,7 +151,7 @@ When `apt_repo` is set, the action:
 3. Publishes `.deb` files under `pool/main/<bucket>/`
 4. Regenerates architecture-specific `Packages` / `Packages.gz` indexes in `dists/stable/main/binary-<arch>/`
 5. Regenerates `dists/stable/Release` with all detected architectures
-6. When `apt_signing_key` is provided, signs the `Release` file to produce `dists/stable/InRelease` (clearsigned) and `dists/stable/Release.gpg` (detached ASCII-armored signature)
+6. When `apt_signing_key` is provided, signs the `Release` file to produce `dists/stable/InRelease` (clearsigned) and `Release.gpg` (detached ASCII-armoured signature)
 7. Commits and pushes the updated apt repository contents
 
 The same `.deb` files remain attached to the GitHub Release as downloadable assets.
