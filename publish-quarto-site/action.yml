@@ -19,7 +19,7 @@ inputs:
     required: false
     default: "false"
   renv_restore:
-    description: "Deprecated. renv is now restored automatically by r-lib/actions/setup-r-dependencies when a renv.lock file is present."
+    description: "Deprecated compatibility input. Ignored; setup-r-dependencies restores renv.lock automatically when setup_r is true."
     required: false
     default: "true"
   setup_python:
@@ -30,10 +30,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Create gh-pages branch if it doesn't exist
-      shell: bash
-      run: bash "$GITHUB_ACTION_PATH/../scripts/ensure-gh-pages-branch.sh"
-
     - name: Set up R
       if: ${{ inputs.setup_r == 'true' }}
       uses: r-lib/actions/setup-r@465b7d8e732ca3921382b1674c59bada9cbf3399 # v2
