@@ -92,13 +92,11 @@ runs:
         RAW_VERSION: ${{ inputs.version }}
         RAW_BUMP: ${{ inputs.bump_type }}
       run: |
-        # Massage version (trim whitespace, lowercase)
         VERSION_INPUT=$("$GITHUB_ACTION_PATH/../scripts/normalize-action-input.sh" "$RAW_VERSION")
         if [ "$RAW_VERSION" != "$VERSION_INPUT" ] && [ -n "$RAW_VERSION" ]; then
           echo "Note: Massaged version input from '$RAW_VERSION' to '$VERSION_INPUT'"
         fi
 
-        # Massage bump_type (trim whitespace, lowercase)
         BUMP_INPUT=$("$GITHUB_ACTION_PATH/../scripts/normalize-action-input.sh" "$RAW_BUMP")
         if [ "$RAW_BUMP" != "$BUMP_INPUT" ] && [ -n "$RAW_BUMP" ]; then
           echo "Note: Massaged bump_type input from '$RAW_BUMP' to '$BUMP_INPUT'"
@@ -161,52 +159,11 @@ runs:
         PREV_VERSION="${PREV_TAG#v}"
         "$GITHUB_ACTION_PATH/../scripts/check-version-progression.sh" "$NEW_VERSION" "$PREV_VERSION"
 
-    - name: Create and push git tag
+    - name: Create or verify base tag
       shell: bash
       env:
         TAG: ${{ steps.get_version.outputs.tag }}
-      run: |
-        HEAD_SHA="$(git rev-parse HEAD)"
-
-        if git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null 2>&1; then
-          git fetch --no-tags origin "refs/tags/${TAG}:refs/tags/${TAG}"
-          TAG_SHA="$(git rev-list -n 1 "${TAG}")"
-          if [ "$TAG_SHA" != "$HEAD_SHA" ]; then
-            echo "Error: tag ${TAG} already exists on origin but points to ${TAG_SHA}, not HEAD ${HEAD_SHA}." >&2
-            exit 1
-          fi
-          echo "Tag ${TAG} already exists on origin and points to HEAD."
-          exit 0
-        fi
-
-        if git show-ref --tags --verify --quiet "refs/tags/${TAG}"; then
-          TAG_SHA="$(git rev-list -n 1 "${TAG}")"
-          if [ "$TAG_SHA" != "$HEAD_SHA" ]; then
-            echo "Error: local tag ${TAG} points to ${TAG_SHA}, not HEAD ${HEAD_SHA}." >&2
-            exit 1
-          fi
-          echo "Tag ${TAG} already exists locally and points to HEAD."
-        else
-          git tag -a "$TAG" -m "Release $TAG"
-        fi
-
-        git push origin "refs/tags/${TAG}"
-
-    - name: Update floating major, minor and latest tags
-      shell: bash
-      env:
-        TAG: ${{ steps.get_version.outputs.tag }}
-      run: |
-        MAJOR=$(echo "$TAG" | cut -d'.' -f1)
-        MINOR=$(echo "$TAG" | cut -d'.' -f1,2)
-
-        echo "Updating floating tags to $TAG..."
-        git tag -fa "$MINOR" -m "Update $MINOR to point to $TAG"
-        git tag -fa "$MAJOR" -m "Update $MAJOR to point to $TAG"
-        git tag -fa "latest" -m "Update latest to point to $TAG"
-        git push origin "refs/tags/$MINOR" --force
-        git push origin "refs/tags/$MAJOR" --force
-        git push origin "refs/tags/latest" --force
+      run: bash "$GITHUB_ACTION_PATH/../scripts/ensure-release-tag.sh" "$TAG"
 
     - name: Setup Go
       uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
@@ -233,3 +190,9 @@ runs:
         APT_SIGNING_KEY_PASSPHRASE: ${{ inputs.apt_signing_key_passphrase }}
         TAG: ${{ steps.get_version.outputs.tag }}
       run: "$GITHUB_ACTION_PATH/../scripts/publish-apt-repository.sh"
+
+    - name: Update floating major, minor and latest tags
+      shell: bash
+      env:
+        TAG: ${{ steps.get_version.outputs.tag }}
+      run: bash "$GITHUB_ACTION_PATH/../scripts/update-floating-release-tags.sh" "$TAG"
