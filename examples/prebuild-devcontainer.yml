@@ -52,7 +52,7 @@ jobs:
 
       - name: Pre-build Dev Container
         id: prebuild
-        uses: MiguelRodo/actions/prebuild-devcontainer@v2
+        uses: MiguelRodo/actions/prebuild-devcontainer@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           version: ${{ inputs.version }}
