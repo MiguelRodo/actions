@@ -55,4 +55,4 @@ runs:
         APT_SIGNING_KEY: ${{ inputs.apt_signing_key }}
         APT_SIGNING_KEY_PASSPHRASE: ${{ inputs.apt_signing_key_passphrase }}
         PUSH_TOKEN: ${{ inputs.token }}
-      run: "$GITHUB_ACTION_PATH/../scripts/apt-repo-prune.sh"
+      run: bash "$GITHUB_ACTION_PATH/../scripts/apt-repo-prune.sh"
