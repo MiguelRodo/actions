@@ -78,7 +78,8 @@ runs:
       env:
         NEW_VERSION: ${{ steps.get_version.outputs.version }}
       run: |
-        bash "$GITHUB_ACTION_PATH/../scripts/update-r-description-version.sh" "$NEW_VERSION" DESCRIPTION
+        TARBALL="$(bash "$GITHUB_ACTION_PATH/../scripts/update-r-description-version.sh" "$NEW_VERSION" DESCRIPTION)"
+        echo "tarball=$TARBALL" >> "$GITHUB_ENV"
         echo "R version updated to ${NEW_VERSION}"
 
     - name: Commit version changes
@@ -101,15 +102,15 @@ runs:
 
     - name: Setup R Dependencies
       uses: r-lib/actions/setup-r-dependencies@465b7d8e732ca3921382b1674c59bada9cbf3399 # v2
-      with:
-        extra-packages: any::rcmdcheck
 
     - name: Build R Package
       shell: bash
       run: |
         R CMD build .
-        TARBALL=$(ls *.tar.gz | head -n 1)
-        echo "tarball=$TARBALL" >> "$GITHUB_ENV"
+        if [ ! -f "$tarball" ]; then
+          echo "Error: R CMD build did not create expected tarball: $tarball" >&2
+          exit 1
+        fi
 
     - name: Create or verify base tag
       shell: bash
