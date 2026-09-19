@@ -109,7 +109,7 @@
     "href": "SECURITY.html",
     "title": "Security Policy",
     "section": "",
-    "text": "Security fixes are applied to the latest release only. We recommend always using the most recent tag.\n\n\n\nVersion\nSupported\n\n\n\n\nLatest (v2)\n✅\n\n\nOlder major versions\n❌\n\n\n\n\n\n\nPlease do not open a public GitHub issue for security vulnerabilities.\nReport vulnerabilities by using GitHub’s private vulnerability reporting:\n\nGo to the Security tab of this repository.\nClick Report a vulnerability.\nFill in the details and submit.\n\nYou can expect an initial response within 72 hours. If a fix is warranted, a patched release will be published and you will be credited in the release notes (unless you prefer to remain anonymous).\n\n\n\n\n\nEach action documents the minimum token scopes it requires. Never grant broader scopes than necessary:\n\nprebuild-devcontainer — contents: write, packages: write\nadd-issues-to-project — PAT with repo, project, read:org (org projects only)\nversion-release — contents: write\npublish-quarto-site — contents: write, pages: write\n\n\n\n\nFloating tags (e.g. @v2) are convenient but can be updated at any time. For environments with strict supply-chain requirements, pin to a specific commit SHA:\nuses: MiguelRodo/actions/prebuild-devcontainer@&lt;full-commit-sha&gt;\nFind the SHA for any release on the Releases page or by running:\ngit ls-remote https://github.com/MiguelRodo/actions refs/tags/v2"
+    "text": "Security fixes are applied to the latest release only. We recommend always using the most recent tag.\n\n\n\nVersion\nSupported\n\n\n\n\nLatest (v2)\n✅\n\n\nOlder major versions\n❌\n\n\n\n\n\n\nPlease do not open a public GitHub issue for security vulnerabilities.\nReport vulnerabilities by using GitHub’s private vulnerability reporting:\n\nGo to the Security tab of this repository.\nClick Report a vulnerability.\nFill in the details and submit.\n\nYou can expect an initial response within 72 hours. If a fix is warranted, a patched release will be published and you will be credited in the release notes (unless you prefer to remain anonymous).\n\n\n\n\n\nEach action documents the minimum token scopes it requires. Never grant broader scopes than necessary:\n\nprebuild-devcontainer — contents: write, packages: write\nversion-release — contents: write\npublish-quarto-site — contents: write, pages: write\n\n\n\n\nFloating tags (e.g. @v2) are convenient but can be updated at any time. For environments with strict supply-chain requirements, pin to a specific commit SHA:\nuses: MiguelRodo/actions/prebuild-devcontainer@&lt;full-commit-sha&gt;\nFind the SHA for any release on the Releases page or by running:\ngit ls-remote https://github.com/MiguelRodo/actions refs/tags/v2"
   },
   {
     "objectID": "SECURITY.html#supported-versions",
@@ -130,35 +130,70 @@
     "href": "SECURITY.html#security-considerations-for-users",
     "title": "Security Policy",
     "section": "",
-    "text": "Each action documents the minimum token scopes it requires. Never grant broader scopes than necessary:\n\nprebuild-devcontainer — contents: write, packages: write\nadd-issues-to-project — PAT with repo, project, read:org (org projects only)\nversion-release — contents: write\npublish-quarto-site — contents: write, pages: write\n\n\n\n\nFloating tags (e.g. @v2) are convenient but can be updated at any time. For environments with strict supply-chain requirements, pin to a specific commit SHA:\nuses: MiguelRodo/actions/prebuild-devcontainer@&lt;full-commit-sha&gt;\nFind the SHA for any release on the Releases page or by running:\ngit ls-remote https://github.com/MiguelRodo/actions refs/tags/v2"
+    "text": "Each action documents the minimum token scopes it requires. Never grant broader scopes than necessary:\n\nprebuild-devcontainer — contents: write, packages: write\nversion-release — contents: write\npublish-quarto-site — contents: write, pages: write\n\n\n\n\nFloating tags (e.g. @v2) are convenient but can be updated at any time. For environments with strict supply-chain requirements, pin to a specific commit SHA:\nuses: MiguelRodo/actions/prebuild-devcontainer@&lt;full-commit-sha&gt;\nFind the SHA for any release on the Releases page or by running:\ngit ls-remote https://github.com/MiguelRodo/actions refs/tags/v2"
   },
   {
-    "objectID": "r-version-release.html",
-    "href": "r-version-release.html",
-    "title": "R Version and Release",
+    "objectID": "apt-repo-prune.html",
+    "href": "apt-repo-prune.html",
+    "title": "APT Repository Prune",
     "section": "",
-    "text": "Bumps the version in an R DESCRIPTION file, builds the R package as a tarball, creates a versioned git tag with floating major/minor aliases, and publishes a GitHub Release containing the .tar.gz package artifact.\nThis makes it convenient for users to install that specific version (e.g. using remotes::install_github() or similar)."
+    "text": "Composite action for pruning superseded .deb package versions from a GitHub-hosted apt repository. The action rewrites the full Git history of the target repository so that removed binaries are eliminated entirely—not just from the tip—then regenerates the apt metadata and force-pushes the result.\nThe action is designed for repositories that are managed by the go-version-release action in this repository; it validates the expected pool/main/ and dists/stable/ structure before proceeding."
   },
   {
-    "objectID": "r-version-release.html#usage",
-    "href": "r-version-release.html#usage",
-    "title": "R Version and Release",
+    "objectID": "apt-repo-prune.html#usage",
+    "href": "apt-repo-prune.html#usage",
+    "title": "APT Repository Prune",
     "section": "Usage",
-    "text": "Usage\nYou must provide exactly one of version or bump_type.\nname: R Version and Release\n\non:\n  push:\n    tags:\n      - 'v[0-9]+.[0-9]+.[0-9]+'\n  workflow_dispatch:\n    inputs:\n      version:\n        description: 'Exact version (e.g. v1.2.3). Cannot be used with bump_type.'\n        required: false\n      bump_type:\n        description: 'Component to bump: major | minor | patch. Cannot be used with version.'\n        required: false\n      version_force:\n        description: 'When true, skip strict version progression checks.'\n        required: false\n        type: boolean\n\njobs:\n  release:\n    runs-on: ubuntu-latest\n    permissions:\n      contents: write\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          fetch-depth: 0\n      - uses: MiguelRodo/actions/r-version-release@v2\n        with:\n          github_token: ${{ secrets.GITHUB_TOKEN }}\n          version: ${{ inputs.version }}\n          bump_type: ${{ inputs.bump_type }}\n          version_force: ${{ inputs.version_force }}"
+    "text": "Usage\n\nWith an encrypted GPG signing key\nname: Prune APT Repository\n\non:\n  workflow_dispatch:\n    inputs:\n      retention:\n        description: 'Retention policy: latest | latest-per-minor | latest-per-major'\n        required: false\n        default: latest-per-major\n  schedule:\n    - cron: '0 3 * * 0'   # weekly on Sunday at 03:00 UTC\n\njobs:\n  prune:\n    runs-on: ubuntu-latest\n    permissions:\n      contents: write\n    steps:\n      - uses: MiguelRodo/actions/apt-repo-prune@v2\n        with:\n          token: ${{ secrets.GITHUB_TOKEN }}\n          retention: ${{ inputs.retention || 'latest-per-major' }}\n          apt_signing_key: ${{ secrets.APT_SIGNING_KEY }}\n          apt_signing_key_passphrase: ${{ secrets.APT_SIGNING_KEY_PASSPHRASE }}\n\n\nWith an unencrypted GPG signing key (no passphrase)\nname: Prune APT Repository\n\non:\n  workflow_dispatch:\n    inputs:\n      retention:\n        description: 'Retention policy: latest | latest-per-minor | latest-per-major'\n        required: false\n        default: latest-per-major\n  schedule:\n    - cron: '0 3 * * 0'   # weekly on Sunday at 03:00 UTC\n\njobs:\n  prune:\n    runs-on: ubuntu-latest\n    permissions:\n      contents: write\n    steps:\n      - uses: MiguelRodo/actions/apt-repo-prune@v2\n        with:\n          token: ${{ secrets.GITHUB_TOKEN }}\n          retention: ${{ inputs.retention || 'latest-per-major' }}\n          apt_signing_key: ${{ secrets.APT_SIGNING_KEY }}\n          # apt_signing_key_passphrase is omitted — unencrypted keys do not need it"
   },
   {
-    "objectID": "r-version-release.html#inputs",
-    "href": "r-version-release.html#inputs",
-    "title": "R Version and Release",
+    "objectID": "apt-repo-prune.html#inputs",
+    "href": "apt-repo-prune.html#inputs",
+    "title": "APT Repository Prune",
     "section": "Inputs",
-    "text": "Inputs\n\n\n\n\n\n\n\n\n\nInput\nDescription\nRequired\nDefault\n\n\n\n\ngithub_token\nGitHub token for pushing tags and publishing releases.\nYes\n—\n\n\nversion\nExact version to set (e.g. v1.2.3). Cannot be set together with bump_type. Whitespace is ignored and case is insensitive.\nNo\n\"\"\n\n\nbump_type\nVersion component to bump (major | minor | patch). Cannot be set together with version. Whitespace is ignored and case is insensitive.\nNo\n\"\"\n\n\nversion_force\nWhen true (the default is false), skip strict version progression checks (e.g., allowing downgrades or large version jumps).\nNo\nfalse"
+    "text": "Inputs\n\n\n\n\n\n\n\n\n\nInput\nDescription\nRequired\nDefault\n\n\n\n\ntoken\nGitHub token with contents: write permission on the current repository.\nYes\n—\n\n\nretention\nVersion retention policy (case-insensitive). ‘latest’ – keep only the newest version per (package, arch) pair. ‘latest-per-minor’ – keep the highest patch release for each major.minor series. ‘latest-per-major’ (default) – keep the highest minor.patch release for each major series.\nNo\nlatest-per-major\n\n\napt_signing_key\nOptional ASCII-armored GPG private key for signing the regenerated apt metadata. When omitted only the unsigned Release file is written and any stale InRelease / Release.gpg files are removed.\nNo\n\"\"\n\n\napt_signing_key_passphrase\nOptional passphrase for apt_signing_key.\nNo\n\"\""
   },
   {
-    "objectID": "r-version-release.html#outputs",
-    "href": "r-version-release.html#outputs",
-    "title": "R Version and Release",
-    "section": "Outputs",
-    "text": "Outputs\n\n\n\nOutput\nDescription\n\n\n\n\nversion\nReleased version without a leading v (e.g. 1.2.3).\n\n\ntag\nGit tag that was created (e.g. v1.2.3)."
+    "objectID": "apt-repo-prune.html#how-it-works",
+    "href": "apt-repo-prune.html#how-it-works",
+    "title": "APT Repository Prune",
+    "section": "How it works",
+    "text": "How it works\n\nClone – The current repository is cloned with its full history using the provided token for authentication.\nValidate structure – The action checks that pool/main/ and dists/stable/ exist (the layout produced by go-version-release).\nSelect files to remove – scripts/apt-prune-select-versions.sh reads every .deb file via dpkg-deb, groups versions by (package, arch), and outputs the relative paths of files that fall outside the retention window.\nRewrite history – git filter-repo removes the selected files from every commit, including the root commit when it contains target files (which will change the root commit SHA).\nRegenerate metadata – Packages, Packages.gz, and Release are rebuilt from the remaining .deb files. When apt_signing_key is supplied, InRelease (clearsigned) and Release.gpg (detached signature) are also regenerated.\nForce-push – The rewritten history is pushed to the repository’s default branch with --force."
+  },
+  {
+    "objectID": "apt-repo-prune.html#notes",
+    "href": "apt-repo-prune.html#notes",
+    "title": "APT Repository Prune",
+    "section": "Notes",
+    "text": "Notes\n\nThe action requires dpkg-deb, dpkg-scanpackages, and apt-ftparchive to be available on the runner. These are pre-installed on ubuntu-latest.\ngit-filter-repo is installed automatically via pip if it is not already present.\nOnly .deb files with plain X.Y.Z semver versions are considered; files with non-semver versions are left untouched.\nEach package architecture is evaluated independently, so you can have amd64 at version 2.1.0 while arm64 is still at 2.0.0 and both will be treated separately."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Custom GitHub Actions",
+    "section": "",
+    "text": "Reusable composite GitHub Actions for common CI/CD tasks."
+  },
+  {
+    "objectID": "index.html#available-actions",
+    "href": "index.html#available-actions",
+    "title": "Custom GitHub Actions",
+    "section": "Available Actions",
+    "text": "Available Actions\n\n\n\n\n\nAction\nDescription\n\n\n\n\nPrune APT Repository\nRemoves superseded .deb package versions from a GitHub-hosted apt repository and rewrites Git history so that the pruned binaries are fully eliminated. After history rewrite the apt metadata (Packages, Release, optional InRelease / Release.gpg) is regenerated and the result is force-pushed.\n\n\nGo Version and Release\nDetermines a Go project release version, validates semver progression, creates and pushes a git tag, then runs GoReleaser and can publish generated .deb artifacts to apt.\n\n\nPre-build Dev Container\nBuilds a devcontainer, pushes it to a container registry tagged with a git tag and SemVer aliases, and optionally updates the prebuild JSON.\n\n\nPublish Quarto Site\nPublishes a Quarto site to the gh-pages branch, creating the branch if it does not already exist.\n\n\nR Version and Release\nBumps the version in DESCRIPTION, builds the R package, pushes floating tags, and publishes a GitHub Release with the tarball.\n\n\nRust Version and Release\nDetermines a Rust project release version, validates semver progression, creates and pushes a git tag, then builds .deb with cargo-deb and can publish generated .deb artifacts to apt.\n\n\nSetup Project Infrastructure\nBootstraps new multi-repo workspaces by linking working repo, devcontainers, caches, and tracking.\n\n\nVersion and Release\nBumps versions for Python (pyproject.toml) and R (DESCRIPTION) packages when present, creates a versioned git tag, updates floating major/minor tags, and publishes a GitHub Release."
+  },
+  {
+    "objectID": "index.html#usage",
+    "href": "index.html#usage",
+    "title": "Custom GitHub Actions",
+    "section": "Usage",
+    "text": "Usage\nReference any action directly in a workflow — no cloning required:\nuses: MiguelRodo/actions/&lt;action-folder-name&gt;@v2"
+  },
+  {
+    "objectID": "index.html#releasing",
+    "href": "index.html#releasing",
+    "title": "Custom GitHub Actions",
+    "section": "Releasing",
+    "text": "Releasing\nThis repository manages its own versions with an automated workflow. Push a vX.Y.Z tag or run Actions → Publish Release and Bump Floating Tags manually to create a release and update floating major/minor tags."
   },
   {
     "objectID": "prebuild-devcontainer.html",
@@ -203,116 +238,32 @@
     "text": "Examples\n\nCustom image name\n- uses: MiguelRodo/actions/prebuild-devcontainer@v2\n  with:\n    github_token: ${{ secrets.GITHUB_TOKEN }}\n    image_name: 'ghcr.io/myorg/my-devcontainer'\n\n\nNon-default devcontainer path\n- uses: MiguelRodo/actions/prebuild-devcontainer@v2\n  with:\n    github_token: ${{ secrets.GITHUB_TOKEN }}\n    devcontainer_path: 'src/.devcontainer'\n\n\nNon-GitHub container registry\nWhen using a custom image_name, the registry input is used only for login — it is not prepended to the image name automatically.\n- uses: MiguelRodo/actions/prebuild-devcontainer@v2\n  with:\n    github_token: ${{ secrets.REGISTRY_TOKEN }}\n    registry: 'registry.example.com'\n    registry_username: 'my-username'\n    image_name: 'registry.example.com/myorg/my-devcontainer'"
   },
   {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "Custom GitHub Actions",
+    "objectID": "r-version-release.html",
+    "href": "r-version-release.html",
+    "title": "R Version and Release",
     "section": "",
-    "text": "Reusable composite GitHub Actions for common CI/CD tasks."
+    "text": "Bumps the version in an R DESCRIPTION file, builds the R package as a tarball, creates a versioned git tag with floating major/minor aliases, and publishes a GitHub Release containing the .tar.gz package artifact.\nThis makes it convenient for users to install that specific version (e.g. using remotes::install_github() or similar)."
   },
   {
-    "objectID": "index.html#available-actions",
-    "href": "index.html#available-actions",
-    "title": "Custom GitHub Actions",
-    "section": "Available Actions",
-    "text": "Available Actions\n\n\n\n\n\nAction\nDescription\n\n\n\n\nAdd Issues to Project\nAdds issues from a specified repository to a specified GitHub Project.\n\n\nPrune APT Repository\nRemoves superseded .deb package versions from a GitHub-hosted apt repository and rewrites Git history so that the pruned binaries are fully eliminated. After history rewrite the apt metadata (Packages, Release, optional InRelease / Release.gpg) is regenerated and the result is force-pushed.\n\n\nGo Version and Release\nDetermines a Go project release version, validates semver progression, creates and pushes a git tag, then runs GoReleaser and can publish generated .deb artifacts to apt.\n\n\nPre-build Dev Container\nBuilds a devcontainer, pushes it to a container registry tagged with a git tag and SemVer aliases, and optionally updates the prebuild JSON.\n\n\nPublish Quarto Site\nPublishes a Quarto site to the gh-pages branch, creating the branch if it does not already exist.\n\n\nR Version and Release\nBumps the version in DESCRIPTION, builds the R package, pushes floating tags, and publishes a GitHub Release with the tarball.\n\n\nRust Version and Release\nDetermines a Rust project release version, validates semver progression, creates and pushes a git tag, then builds .deb with cargo-deb and can publish generated .deb artifacts to apt.\n\n\nSetup Project Infrastructure\nBootstraps new multi-repo workspaces by linking working repo, devcontainers, caches, and tracking.\n\n\nVersion and Release\nBumps versions for Python (pyproject.toml) and R (DESCRIPTION) packages when present, creates a versioned git tag, updates floating major/minor tags, and publishes a GitHub Release."
-  },
-  {
-    "objectID": "index.html#usage",
-    "href": "index.html#usage",
-    "title": "Custom GitHub Actions",
+    "objectID": "r-version-release.html#usage",
+    "href": "r-version-release.html#usage",
+    "title": "R Version and Release",
     "section": "Usage",
-    "text": "Usage\nReference any action directly in a workflow — no cloning required:\nuses: MiguelRodo/actions/&lt;action-folder-name&gt;@v2"
+    "text": "Usage\nYou must provide exactly one of version or bump_type.\nname: R Version and Release\n\non:\n  push:\n    tags:\n      - 'v[0-9]+.[0-9]+.[0-9]+'\n  workflow_dispatch:\n    inputs:\n      version:\n        description: 'Exact version (e.g. v1.2.3). Cannot be used with bump_type.'\n        required: false\n      bump_type:\n        description: 'Component to bump: major | minor | patch. Cannot be used with version.'\n        required: false\n      version_force:\n        description: 'When true, skip strict version progression checks.'\n        required: false\n        type: boolean\n\njobs:\n  release:\n    runs-on: ubuntu-latest\n    permissions:\n      contents: write\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          fetch-depth: 0\n      - uses: MiguelRodo/actions/r-version-release@v2\n        with:\n          github_token: ${{ secrets.GITHUB_TOKEN }}\n          version: ${{ inputs.version }}\n          bump_type: ${{ inputs.bump_type }}\n          version_force: ${{ inputs.version_force }}"
   },
   {
-    "objectID": "index.html#releasing",
-    "href": "index.html#releasing",
-    "title": "Custom GitHub Actions",
-    "section": "Releasing",
-    "text": "Releasing\nThis repository manages its own versions with an automated workflow. Push a vX.Y.Z tag or run Actions → Publish Release and Bump Floating Tags manually to create a release and update floating major/minor tags."
-  },
-  {
-    "objectID": "apt-repo-prune.html",
-    "href": "apt-repo-prune.html",
-    "title": "APT Repository Prune",
-    "section": "",
-    "text": "Composite action for pruning superseded .deb package versions from a GitHub-hosted apt repository. The action rewrites the full Git history of the target repository so that removed binaries are eliminated entirely—not just from the tip—then regenerates the apt metadata and force-pushes the result.\nThe action is designed for repositories that are managed by the go-version-release action in this repository; it validates the expected pool/main/ and dists/stable/ structure before proceeding."
-  },
-  {
-    "objectID": "apt-repo-prune.html#usage",
-    "href": "apt-repo-prune.html#usage",
-    "title": "APT Repository Prune",
-    "section": "Usage",
-    "text": "Usage\n\nWith an encrypted GPG signing key\nname: Prune APT Repository\n\non:\n  workflow_dispatch:\n    inputs:\n      retention:\n        description: 'Retention policy: latest | latest-per-minor | latest-per-major'\n        required: false\n        default: latest-per-major\n  schedule:\n    - cron: '0 3 * * 0'   # weekly on Sunday at 03:00 UTC\n\njobs:\n  prune:\n    runs-on: ubuntu-latest\n    permissions:\n      contents: write\n    steps:\n      - uses: MiguelRodo/actions/apt-repo-prune@v2\n        with:\n          token: ${{ secrets.GITHUB_TOKEN }}\n          retention: ${{ inputs.retention || 'latest-per-major' }}\n          apt_signing_key: ${{ secrets.APT_SIGNING_KEY }}\n          apt_signing_key_passphrase: ${{ secrets.APT_SIGNING_KEY_PASSPHRASE }}\n\n\nWith an unencrypted GPG signing key (no passphrase)\nname: Prune APT Repository\n\non:\n  workflow_dispatch:\n    inputs:\n      retention:\n        description: 'Retention policy: latest | latest-per-minor | latest-per-major'\n        required: false\n        default: latest-per-major\n  schedule:\n    - cron: '0 3 * * 0'   # weekly on Sunday at 03:00 UTC\n\njobs:\n  prune:\n    runs-on: ubuntu-latest\n    permissions:\n      contents: write\n    steps:\n      - uses: MiguelRodo/actions/apt-repo-prune@v2\n        with:\n          token: ${{ secrets.GITHUB_TOKEN }}\n          retention: ${{ inputs.retention || 'latest-per-major' }}\n          apt_signing_key: ${{ secrets.APT_SIGNING_KEY }}\n          # apt_signing_key_passphrase is omitted — unencrypted keys do not need it"
-  },
-  {
-    "objectID": "apt-repo-prune.html#inputs",
-    "href": "apt-repo-prune.html#inputs",
-    "title": "APT Repository Prune",
+    "objectID": "r-version-release.html#inputs",
+    "href": "r-version-release.html#inputs",
+    "title": "R Version and Release",
     "section": "Inputs",
-    "text": "Inputs\n\n\n\n\n\n\n\n\n\nInput\nDescription\nRequired\nDefault\n\n\n\n\ntoken\nGitHub token with contents: write permission on the current repository.\nYes\n—\n\n\nretention\nVersion retention policy (case-insensitive). ‘latest’ – keep only the newest version per (package, arch) pair. ‘latest-per-minor’ – keep the highest patch release for each major.minor series. ‘latest-per-major’ (default) – keep the highest minor.patch release for each major series.\nNo\nlatest-per-major\n\n\napt_signing_key\nOptional ASCII-armored GPG private key for signing the regenerated apt metadata. When omitted only the unsigned Release file is written and any stale InRelease / Release.gpg files are removed.\nNo\n\"\"\n\n\napt_signing_key_passphrase\nOptional passphrase for apt_signing_key.\nNo\n\"\""
+    "text": "Inputs\n\n\n\n\n\n\n\n\n\nInput\nDescription\nRequired\nDefault\n\n\n\n\ngithub_token\nGitHub token for pushing tags and publishing releases.\nYes\n—\n\n\nversion\nExact version to set (e.g. v1.2.3). Cannot be set together with bump_type. Whitespace is ignored and case is insensitive.\nNo\n\"\"\n\n\nbump_type\nVersion component to bump (major | minor | patch). Cannot be set together with version. Whitespace is ignored and case is insensitive.\nNo\n\"\"\n\n\nversion_force\nWhen true (the default is false), skip strict version progression checks (e.g., allowing downgrades or large version jumps).\nNo\nfalse"
   },
   {
-    "objectID": "apt-repo-prune.html#how-it-works",
-    "href": "apt-repo-prune.html#how-it-works",
-    "title": "APT Repository Prune",
-    "section": "How it works",
-    "text": "How it works\n\nClone – The current repository is cloned with its full history using the provided token for authentication.\nValidate structure – The action checks that pool/main/ and dists/stable/ exist (the layout produced by go-version-release).\nSelect files to remove – scripts/apt-prune-select-versions.sh reads every .deb file via dpkg-deb, groups versions by (package, arch), and outputs the relative paths of files that fall outside the retention window.\nRewrite history – git filter-repo removes the selected files from every commit, including the root commit when it contains target files (which will change the root commit SHA).\nRegenerate metadata – Packages, Packages.gz, and Release are rebuilt from the remaining .deb files. When apt_signing_key is supplied, InRelease (clearsigned) and Release.gpg (detached signature) are also regenerated.\nForce-push – The rewritten history is pushed to the repository’s default branch with --force."
-  },
-  {
-    "objectID": "apt-repo-prune.html#notes",
-    "href": "apt-repo-prune.html#notes",
-    "title": "APT Repository Prune",
-    "section": "Notes",
-    "text": "Notes\n\nThe action requires dpkg-deb, dpkg-scanpackages, and apt-ftparchive to be available on the runner. These are pre-installed on ubuntu-latest.\ngit-filter-repo is installed automatically via pip if it is not already present.\nOnly .deb files with plain X.Y.Z semver versions are considered; files with non-semver versions are left untouched.\nEach package architecture is evaluated independently, so you can have amd64 at version 2.1.0 while arm64 is still at 2.0.0 and both will be treated separately."
-  },
-  {
-    "objectID": "add-issues-to-project.html",
-    "href": "add-issues-to-project.html",
-    "title": "Add Issues to Project",
-    "section": "",
-    "text": "Add Issues to Project automates syncing issues from a repository to a GitHub Project (V2) board. It includes duplicate detection so issues are only added once."
-  },
-  {
-    "objectID": "add-issues-to-project.html#quick-start",
-    "href": "add-issues-to-project.html#quick-start",
-    "title": "Add Issues to Project",
-    "section": "Quick Start",
-    "text": "Quick Start\n\nGenerate a Personal Access Token (PAT) with repo, project, and read:org scopes.\nSave the PAT as a repository secret named ADD_ISSUES_TO_PROJECT_TOKEN.\nCopy the workflow below to .github/workflows/add-issues-to-project.yml.\n\nname: Sync Issues to Project\n\non:\n  workflow_dispatch:\n  issues:\n    types: [opened, reopened]\n\njobs:\n  add-to-project:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: MiguelRodo/actions/add-issues-to-project@v2\n        with:\n          ADD_ISSUES_TO_PROJECT_TOKEN: ${{ secrets.ADD_ISSUES_TO_PROJECT_TOKEN }}\n          # project_name: \"My Custom Project Board\"\n          # is_project_owner_org: \"true\""
-  },
-  {
-    "objectID": "add-issues-to-project.html#inputs",
-    "href": "add-issues-to-project.html#inputs",
-    "title": "Add Issues to Project",
-    "section": "Inputs",
-    "text": "Inputs\n\n\n\n\n\n\n\n\n\nInput\nDescription\nRequired\nDefault\n\n\n\n\nproject_name\nProject name. Defaults to repository name.\nNo\n—\n\n\nproject_owner\nProject owner. Defaults to repository owner.\nNo\n—\n\n\nis_project_owner_org\nWhether the project owner is an organization. Defaults to false.\nNo\nfalse\n\n\nsource_repo_name\nRepository name. Defaults to current repository.\nNo\n—\n\n\nsource_repo_owner\nRepository owner. Defaults to current GitHub user.\nNo\n—\n\n\nADD_ISSUES_TO_PROJECT_TOKEN\nGitHub token with correct access for accessing issues and writing to projects\nYes\n—"
-  },
-  {
-    "objectID": "add-issues-to-project.html#outputs",
-    "href": "add-issues-to-project.html#outputs",
-    "title": "Add Issues to Project",
+    "objectID": "r-version-release.html#outputs",
+    "href": "r-version-release.html#outputs",
+    "title": "R Version and Release",
     "section": "Outputs",
-    "text": "Outputs\n\n\n\n\n\n\n\nOutput\nDescription\n\n\n\n\nissues_added\nNumber of issues that were newly added to the project."
-  },
-  {
-    "objectID": "add-issues-to-project.html#how-it-works",
-    "href": "add-issues-to-project.html#how-it-works",
-    "title": "Add Issues to Project",
-    "section": "How It Works",
-    "text": "How It Works\n\nInstalls the GitHub CLI (gh) and the gh-projects extension.\nAuthenticates with the provided ADD_ISSUES_TO_PROJECT_TOKEN.\nValidates the target project, organization/user, and source repository.\nUses GraphQL to fetch the Project ID and all existing items.\nCross-references the board’s existing issue IDs against the repository’s issue list.\nAppends only the missing issues via a GraphQL mutation."
-  },
-  {
-    "objectID": "add-issues-to-project.html#advanced-example",
-    "href": "add-issues-to-project.html#advanced-example",
-    "title": "Add Issues to Project",
-    "section": "Advanced Example",
-    "text": "Advanced Example\nSync issues from a repository into a centrally managed organization project board:\n- uses: MiguelRodo/actions/add-issues-to-project@v2\n  with:\n    ADD_ISSUES_TO_PROJECT_TOKEN: ${{ secrets.ORG_PROJECT_PAT }}\n    project_name: \"Q1 Engineering Roadmap\"\n    project_owner: \"MyAwesomeOrg\"\n    is_project_owner_org: \"true\"\n    source_repo_name: \"frontend-client\"\n    source_repo_owner: \"MyAwesomeOrg\""
-  },
-  {
-    "objectID": "add-issues-to-project.html#troubleshooting",
-    "href": "add-issues-to-project.html#troubleshooting",
-    "title": "Add Issues to Project",
-    "section": "Troubleshooting",
-    "text": "Troubleshooting\n\nAuthentication fails: Ensure the PAT is active, unexpired, and has the project scope. Classic PATs are generally easier to configure for organization-wide boards than fine-grained tokens.\nProject not found: Check the spelling of project_name. If the project belongs to an organization, you must set is_project_owner_org: \"true\"."
+    "text": "Outputs\n\n\n\nOutput\nDescription\n\n\n\n\nversion\nReleased version without a leading v (e.g. 1.2.3).\n\n\ntag\nGit tag that was created (e.g. v1.2.3)."
   },
   {
     "objectID": "rust-version-release.html",

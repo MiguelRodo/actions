@@ -138,10 +138,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">Pre-build Dev Container</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./add-issues-to-project.html"> 
-<span class="menu-text">Add Issues to Project</span></a>
-  </li>  
-  <li class="nav-item">
     <a class="nav-link" href="./setup-project-infrastructure.html"> 
 <span class="menu-text">Setup Project Infrastructure</span></a>
   </li>  
@@ -234,38 +230,34 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td><a href="./add-issues-to-project.html">Add Issues to Project</a></td>
-<td>Adds issues from a specified repository to a specified GitHub Project.</td>
-</tr>
-<tr class="even">
 <td><a href="./apt-repo-prune.html">Prune APT Repository</a></td>
 <td>Removes superseded .deb package versions from a GitHub-hosted apt repository and rewrites Git history so that the pruned binaries are fully eliminated. After history rewrite the apt metadata (Packages, Release, optional InRelease / Release.gpg) is regenerated and the result is force-pushed.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="./go-version-release.html">Go Version and Release</a></td>
 <td>Determines a Go project release version, validates semver progression, creates and pushes a git tag, then runs GoReleaser and can publish generated .deb artifacts to apt.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="./prebuild-devcontainer.html">Pre-build Dev Container</a></td>
 <td>Builds a devcontainer, pushes it to a container registry tagged with a git tag and SemVer aliases, and optionally updates the prebuild JSON.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="./publish-quarto-site.html">Publish Quarto Site</a></td>
 <td>Publishes a Quarto site to the gh-pages branch, creating the branch if it does not already exist.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="./r-version-release.html">R Version and Release</a></td>
 <td>Bumps the version in DESCRIPTION, builds the R package, pushes floating tags, and publishes a GitHub Release with the tarball.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="./rust-version-release.html">Rust Version and Release</a></td>
 <td>Determines a Rust project release version, validates semver progression, creates and pushes a git tag, then builds .deb with cargo-deb and can publish generated .deb artifacts to apt.</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><a href="./setup-project-infrastructure.html">Setup Project Infrastructure</a></td>
 <td>Bootstraps new multi-repo workspaces by linking working repo, devcontainers, caches, and tracking.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><a href="./version-release.html">Version and Release</a></td>
 <td>Bumps versions for Python (pyproject.toml) and R (DESCRIPTION) packages when present, creates a versioned git tag, updates floating major/minor tags, and publishes a GitHub Release.</td>
 </tr>
