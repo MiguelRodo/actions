@@ -188,10 +188,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#quick-start" id="toc-quick-start" class="nav-link active" data-scroll-target="#quick-start">Quick Start</a></li>
-  <li><a href="#inputs" id="toc-inputs" class="nav-link" data-scroll-target="#inputs">Inputs</a></li>
-  <li><a href="#how-it-works" id="toc-how-it-works" class="nav-link" data-scroll-target="#how-it-works">How It Works</a></li>
-  <li><a href="#troubleshooting" id="toc-troubleshooting" class="nav-link" data-scroll-target="#troubleshooting">Troubleshooting</a></li>
+  <li><a href="#tldr" id="toc-tldr" class="nav-link active" data-scroll-target="#tldr">📋 TL;DR</a></li>
+  <li><a href="#permissions" id="toc-permissions" class="nav-link" data-scroll-target="#permissions">🔐 Permissions</a></li>
+  <li><a href="#inputs" id="toc-inputs" class="nav-link" data-scroll-target="#inputs">🔧 Inputs</a></li>
+  <li><a href="#how-it-works" id="toc-how-it-works" class="nav-link" data-scroll-target="#how-it-works">⚙️ How It Works</a></li>
+  <li><a href="#troubleshooting" id="toc-troubleshooting" class="nav-link" data-scroll-target="#troubleshooting">🐞 Troubleshooting</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/MiguelRodo/actions/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></nav>
     </div>
@@ -217,35 +218,52 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p><strong>Publish Quarto Site</strong> renders and publishes a Quarto website to the <code>gh-pages</code> branch of your repository. It automatically creates the branch if it does not already exist.</p>
-<section id="quick-start" class="level2">
-<h2 class="anchored" data-anchor-id="quick-start">Quick Start</h2>
-<p>Copy the following to <code>.github/workflows/publish-quarto-site.yml</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">name</span><span class="kw">:</span><span class="at"> Publish Quarto Site</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">on</span><span class="kw">:</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">push</span><span class="kw">:</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">branches</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">main</span><span class="kw">]</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">permissions</span><span class="kw">:</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">contents</span><span class="kw">:</span><span class="at"> write</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">pages</span><span class="kw">:</span><span class="at"> write</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">jobs</span><span class="kw">:</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">build-and-publish</span><span class="kw">:</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">runs-on</span><span class="kw">:</span><span class="at"> ubuntu-latest</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">steps</span><span class="kw">:</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/checkout@v4</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">with</span><span class="kw">:</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">fetch-depth</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> MiguelRodo/actions/publish-quarto-site@v2</span></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">with</span><span class="kw">:</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">github_token</span><span class="kw">:</span><span class="at"> ${{ secrets.GITHUB_TOKEN }}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<!-- generated-from-action-readme -->
+<!-- This page is generated from publish-quarto-site/README.md. -->
+<p>A composite GitHub Action that publishes a Quarto site to the <code>gh-pages</code> branch of your repository. It automatically creates the <code>gh-pages</code> branch if it does not already exist.</p>
+<section id="tldr" class="level2">
+<h2 class="anchored" data-anchor-id="tldr">📋 TL;DR</h2>
+<p>Copy <a href="examples/publish-quarto-site.yml"><code>examples/publish-quarto-site.yml</code></a> into <code>.github/workflows/publish-quarto-site.yml</code> and adjust the optional inputs as needed.</p>
+<hr>
+</section>
+<section id="permissions" class="level2">
+<h2 class="anchored" data-anchor-id="permissions">🔐 Permissions</h2>
+<p>The calling workflow needs the following permissions:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Permission</th>
+<th>Why it is needed</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>contents: write</code></td>
+<td>Push rendered output to the <code>gh-pages</code> branch.</td>
+</tr>
+<tr class="even">
+<td><code>pages: write</code></td>
+<td>Required when deploying through GitHub Pages environments.</td>
+</tr>
+</tbody>
+</table>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">permissions</span><span class="kw">:</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">contents</span><span class="kw">:</span><span class="at"> write</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">pages</span><span class="kw">:</span><span class="at"> write</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<blockquote class="blockquote">
+<p><strong>Version pinning:</strong> For stricter supply-chain security, pin to a specific commit SHA instead of a floating tag:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">uses</span><span class="kw">:</span><span class="at"> MiguelRodo/actions/publish-quarto-site@&lt;full-commit-sha&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</blockquote>
+<hr>
 <!-- action-inputs:start -->
 <!-- Generated from publish-quarto-site/action.yml by scripts/generate-action-docs.py. Do not edit this block manually. -->
 </section>
 <section id="inputs" class="level2">
-<h2 class="anchored" data-anchor-id="inputs">Inputs</h2>
+<h2 class="anchored" data-anchor-id="inputs">🔧 Inputs</h2>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 21%">
@@ -297,19 +315,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <!-- action-inputs:end -->
 </section>
 <section id="how-it-works" class="level2">
-<h2 class="anchored" data-anchor-id="how-it-works">How It Works</h2>
+<h2 class="anchored" data-anchor-id="how-it-works">⚙️ How It Works</h2>
 <ol type="1">
 <li>Configures git with the <code>github-actions[bot]</code> identity.</li>
-<li>Checks whether <code>gh-pages</code> exists on the remote. If not, creates an empty orphan branch and pushes it.</li>
+<li>Checks whether the <code>gh-pages</code> branch already exists on the remote. If not, creates an empty orphan branch and pushes it.</li>
 <li>Installs Quarto via <a href="https://github.com/quarto-dev/quarto-actions"><code>quarto-dev/quarto-actions/setup@v2</code></a>.</li>
 <li>Publishes the rendered site to <code>gh-pages</code> via <a href="https://github.com/quarto-dev/quarto-actions"><code>quarto-dev/quarto-actions/publish@v2</code></a>.</li>
 </ol>
+<hr>
 </section>
 <section id="troubleshooting" class="level2">
-<h2 class="anchored" data-anchor-id="troubleshooting">Troubleshooting</h2>
+<h2 class="anchored" data-anchor-id="troubleshooting">🐞 Troubleshooting</h2>
 <ul>
-<li><strong>Permission denied pushing to <code>gh-pages</code>:</strong> Ensure the calling workflow sets <code>permissions: contents: write</code> (and <code>pages: write</code> if using GitHub Pages deployments).</li>
-<li><strong>Quarto render errors:</strong> Rendering is delegated to <code>quarto-dev/quarto-actions/publish</code>. See the <a href="https://github.com/quarto-dev/quarto-actions">quarto-actions documentation</a> for render-related issues.</li>
+<li><strong>Permission denied pushing to gh-pages:</strong> Ensure the calling workflow has <code>permissions: contents: write</code> (and <code>pages: write</code> if using GitHub Pages deployments).</li>
+<li><strong>Quarto render errors:</strong> The action delegates rendering entirely to <code>quarto-dev/quarto-actions/publish</code>. Consult the <a href="https://github.com/quarto-dev/quarto-actions">quarto-actions documentation</a> for render-related issues.</li>
 </ul>
 
 

@@ -249,10 +249,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><p><code>action.yml</code> is the canonical source for an action’s machine-readable name, description, inputs and outputs.</p></li>
 <li><p>After changing that metadata, regenerate the reference tables and action catalogues with:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> scripts/generate-action-docs.py <span class="at">--write</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
-<li><p>Do not hand-edit content inside <code>action-inputs</code>, <code>action-outputs</code> or <code>action-catalogue</code> marker blocks. CI runs <code>python3 scripts/generate-action-docs.py --check</code> and fails when those sections are stale.</p></li>
-<li><p>Keep narrative guidance and examples outside generated blocks up to date when behaviour changes.</p></li>
+<li><p>Do not hand-edit content inside <code>action-inputs</code>, <code>action-outputs</code> or <code>action-catalogue</code> marker blocks, or the matching top-level action <code>.qmd</code> page. Each action QMD is generated from its README. CI runs <code>python3 scripts/generate-action-docs.py --check</code> and fails when generated documentation is stale.</p></li>
+<li><p>Keep narrative guidance in the action README up to date when behaviour changes.</p></li>
 <li><p>The root <code>README.md</code> is intentionally a concise catalogue rather than a second copy of each action’s documentation.</p></li>
-<li><p>Complete, copy-paste-ready workflow files live in the <code>examples/</code> directory.</p></li>
+<li><p>Complete, copy-paste-ready workflow files live in the <code>examples/</code> directory. Keep one canonical full workflow there and link to it from the action README instead of duplicating it.</p></li>
 </ul>
 </section>
 <section id="workflow-dependency-security" class="level3">

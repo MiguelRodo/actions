@@ -1,0 +1,61 @@
+# .github/workflows/prebuild-devcontainer.yml
+#
+# Builds and pushes a pre-built Dev Container image to GHCR whenever a SemVer
+# tag (e.g. v1.2.3 or main-v1.2.3) is pushed, or on manual dispatch.
+#
+# Copy this file into your repository's .github/workflows/ directory.
+
+name: Pre-build Dev Container
+
+on:
+  push:
+    tags:
+      - 'v*'
+      - '*-v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Exact version (e.g. v1.2.3). Leave blank if using bump_type.'
+        required: false
+      bump_type:
+        description: 'Version component to bump: major | minor | patch. Leave blank if using version.'
+        required: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: write   # push prebuild/devcontainer.json
+      packages: write   # push image to GHCR
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Pre-build Dev Container
+        id: prebuild
+        uses: MiguelRodo/actions/prebuild-devcontainer@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          version: ${{ inputs.version }}
+          bump_type: ${{ inputs.bump_type }}
+          # Optional overrides:
+          # target_branch: "main"
+          # no_cache: "false"
+          # create_prebuild_json: "true"
+          # devcontainer_path: ".devcontainer"
+          # image_name: "ghcr.io/myorg/my-devcontainer"
+          # registry: "ghcr.io"
+
+      - name: Show outputs
+        env:
+          IMAGE_REF: ${{ steps.prebuild.outputs.image_ref }}
+          ALIAS_TAGS: ${{ steps.prebuild.outputs.alias_tags }}
+        run: |
+          echo "Image: ${IMAGE_REF}"
+          echo "Alias tags: ${ALIAS_TAGS}"

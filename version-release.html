@@ -189,16 +189,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
    
   <ul>
   <li><a href="#quick-start" id="toc-quick-start" class="nav-link active" data-scroll-target="#quick-start">Quick Start</a></li>
+  <li><a href="#permissions" id="toc-permissions" class="nav-link" data-scroll-target="#permissions">Permissions</a></li>
   <li><a href="#inputs" id="toc-inputs" class="nav-link" data-scroll-target="#inputs">Inputs</a></li>
   <li><a href="#outputs" id="toc-outputs" class="nav-link" data-scroll-target="#outputs">Outputs</a></li>
-  <li><a href="#how-it-works" id="toc-how-it-works" class="nav-link" data-scroll-target="#how-it-works">How It Works</a>
+  <li><a href="#how-it-works" id="toc-how-it-works" class="nav-link" data-scroll-target="#how-it-works">How it works</a>
   <ul class="collapse">
-  <li><a href="#tag-push-trigger-v" id="toc-tag-push-trigger-v" class="nav-link" data-scroll-target="#tag-push-trigger-v">Tag push trigger (<code>v*</code>)</a></li>
-  <li><a href="#workflow_dispatch-trigger" id="toc-workflow_dispatch-trigger" class="nav-link" data-scroll-target="#workflow_dispatch-trigger"><code>workflow_dispatch</code> trigger</a></li>
+  <li><a href="#trigger-tag-push-v" id="toc-trigger-tag-push-v" class="nav-link" data-scroll-target="#trigger-tag-push-v">Trigger: tag push (<code>v*</code>)</a></li>
+  <li><a href="#trigger-workflow_dispatch" id="toc-trigger-workflow_dispatch" class="nav-link" data-scroll-target="#trigger-workflow_dispatch">Trigger: <code>workflow_dispatch</code></a></li>
   <li><a href="#python-package-pyproject.toml" id="toc-python-package-pyproject.toml" class="nav-link" data-scroll-target="#python-package-pyproject.toml">Python package (<code>pyproject.toml</code>)</a></li>
   <li><a href="#r-package-description" id="toc-r-package-description" class="nav-link" data-scroll-target="#r-package-description">R package (<code>DESCRIPTION</code>)</a></li>
+  <li><a href="#version-precedence-per-package" id="toc-version-precedence-per-package" class="nav-link" data-scroll-target="#version-precedence-per-package">Version precedence (per package)</a></li>
   </ul></li>
-  <li><a href="#version-precedence" id="toc-version-precedence" class="nav-link" data-scroll-target="#version-precedence">Version Precedence</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/MiguelRodo/actions/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></nav>
     </div>
@@ -224,47 +225,47 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p><strong>Version and Release</strong> determines the next version, updates version fields in Python (<code>pyproject.toml</code>) and/or R (<code>DESCRIPTION</code>) packages, creates a versioned git tag with floating aliases, and publishes a GitHub Release.</p>
+<!-- generated-from-action-readme -->
+<!-- This page is generated from version-release/README.md. -->
+<p>A composite GitHub Action that:</p>
+<ol type="1">
+<li>Determines the next version (from a tag push, an explicit <code>version</code> input, or a <code>bump_type</code>).</li>
+<li>Automatically bumps the version in <strong>Python</strong> (<code>pyproject.toml</code>) and/or <strong>R</strong> (<code>DESCRIPTION</code>) packages — only when those files are present in the repository root.</li>
+<li>Commits any version-file changes back to the repository.</li>
+<li>Creates (or verifies) a versioned git tag (<code>vX.Y.Z</code>) and updates floating major (<code>vX</code>) and minor (<code>vX.Y</code>) tags.</li>
+<li>Publishes a GitHub Release with auto-generated release notes.</li>
+</ol>
 <section id="quick-start" class="level2">
 <h2 class="anchored" data-anchor-id="quick-start">Quick Start</h2>
-<p>Copy the following to <code>.github/workflows/version-release.yml</code>:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">name</span><span class="kw">:</span><span class="at"> Version and Release</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">on</span><span class="kw">:</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">push</span><span class="kw">:</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">tags</span><span class="kw">:</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">'v[0-9]+.[0-9]+.[0-9]+'</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">workflow_dispatch</span><span class="kw">:</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">inputs</span><span class="kw">:</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">version</span><span class="kw">:</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">description</span><span class="kw">:</span><span class="at"> </span><span class="st">'Exact version (e.g. 1.2.3). Cannot be used with bump_type.'</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">required</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">bump_type</span><span class="kw">:</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">description</span><span class="kw">:</span><span class="at"> </span><span class="st">'Component to bump: major | minor | patch. Cannot be used with version.'</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">required</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">python_version</span><span class="kw">:</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">description</span><span class="kw">:</span><span class="at"> </span><span class="st">'Override: exact version for the Python package.'</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">required</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">r_version</span><span class="kw">:</span></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">description</span><span class="kw">:</span><span class="at"> </span><span class="st">'Override: exact version for the R package.'</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">required</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="fu">jobs</span><span class="kw">:</span></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">version-release</span><span class="kw">:</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">runs-on</span><span class="kw">:</span><span class="at"> ubuntu-latest</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">permissions</span><span class="kw">:</span></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">contents</span><span class="kw">:</span><span class="at"> write</span></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">steps</span><span class="kw">:</span></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/checkout@v4</span></span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">with</span><span class="kw">:</span></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">fetch-depth</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span></span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> MiguelRodo/actions/version-release@v2</span></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">with</span><span class="kw">:</span></span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">github_token</span><span class="kw">:</span><span class="at"> ${{ secrets.GITHUB_TOKEN }}</span></span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">version</span><span class="kw">:</span><span class="at"> ${{ inputs.version }}</span></span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">bump_type</span><span class="kw">:</span><span class="at"> ${{ inputs.bump_type }}</span></span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">python_version</span><span class="kw">:</span><span class="at"> ${{ inputs.python_version }}</span></span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">r_version</span><span class="kw">:</span><span class="at"> ${{ inputs.r_version }}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Copy <a href="examples/version-release.yml"><code>examples/version-release.yml</code></a> into <code>.github/workflows/version-release.yml</code> and adjust the optional version inputs as needed.</p>
+</section>
+<section id="permissions" class="level2">
+<h2 class="anchored" data-anchor-id="permissions">Permissions</h2>
+<p>The calling workflow needs the following permission:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Permission</th>
+<th>Why it is needed</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>contents: write</code></td>
+<td>Push version-bump commits, create/update tags, and publish the GitHub Release.</td>
+</tr>
+</tbody>
+</table>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">permissions</span><span class="kw">:</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">contents</span><span class="kw">:</span><span class="at"> write</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<blockquote class="blockquote">
+<p><strong>Version pinning:</strong> For stricter supply-chain security, pin to a specific commit SHA instead of a floating tag:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">uses</span><span class="kw">:</span><span class="at"> MiguelRodo/actions/version-release@&lt;full-commit-sha&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</blockquote>
 <!-- action-inputs:start -->
 <!-- Generated from version-release/action.yml by scripts/generate-action-docs.py. Do not edit this block manually. -->
 </section>
@@ -351,31 +352,30 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <!-- action-outputs:end -->
 </section>
 <section id="how-it-works" class="level2">
-<h2 class="anchored" data-anchor-id="how-it-works">How It Works</h2>
-<section id="tag-push-trigger-v" class="level3">
-<h3 class="anchored" data-anchor-id="tag-push-trigger-v">Tag push trigger (<code>v*</code>)</h3>
+<h2 class="anchored" data-anchor-id="how-it-works">How it works</h2>
+<section id="trigger-tag-push-v" class="level3">
+<h3 class="anchored" data-anchor-id="trigger-tag-push-v">Trigger: tag push (<code>v*</code>)</h3>
 <p>The version is taken directly from the pushed tag (e.g.&nbsp;<code>v1.2.3</code> → <code>1.2.3</code>). The <code>version</code> and <code>bump_type</code> inputs are ignored.</p>
 </section>
-<section id="workflow_dispatch-trigger" class="level3">
-<h3 class="anchored" data-anchor-id="workflow_dispatch-trigger"><code>workflow_dispatch</code> trigger</h3>
+<section id="trigger-workflow_dispatch" class="level3">
+<h3 class="anchored" data-anchor-id="trigger-workflow_dispatch">Trigger: <code>workflow_dispatch</code></h3>
 <p>Exactly one of the following must be supplied:</p>
 <ul>
-<li><strong><code>version</code></strong> — use an explicit version for all packages.</li>
+<li><strong><code>version</code></strong> — use an explicit version for all packages (e.g.&nbsp;<code>1.2.3</code>).</li>
 <li><strong><code>bump_type</code></strong> — derive the new version by bumping the most recent semver git tag.</li>
 </ul>
 <p>The <code>python_version</code> and <code>r_version</code> inputs always override the global <code>version</code> for their respective packages.</p>
 </section>
 <section id="python-package-pyproject.toml" class="level3">
 <h3 class="anchored" data-anchor-id="python-package-pyproject.toml">Python package (<code>pyproject.toml</code>)</h3>
-<p>If <code>pyproject.toml</code> is present at the repository root, the <code>version = "X.Y.Z"</code> field is updated to the resolved version. If absent, the step is silently skipped.</p>
+<p>If <code>pyproject.toml</code> is present in the repository root, the action reads the current <code>version = "X.Y.Z"</code> field and updates it to the resolved Python version. If the file is absent the step is silently skipped.</p>
 </section>
 <section id="r-package-description" class="level3">
 <h3 class="anchored" data-anchor-id="r-package-description">R package (<code>DESCRIPTION</code>)</h3>
-<p>If <code>DESCRIPTION</code> is present at the repository root, the <code>Version: X.Y.Z</code> field is updated. If absent, the step is silently skipped.</p>
+<p>If <code>DESCRIPTION</code> is present in the repository root, the action reads the current <code>Version: X.Y.Z</code> field and updates it to the resolved R version. If the file is absent the step is silently skipped.</p>
 </section>
-</section>
-<section id="version-precedence" class="level2">
-<h2 class="anchored" data-anchor-id="version-precedence">Version Precedence</h2>
+<section id="version-precedence-per-package" class="level3">
+<h3 class="anchored" data-anchor-id="version-precedence-per-package">Version precedence (per package)</h3>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -398,12 +398,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="even">
 <td>4</td>
-<td>Version from the pushed tag</td>
+<td>Use the tag pushed (tag-push trigger)</td>
 </tr>
 </tbody>
 </table>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->

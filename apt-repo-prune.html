@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>APT Repository Prune – MiguelRodo/actions</title>
+<title>Prune APT Repository – MiguelRodo/actions</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -204,7 +204,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">APT Repository Prune</h1>
+<h1 class="title">Prune APT Repository</h1>
 </div>
 
 
@@ -221,8 +221,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
+<!-- generated-from-action-readme -->
+<!-- This page is generated from apt-repo-prune/README.md. -->
 <p>Composite action for pruning superseded <code>.deb</code> package versions from a GitHub-hosted apt repository. The action rewrites the full Git history of the target repository so that removed binaries are eliminated entirely—not just from the tip—then regenerates the apt metadata and force-pushes the result.</p>
-<p>The action is designed for repositories that are managed by the <a href="../go-version-release">go-version-release</a> action in this repository; it validates the expected <code>pool/main/</code> and <code>dists/stable/</code> structure before proceeding.</p>
+<p>The action is designed for repositories that are managed by the <a href="./go-version-release.html">go-version-release</a> action in this repository; it validates the expected <code>pool/main/</code> and <code>dists/stable/</code> structure before proceeding.</p>
 <blockquote class="blockquote">
 <p>[!IMPORTANT] Because history is rewritten every run requires a <strong>force-push</strong>. Ensure the default branch does <strong>not</strong> have force-push protection enabled (or that the token used has bypass permission).</p>
 <p>The workflow must grant <strong><code>contents: write</code></strong> permission so the token can push the rewritten history.</p>
