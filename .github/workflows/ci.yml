@@ -63,3 +63,41 @@ jobs:
 
       - name: Run BATS tests
         run: bats scripts/tests/
+
+  publish-quarto-site-integration:
+    name: Publish Quarto site from fresh repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Create fresh Quarto repository
+        shell: bash
+        run: |
+          remote="$RUNNER_TEMP/publish-quarto-site-remote.git"
+          site="$RUNNER_TEMP/publish-quarto-site-site"
+          git init --bare "$remote"
+          git init "$site"
+          git -C "$site" config user.name "Test User"
+          git -C "$site" config user.email "test@example.com"
+          printf 'project:\n  type: website\n' > "$site/_quarto.yml"
+          printf '# Fresh site\n' > "$site/index.qmd"
+          git -C "$site" add .
+          git -C "$site" commit -m "Initial site"
+          git -C "$site" branch -M main
+          git -C "$site" remote add origin "$remote"
+          git -C "$site" push -u origin main
+
+      - name: Publish from fresh repository
+        uses: ./publish-quarto-site
+        with:
+          github_token: ${{ github.token }}
+          path: ${{ runner.temp }}/publish-quarto-site-site
+
+      - name: Verify gh-pages was created
+        shell: bash
+        run: |
+          remote="$RUNNER_TEMP/publish-quarto-site-remote.git"
+          git --git-dir="$remote" rev-parse --verify refs/heads/gh-pages
+          git --git-dir="$remote" cat-file -e refs/heads/gh-pages:index.html

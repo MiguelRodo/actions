@@ -1,6 +1,6 @@
 # Publish Quarto Site Action
 
-A composite GitHub Action that publishes a Quarto site to the `gh-pages` branch of your repository. It automatically creates the `gh-pages` branch if it does not already exist.
+A composite GitHub Action that publishes a Quarto site to the `gh-pages` branch of your repository. It only bootstraps a missing `gh-pages` branch; rendering and publishing stay delegated to Quarto.
 
 ## 📋 TL;DR
 
@@ -39,16 +39,19 @@ permissions:
 | `github_token` | GitHub token used to push to the gh-pages branch. | Yes | — |
 | `path` | Path to the Quarto project to publish. | No | `.` |
 | `setup_r` | Whether to install R and set up R dependencies before rendering. | No | `false` |
-| `renv_restore` | Deprecated. renv is now restored automatically by r-lib/actions/setup-r-dependencies when a renv.lock file is present. | No | `true` |
+| `renv_restore` | Deprecated compatibility input. Ignored; setup-r-dependencies restores renv.lock automatically when setup_r is true. | No | `true` |
 | `setup_python` | Whether to install Python and set up Python dependencies before rendering. | No | `false` |
 <!-- action-inputs:end -->
 
+`renv_restore` is retained only for compatibility with the current major release and has no effect.
+
 ## ⚙️ How It Works
 
-1. Configures git with the `github-actions[bot]` identity.
-2. Checks whether the `gh-pages` branch already exists on the remote. If not, creates an empty orphan branch and pushes it.
-3. Installs Quarto via [`quarto-dev/quarto-actions/setup@v2`](https://github.com/quarto-dev/quarto-actions).
-4. Publishes the rendered site to `gh-pages` via [`quarto-dev/quarto-actions/publish@v2`](https://github.com/quarto-dev/quarto-actions).
+1. Creates a minimal empty `gh-pages` branch only when the remote does not already have one. Quarto's non-interactive GitHub Actions path requires that branch to exist.
+2. Optionally installs R and R dependencies when `setup_r` is enabled.
+3. Optionally installs Python and project dependencies when `setup_python` is enabled.
+4. Installs Quarto via [`quarto-dev/quarto-actions/setup@v2`](https://github.com/quarto-dev/quarto-actions).
+5. Publishes via [`quarto-dev/quarto-actions/publish@v2`](https://github.com/quarto-dev/quarto-actions).
 
 ---
 
