@@ -258,7 +258,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="workflow-dependency-security" class="level3">
 <h3 class="anchored" data-anchor-id="workflow-dependency-security">Workflow dependency security</h3>
 <p>Repository-owned workflows under <code>.github/workflows/</code> may receive privileged tokens, publish artifacts or enforce CI. Their third-party actions are therefore pinned to full immutable commit SHAs, with the corresponding release version retained as an inline comment. Dependabot updates these SHA pins monthly and groups routine GitHub Actions updates into one low-noise PR; updates still require the normal protected-branch CI before merge.</p>
-<p>Published composite actions and copy-paste consumer examples may instead use readable major tags such as <code>@v2</code>. Those surfaces prioritize consumer compatibility and automatic patch uptake, while this repository’s own privileged execution path uses stricter immutable pins.</p>
+<p>Published composite actions and copy-paste consumer examples may instead use readable major tags such as <code>@v3</code>. Those surfaces prioritize consumer compatibility and automatic patch uptake, while this repository’s own privileged execution path uses stricter immutable pins.</p>
 <p><code>actionlint</code> is installed by <code>scripts/install-actionlint.sh</code> from a fixed release archive whose SHA-256 digest is pinned to the checksum published with that upstream release. It is updated manually when needed rather than through a separate recurring version-check workflow.</p>
 </section>
 <section id="releases" class="level3">
@@ -285,13 +285,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <ul>
 <li><strong>Specific tags</strong> (<code>vX.Y.Z</code>) are annotated tags and have an associated GitHub Release entry with auto-generated notes.</li>
 <li><strong>Floating tags</strong> (<code>vX</code>, <code>vX.Y</code>) are lightweight tags that are force-updated on every release to point to the latest matching commit. They do <strong>not</strong> have their own GitHub Release entries — this is intentional. The GitHub Releases page only shows entries for specific <code>vX.Y.Z</code> tags.</li>
-<li>Consumers of these actions should pin to a floating tag (e.g.&nbsp;<code>@v2</code> or <code>@v2.17</code>) or a specific tag (e.g.&nbsp;<code>@v2.17.0</code>), not to a Release object.</li>
+<li>Consumers of these actions should pin to a floating tag (e.g.&nbsp;<code>@v3</code> or <code>@v3.17</code>) or a specific tag (e.g.&nbsp;<code>@v3.17.0</code>), not to a Release object.</li>
 </ul>
 <p>To verify what commit a floating tag resolves to:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Show the commit a tag points to</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> ls-remote <span class="at">--tags</span> https://github.com/MiguelRodo/actions <span class="st">"refs/tags/v2"</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> ls-remote <span class="at">--tags</span> https://github.com/MiguelRodo/actions <span class="st">"refs/tags/v3"</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># or, in a local clone:</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> rev-list <span class="at">-n</span> 1 refs/tags/v2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> rev-list <span class="at">-n</span> 1 refs/tags/v3</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 </section>
 </section>

@@ -221,7 +221,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td>Latest (<code>v2</code>)</td>
+<td>Latest (<code>v3</code>)</td>
 <td>✅</td>
 </tr>
 <tr class="even">
@@ -255,10 +255,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="version-pinning" class="level3">
 <h3 class="anchored" data-anchor-id="version-pinning">Version pinning</h3>
-<p>Floating tags (e.g.&nbsp;<code>@v2</code>) are convenient but can be updated at any time. For environments with strict supply-chain requirements, pin to a specific commit SHA:</p>
+<p>Floating tags (e.g.&nbsp;<code>@v3</code>) are convenient but can be updated at any time. For environments with strict supply-chain requirements, pin to a specific commit SHA:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">uses</span><span class="kw">:</span><span class="at"> MiguelRodo/actions/prebuild-devcontainer@&lt;full-commit-sha&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Find the SHA for any release on the <a href="../../releases">Releases page</a> or by running:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> ls-remote https://github.com/MiguelRodo/actions refs/tags/v2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> ls-remote https://github.com/MiguelRodo/actions refs/tags/v3</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 
 </section>
