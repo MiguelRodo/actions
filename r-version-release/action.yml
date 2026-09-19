@@ -150,7 +150,7 @@ runs:
       env:
         NEW_VERSION: ${{ steps.get_version.outputs.version }}
       run: |
-        sed -i "s/^Version: .*/Version: ${NEW_VERSION}/" DESCRIPTION
+        bash "$GITHUB_ACTION_PATH/../scripts/update-r-description-version.sh" "$NEW_VERSION" DESCRIPTION
         echo "R version updated to ${NEW_VERSION}"
 
     - name: Commit version changes
