@@ -37,6 +37,27 @@ EOF
   [ "$status" -eq 0 ]
 }
 
+@test "version-release changes only the project table version" {
+  repo="$BATS_TEST_TMPDIR/python-extra-version"
+  mkdir -p "$repo"
+  cat > "$repo/pyproject.toml" <<'EOF'
+[project]
+name = "example"
+version = "1.2.3"
+
+[tool.example]
+version = "9.9.9"
+EOF
+
+  cd "$repo"
+  run bash "$SCRIPT" "" "" "" patch
+  [ "$status" -eq 0 ]
+  run grep -Fx 'version = "1.2.4"' pyproject.toml
+  [ "$status" -eq 0 ]
+  run grep -Fx 'version = "9.9.9"' pyproject.toml
+  [ "$status" -eq 0 ]
+}
+
 @test "version-release updates an R-only repository with the package override" {
   repo="$BATS_TEST_TMPDIR/r-only"
   mkdir -p "$repo"
