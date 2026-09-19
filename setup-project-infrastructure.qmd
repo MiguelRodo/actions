@@ -7,7 +7,7 @@ title: "Setup Project Infrastructure"
 
 Bootstraps new multi-repo workspaces by linking the working repository, container build pipeline, package caches, and repository workspace configuration.
 
-The action deliberately delegates repository operations to the existing tools that own them: `repos` clones/creates branches and generates workspace/Codespaces configuration, while `setupmjr` copies the template `.devcontainer`, scaffolds a missing README, and installs the prebuild workflow when the builder is separate. The action only keeps the cross-repository wiring that is specific to this workflow.
+The action delegates repository cloning/branch creation plus workspace/Codespaces configuration to `repos`. The template repository is cloned through the same authenticated path, then its complete `.devcontainer/` is copied into the builder. `setupmjr` is used only for the prebuild workflow that it already owns. Interactive README scaffolding is deliberately left out of the unattended action.
 
 Required delegated operations fail closed. Rerunning the action is safe: requested `repos.list` entries are only added when absent, and unchanged repositories are not committed again.
 
@@ -49,8 +49,8 @@ jobs:
 
 ## Outputs
 
-* Branches are cloned or created by `repos` and pushed when the action makes changes.
-* The builder `.devcontainer/` is populated by `setupmjr`, including dotfiles from the template.
+* Working, builder, config, and template repositories are cloned or have requested branches created by `repos`.
+* The full template `.devcontainer/`, including dotfiles, is copied into the builder.
 * `repos.list`, Codespaces permissions, and `entire-project.code-workspace` are managed by `repos`.
 * A separate builder receives `.github/workflows/prebuild-devcontainer.yml` via `setupmjr repo action prebuild-devcontainer`.
 * A separate config repository is pointed at the builder GHCR image.

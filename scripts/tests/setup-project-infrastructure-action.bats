@@ -29,6 +29,11 @@ if [[ "${1:-}" == "clone" ]]; then
   while read -r ref target rest; do
     [[ -n "${ref:-}" ]] || continue
     mkdir -p "../$target"
+    if [[ "$target" == "template_repo_dir" ]]; then
+      mkdir -p "../$target/.devcontainer"
+      printf '{"features":{}}\n' > "../$target/.devcontainer/devcontainer.json"
+      printf 'copied\n' > "../$target/.devcontainer/.hidden-template-file"
+    fi
   done < repos.list
 elif [[ "${1:-}" == "workspace" ]]; then
   printf '{}\n' > entire-project.code-workspace
@@ -40,15 +45,9 @@ STUB
 set -euo pipefail
 printf 'setupmjr cwd=%s args=%s\n' "$PWD" "$*" >> "$CALL_LOG"
 [[ "${FAIL_SETUPMJR_COMMAND:-}" != "$*" ]] || exit 24
-if [[ "$*" == "repo devcontainer --repo "* ]]; then
-  mkdir -p .devcontainer
-  printf '{"features":{}}\n' > .devcontainer/devcontainer.json
-  printf 'copied\n' > .devcontainer/.hidden-template-file
-elif [[ "$*" == "repo action prebuild-devcontainer" ]]; then
+if [[ "$*" == "repo action prebuild-devcontainer" ]]; then
   mkdir -p .github/workflows
   printf 'name: prebuild\n' > .github/workflows/prebuild-devcontainer.yml
-elif [[ "$*" == "repo readme" ]]; then
-  printf '# generated\n' > README.md
 fi
 STUB
 
@@ -185,7 +184,7 @@ JSON
   [[ "$output" == *"control characters"* ]]
 }
 
-@test "orchestrator delegates cloning devcontainer and workspace operations" {
+@test "orchestrator delegates repository operations and copies the complete template devcontainer" {
   make_command_stubs "$BATS_TEST_TMPDIR/bin"
   : > "$BATS_TEST_TMPDIR/calls.log"
 
@@ -194,7 +193,7 @@ JSON
 
   run grep -F 'repos cwd='"$BATS_TEST_TMPDIR"'/workspace/control args=clone --create --fetch-single' "$BATS_TEST_TMPDIR/calls.log"
   [ "$status" -eq 0 ]
-  run grep -F 'setupmjr cwd='"$BATS_TEST_TMPDIR"'/workspace/builder_repo_dir args=repo devcontainer --repo octo/template@main' "$BATS_TEST_TMPDIR/calls.log"
+  run grep -F 'octo/template@main template_repo_dir' "$BATS_TEST_TMPDIR/workspace/control/repos.list"
   [ "$status" -eq 0 ]
   run grep -F 'setupmjr cwd='"$BATS_TEST_TMPDIR"'/workspace/builder_repo_dir args=repo action prebuild-devcontainer' "$BATS_TEST_TMPDIR/calls.log"
   [ "$status" -eq 0 ]
@@ -204,6 +203,8 @@ JSON
   [ "$status" -eq 0 ]
   run grep -F 'repos cwd='"$BATS_TEST_TMPDIR"'/workspace/working_repo_dir args=workspace' "$BATS_TEST_TMPDIR/calls.log"
   [ "$status" -eq 0 ]
+  run grep -E 'repo devcontainer|repo readme' "$BATS_TEST_TMPDIR/calls.log"
+  [ "$status" -ne 0 ]
 
   [ -f "$BATS_TEST_TMPDIR/workspace/builder_repo_dir/.devcontainer/.hidden-template-file" ]
   run jq -e '.image == "ghcr.io/octo/builder-build:latest"' \
@@ -218,6 +219,6 @@ JSON
   run run_orchestrator "$BATS_TEST_TMPDIR/workspace-repos-fail" FAIL_REPOS_COMMAND=workspace
   [ "$status" -eq 23 ]
 
-  run run_orchestrator "$BATS_TEST_TMPDIR/workspace-readme-fail" FAIL_SETUPMJR_COMMAND='repo readme'
+  run run_orchestrator "$BATS_TEST_TMPDIR/workspace-setupmjr-fail" FAIL_SETUPMJR_COMMAND='repo action prebuild-devcontainer'
   [ "$status" -eq 24 ]
 }

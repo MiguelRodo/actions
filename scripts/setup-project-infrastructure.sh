@@ -27,6 +27,7 @@ parse_repo_ref "$TEMPLATE_REPO_INPUT"
 TEMPLATE_REPO="$PARSED_REPO"
 TEMPLATE_BRANCH="$PARSED_BRANCH"
 TEMPLATE_REF="$TEMPLATE_REPO${TEMPLATE_BRANCH:+@$TEMPLATE_BRANCH}"
+TEMPLATE_KEY="$TEMPLATE_REPO|$TEMPLATE_BRANCH"
 
 parse_repo_ref "$BUILDER_REPO_REF"
 BUILDER_REPO="$PARSED_REPO"
@@ -55,6 +56,7 @@ mkdir -p "$WORKSPACE_ROOT/control"
 WORKING_DIR="working_repo_dir"
 BUILDER_DIR="builder_repo_dir"
 CONFIG_DIR="config_repo_dir"
+TEMPLATE_DIR="template_repo_dir"
 
 if [[ "$BUILDER_KEY" == "$WORKING_KEY" ]]; then
   BUILDER_DIR="$WORKING_DIR"
@@ -63,6 +65,13 @@ if [[ "$CONFIG_KEY" == "$WORKING_KEY" ]]; then
   CONFIG_DIR="$WORKING_DIR"
 elif [[ "$CONFIG_KEY" == "$BUILDER_KEY" ]]; then
   CONFIG_DIR="$BUILDER_DIR"
+fi
+if [[ "$TEMPLATE_KEY" == "$WORKING_KEY" ]]; then
+  TEMPLATE_DIR="$WORKING_DIR"
+elif [[ "$TEMPLATE_KEY" == "$BUILDER_KEY" ]]; then
+  TEMPLATE_DIR="$BUILDER_DIR"
+elif [[ "$TEMPLATE_KEY" == "$CONFIG_KEY" ]]; then
+  TEMPLATE_DIR="$CONFIG_DIR"
 fi
 
 {
@@ -73,6 +82,9 @@ fi
   if [[ "$CONFIG_DIR" != "$WORKING_DIR" && "$CONFIG_DIR" != "$BUILDER_DIR" ]]; then
     printf '%s %s\n' "$CONFIG_REF" "$CONFIG_DIR"
   fi
+  if [[ "$TEMPLATE_DIR" != "$WORKING_DIR" && "$TEMPLATE_DIR" != "$BUILDER_DIR" && "$TEMPLATE_DIR" != "$CONFIG_DIR" ]]; then
+    printf '%s %s\n' "$TEMPLATE_REF" "$TEMPLATE_DIR"
+  fi
 } > "$WORKSPACE_ROOT/control/repos.list"
 
 (
@@ -80,9 +92,18 @@ fi
   repos clone --create --fetch-single
 )
 
+TEMPLATE_DEVCONTAINER="$WORKSPACE_ROOT/$TEMPLATE_DIR/.devcontainer"
+[[ -d "$TEMPLATE_DEVCONTAINER" ]] || {
+  echo "Error: template repo does not contain .devcontainer" >&2
+  exit 1
+}
+if [[ "$TEMPLATE_DIR" != "$BUILDER_DIR" ]]; then
+  mkdir -p "$WORKSPACE_ROOT/$BUILDER_DIR/.devcontainer"
+  cp -a "$TEMPLATE_DEVCONTAINER/." "$WORKSPACE_ROOT/$BUILDER_DIR/.devcontainer/"
+fi
+
 (
   cd "$WORKSPACE_ROOT/$BUILDER_DIR"
-  setupmjr repo devcontainer --repo "$TEMPLATE_REF"
 
   if [[ -n "$RENV_PKGS_INPUT" || -n "$RENV_REPOS_INPUT" ]]; then
     DEVCONTAINER_JSON=".devcontainer/devcontainer.json"
@@ -109,10 +130,6 @@ fi
 
 (
   cd "$WORKSPACE_ROOT/$WORKING_DIR"
-
-  if [[ ! -f README.md ]]; then
-    setupmjr repo readme
-  fi
 
   if [[ -n "$REPOS_LIST_INPUT" ]]; then
     append_repos_list "repos.list" "$REPOS_LIST_INPUT"

@@ -115,91 +115,19 @@ runs:
         echo "bump_type=${BUMP_TYPE}" >> "$GITHUB_OUTPUT"
         echo "Bump type: ${BUMP_TYPE}"
 
-    - name: Update Python version
-      id: update_python
+    - name: Update package versions
       shell: bash
       env:
         GLOBAL_VERSION_INPUT: ${{ inputs.version }}
         PY_INPUT_RAW: ${{ inputs.python_version }}
-        BUMP_TYPE_INPUT: ${{ steps.determine_bump_type.outputs.bump_type }}
-      run: |
-        if [ ! -f pyproject.toml ]; then
-          echo "No pyproject.toml found; skipping Python version update."
-          echo "updated=false" >> "$GITHUB_OUTPUT"
-          exit 0
-        fi
-
-        GLOBAL_VERSION=$(echo "${GLOBAL_VERSION_INPUT}" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
-        GLOBAL_VERSION="${GLOBAL_VERSION#v}"
-        PY_INPUT=$(echo "${PY_INPUT_RAW}" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
-        PY_INPUT="${PY_INPUT#v}"
-
-        if [ -n "$PY_INPUT" ]; then
-          NEW_PY_VERSION="$PY_INPUT"
-        elif [ -n "$GLOBAL_VERSION" ]; then
-          NEW_PY_VERSION="$GLOBAL_VERSION"
-        else
-          BUMP_TYPE="${BUMP_TYPE_INPUT}"
-          CURRENT_PY=$(sed -n "s/^version = [\"']\([^\"']*\)[\"']/\1/p" pyproject.toml | tr -d '[:space:]')
-          if [ -z "$CURRENT_PY" ]; then
-            echo "Error: could not read version from pyproject.toml" >&2
-            exit 1
-          fi
-          IFS='.' read -r py_major py_minor py_patch <<< "$CURRENT_PY"
-          py_major="${py_major:-0}"; py_minor="${py_minor:-0}"; py_patch="${py_patch:-0}"
-          case "$BUMP_TYPE" in
-            major) NEW_PY_VERSION="$((py_major + 1)).0.0" ;;
-            minor) NEW_PY_VERSION="${py_major}.$((py_minor + 1)).0" ;;
-            *)     NEW_PY_VERSION="${py_major}.${py_minor}.$((py_patch + 1))" ;;
-          esac
-        fi
-
-        sed -i "s/^version = \"[^\"]*\"/version = \"${NEW_PY_VERSION}\"/" pyproject.toml
-        echo "updated=true" >> "$GITHUB_OUTPUT"
-        echo "Python version → ${NEW_PY_VERSION}"
-
-    - name: Update R version
-      id: update_r
-      shell: bash
-      env:
-        GLOBAL_VERSION_INPUT: ${{ inputs.version }}
         R_INPUT_RAW: ${{ inputs.r_version }}
         BUMP_TYPE_INPUT: ${{ steps.determine_bump_type.outputs.bump_type }}
       run: |
-        if [ ! -f DESCRIPTION ]; then
-          echo "No DESCRIPTION found; skipping R version update."
-          echo "updated=false" >> "$GITHUB_OUTPUT"
-          exit 0
-        fi
-
-        GLOBAL_VERSION=$(echo "${GLOBAL_VERSION_INPUT}" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
-        GLOBAL_VERSION="${GLOBAL_VERSION#v}"
-        R_INPUT=$(echo "${R_INPUT_RAW}" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
-        R_INPUT="${R_INPUT#v}"
-
-        if [ -n "$R_INPUT" ]; then
-          NEW_R_VERSION="$R_INPUT"
-        elif [ -n "$GLOBAL_VERSION" ]; then
-          NEW_R_VERSION="$GLOBAL_VERSION"
-        else
-          BUMP_TYPE="${BUMP_TYPE_INPUT}"
-          CURRENT_R=$(sed -n 's/^Version: \([0-9][0-9.]*\).*/\1/p' DESCRIPTION | tr -d '[:space:]')
-          if [ -z "$CURRENT_R" ]; then
-            echo "Error: could not read Version from DESCRIPTION" >&2
-            exit 1
-          fi
-          IFS='.' read -r r_major r_minor r_patch <<< "$CURRENT_R"
-          r_major="${r_major:-0}"; r_minor="${r_minor:-0}"; r_patch="${r_patch:-0}"
-          case "$BUMP_TYPE" in
-            major) NEW_R_VERSION="$((r_major + 1)).0.0" ;;
-            minor) NEW_R_VERSION="${r_major}.$((r_minor + 1)).0" ;;
-            *)     NEW_R_VERSION="${r_major}.${r_minor}.$((r_patch + 1))" ;;
-          esac
-        fi
-
-        sed -i "s/^Version: .*/Version: ${NEW_R_VERSION}/" DESCRIPTION
-        echo "updated=true" >> "$GITHUB_OUTPUT"
-        echo "R version → ${NEW_R_VERSION}"
+        bash "$GITHUB_ACTION_PATH/../scripts/update-package-versions.sh" \
+          "$GLOBAL_VERSION_INPUT" \
+          "$PY_INPUT_RAW" \
+          "$R_INPUT_RAW" \
+          "$BUMP_TYPE_INPUT"
 
     - name: Commit version changes
       shell: bash
