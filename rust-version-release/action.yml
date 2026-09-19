@@ -155,7 +155,7 @@ runs:
         NEW_VERSION: ${{ steps.get_version.outputs.version }}
       run: |
         if [ -f "Cargo.toml" ]; then
-          sed -i "s/^version = \".*\"/version = \"${NEW_VERSION}\"/" Cargo.toml
+          bash "$GITHUB_ACTION_PATH/../scripts/update-cargo-version.sh" "$NEW_VERSION" Cargo.toml
           git add Cargo.toml
           git commit -m "chore: bump version to ${NEW_VERSION}" || true
           git push || true
