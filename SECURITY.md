@@ -6,7 +6,7 @@ Security fixes are applied to the latest release only. We recommend always using
 
 | Version | Supported |
 | --- | --- |
-| Latest (`v2`) | ✅ |
+| Latest (`v3`) | ✅ |
 | Older major versions | ❌ |
 
 ## Reporting a vulnerability
@@ -33,7 +33,7 @@ Each action documents the minimum token scopes it requires. Never grant broader 
 
 ### Version pinning
 
-Floating tags (e.g. `@v2`) are convenient but can be updated at any time. For environments with strict supply-chain requirements, pin to a specific commit SHA:
+Floating tags (e.g. `@v3`) are convenient but can be updated at any time. For environments with strict supply-chain requirements, pin to a specific commit SHA:
 
 ```yaml
 uses: MiguelRodo/actions/prebuild-devcontainer@<full-commit-sha>
@@ -42,5 +42,5 @@ uses: MiguelRodo/actions/prebuild-devcontainer@<full-commit-sha>
 Find the SHA for any release on the [Releases page](../../releases) or by running:
 
 ```bash
-git ls-remote https://github.com/MiguelRodo/actions refs/tags/v2
+git ls-remote https://github.com/MiguelRodo/actions refs/tags/v3
 ```
