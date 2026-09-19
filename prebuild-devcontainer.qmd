@@ -62,7 +62,6 @@ permissions:
 | `registry` | Container registry URL. | No | `ghcr.io` |
 | `registry_username` | Username for registry login. Defaults to the repository owner. | No | `""` |
 | `version_force` | When 'true', skip the version progression check and push the specified version as-is, even if it is more than one increment ahead of (or behind) the previous image version. | No | `false` |
-| `tag` | Git tag to use as the primary container image tag. (Deprecated, use 'version') | No | `""` |
 | `version` | Exact version to set (e.g. v1.2.3 or main-v1.2.3). Cannot be set together with bump_type. Whitespace is ignored and case is insensitive. | No | `""` |
 | `bump_type` | Version component to bump (major \| minor \| patch). Cannot be set together with version. Whitespace is ignored and case is insensitive. | No | `""` |
 | `inject_build_info` | Inject imageVersion into the MiguelRodo/DevContainerFeatures/build-info feature if it is present in devcontainer.json (true/false). | No | `true` |
