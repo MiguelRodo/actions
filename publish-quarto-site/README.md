@@ -1,6 +1,6 @@
 # Publish Quarto Site Action
 
-A composite GitHub Action that publishes a Quarto site to the `gh-pages` branch of your repository. Branch creation and publishing are delegated to Quarto's native GitHub Pages publisher.
+A composite GitHub Action that publishes a Quarto site to the `gh-pages` branch of your repository. It only bootstraps a missing `gh-pages` branch; rendering and publishing stay delegated to Quarto.
 
 ## 📋 TL;DR
 
@@ -47,10 +47,11 @@ permissions:
 
 ## ⚙️ How It Works
 
-1. Optionally installs R and R dependencies when `setup_r` is enabled.
-2. Optionally installs Python and project dependencies when `setup_python` is enabled.
-3. Installs Quarto via [`quarto-dev/quarto-actions/setup@v2`](https://github.com/quarto-dev/quarto-actions).
-4. Publishes via [`quarto-dev/quarto-actions/publish@v2`](https://github.com/quarto-dev/quarto-actions), which handles creation of a missing `gh-pages` branch.
+1. Creates a minimal empty `gh-pages` branch only when the remote does not already have one. Quarto's non-interactive GitHub Actions path requires that branch to exist.
+2. Optionally installs R and R dependencies when `setup_r` is enabled.
+3. Optionally installs Python and project dependencies when `setup_python` is enabled.
+4. Installs Quarto via [`quarto-dev/quarto-actions/setup@v2`](https://github.com/quarto-dev/quarto-actions).
+5. Publishes via [`quarto-dev/quarto-actions/publish@v2`](https://github.com/quarto-dev/quarto-actions).
 
 ---
 

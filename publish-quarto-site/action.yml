@@ -30,6 +30,17 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Bootstrap gh-pages when missing
+      shell: bash
+      env:
+        PROJECT_PATH: ${{ inputs.path }}
+      run: |
+        if ! git -C "$PROJECT_PATH" ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+          tree=$(git -C "$PROJECT_PATH" mktree </dev/null)
+          commit=$(git -C "$PROJECT_PATH" -c user.name="Quarto GHA Workflow Runner" -c user.email="quarto-github-actions-publish@example.com" commit-tree "$tree" -m "Initializing gh-pages branch")
+          git -C "$PROJECT_PATH" push origin "$commit:refs/heads/gh-pages"
+        fi
+
     - name: Set up R
       if: ${{ inputs.setup_r == 'true' }}
       uses: r-lib/actions/setup-r@465b7d8e732ca3921382b1674c59bada9cbf3399 # v2
