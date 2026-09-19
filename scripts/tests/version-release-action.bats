@@ -21,6 +21,22 @@ EOF
   [ ! -e DESCRIPTION ]
 }
 
+@test "version-release updates a single-quoted Python version" {
+  repo="$BATS_TEST_TMPDIR/python-single-quotes"
+  mkdir -p "$repo"
+  cat > "$repo/pyproject.toml" <<'EOF'
+[project]
+name = 'example'
+version = '1.2.3'
+EOF
+
+  cd "$repo"
+  run bash "$SCRIPT" "" "" "" patch
+  [ "$status" -eq 0 ]
+  run grep -Fx "version = '1.2.4'" pyproject.toml
+  [ "$status" -eq 0 ]
+}
+
 @test "version-release updates an R-only repository with the package override" {
   repo="$BATS_TEST_TMPDIR/r-only"
   mkdir -p "$repo"
