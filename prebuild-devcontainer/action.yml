@@ -42,10 +42,6 @@ inputs:
     description: "When 'true', skip the version progression check and push the specified version as-is, even if it is more than one increment ahead of (or behind) the previous image version."
     required: false
     default: "false"
-  tag:
-    description: "Git tag to use as the primary container image tag. (Deprecated, use 'version')"
-    required: false
-    default: ""
   version:
     description: >
       Exact version to set (e.g. v1.2.3 or main-v1.2.3).
@@ -121,14 +117,13 @@ runs:
     - name: Resolve version and cache source
       shell: bash
       env:
-        INPUT_TAG: ${{ inputs.tag }}
         INPUT_VERSION: ${{ inputs.version }}
         INPUT_BUMP: ${{ inputs.bump_type }}
         INPUT_VERSION_FORCE: ${{ inputs.version_force }}
         INPUT_GITHUB_TOKEN: ${{ inputs.github_token }}
       run: |
         RESOLVED=$("$GITHUB_ACTION_PATH/../scripts/prebuild-devcontainer-version.sh" \
-          "$IMAGE_NAME" "$INPUT_VERSION" "$INPUT_TAG" "$INPUT_BUMP" \
+          "$IMAGE_NAME" "$INPUT_VERSION" "$INPUT_BUMP" \
           "$INPUT_VERSION_FORCE" "$GITHUB_REF")
         IMAGE_TAG=$(jq -r '.image_tag' <<<"$RESOLVED")
         CACHE_FROM=$(jq -r '.cache_from' <<<"$RESOLVED")
