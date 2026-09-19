@@ -382,7 +382,7 @@
     "href": "setup-project-infrastructure.html",
     "title": "Setup Project Infrastructure",
     "section": "",
-    "text": "Bootstraps new multi-repo workspaces by linking the working repository, container build pipelines, package caches, and tracking logic automatically.\nThis action acts as a comprehensive scaffold for research projects or compendiums, cloning boilerplate structures, cross-linking container builds to a central registry, injecting continuous deployment GitHub Actions workflows, generating repos.list files for the setupmjr suite, and executing workspace provisioning entirely downstream."
+    "text": "Bootstraps new multi-repo workspaces by linking the working repository, container build pipeline, package caches, and repository workspace configuration.\nThe action delegates repository cloning/branch creation plus workspace/Codespaces configuration to repos. The template repository is cloned through the same authenticated path, then its complete .devcontainer/ is copied into the builder. setupmjr is used only for the prebuild workflow that it already owns. Interactive README scaffolding is deliberately left out of the unattended action.\nRequired delegated operations fail closed. Rerunning the action is safe: requested repos.list entries are only added when absent, and unchanged repositories are not committed again."
   },
   {
     "objectID": "setup-project-infrastructure.html#usage",
@@ -403,7 +403,7 @@
     "href": "setup-project-infrastructure.html#outputs",
     "title": "Setup Project Infrastructure",
     "section": "Outputs",
-    "text": "Outputs\n\nBranches automatically created or updated.\n.devcontainer/ folders populated or redirected to GHCR.\nrepos.list generated and tracked.\n.github/workflows/devcontainer-build.yml injected dynamically into remote builders.\nJob summary details written out to GitHub Actions UI."
+    "text": "Outputs\n\nWorking, builder, config, and template repositories are cloned or have requested branches created by repos.\nThe full template .devcontainer/, including dotfiles, is copied into the builder.\nrepos.list, Codespaces permissions, and entire-project.code-workspace are managed by repos.\nA separate builder receives .github/workflows/prebuild-devcontainer.yml via setupmjr repo action prebuild-devcontainer.\nA separate config repository is pointed at the builder GHCR image.\nJob summary details are written to the GitHub Actions UI."
   },
   {
     "objectID": "go-version-release.html",

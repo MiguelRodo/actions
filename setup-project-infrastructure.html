@@ -218,8 +218,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <!-- generated-from-action-readme -->
 <!-- This page is generated from setup-project-infrastructure/README.md. -->
-<p>Bootstraps new multi-repo workspaces by linking the working repository, container build pipelines, package caches, and tracking logic automatically.</p>
-<p>This action acts as a comprehensive scaffold for research projects or compendiums, cloning boilerplate structures, cross-linking container builds to a central registry, injecting continuous deployment GitHub Actions workflows, generating <code>repos.list</code> files for the <code>setupmjr</code> suite, and executing workspace provisioning entirely downstream.</p>
+<p>Bootstraps new multi-repo workspaces by linking the working repository, container build pipeline, package caches, and repository workspace configuration.</p>
+<p>The action delegates repository cloning/branch creation plus workspace/Codespaces configuration to <code>repos</code>. The template repository is cloned through the same authenticated path, then its complete <code>.devcontainer/</code> is copied into the builder. <code>setupmjr</code> is used only for the prebuild workflow that it already owns. Interactive README scaffolding is deliberately left out of the unattended action.</p>
+<p>Required delegated operations fail closed. Rerunning the action is safe: requested <code>repos.list</code> entries are only added when absent, and unchanged repositories are not committed again.</p>
 <section id="usage" class="level2">
 <h2 class="anchored" data-anchor-id="usage">Usage</h2>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode yaml code-with-copy"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">name</span><span class="kw">:</span><span class="at"> Bootstrap Project Environment</span></span>
@@ -313,11 +314,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="outputs" class="level2">
 <h2 class="anchored" data-anchor-id="outputs">Outputs</h2>
 <ul>
-<li>Branches automatically created or updated.</li>
-<li><code>.devcontainer/</code> folders populated or redirected to GHCR.</li>
-<li><code>repos.list</code> generated and tracked.</li>
-<li><code>.github/workflows/devcontainer-build.yml</code> injected dynamically into remote builders.</li>
-<li>Job summary details written out to GitHub Actions UI.</li>
+<li>Working, builder, config, and template repositories are cloned or have requested branches created by <code>repos</code>.</li>
+<li>The full template <code>.devcontainer/</code>, including dotfiles, is copied into the builder.</li>
+<li><code>repos.list</code>, Codespaces permissions, and <code>entire-project.code-workspace</code> are managed by <code>repos</code>.</li>
+<li>A separate builder receives <code>.github/workflows/prebuild-devcontainer.yml</code> via <code>setupmjr repo action prebuild-devcontainer</code>.</li>
+<li>A separate config repository is pointed at the builder GHCR image.</li>
+<li>Job summary details are written to the GitHub Actions UI.</li>
 </ul>
 
 
