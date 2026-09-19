@@ -85,13 +85,14 @@ PYTHON
 @test "authenticated actions avoid persistent token-bearing git configuration and remotes" {
   credential_files=(
     "$REPO_ROOT/setup-project-infrastructure/action.yml"
+    "$REPO_ROOT/scripts/setup-project-infrastructure.sh"
     "$REPO_ROOT/apt-repo-prune/action.yml"
     "$REPO_ROOT/go-version-release/action.yml"
     "$REPO_ROOT/rust-version-release/action.yml"
     "$REPO_ROOT/scripts/publish-apt-repository.sh"
   )
   helper_users=(
-    "$REPO_ROOT/setup-project-infrastructure/action.yml"
+    "$REPO_ROOT/scripts/setup-project-infrastructure.sh"
     "$REPO_ROOT/apt-repo-prune/action.yml"
     "$REPO_ROOT/scripts/publish-apt-repository.sh"
   )
