@@ -103,7 +103,7 @@ You can tell the action to automatically calculate the next version based on exi
 
 ```yaml
       - name: Run Dev Container Prebuild
-        uses: MiguelRodo/actions/prebuild-devcontainer@v2
+        uses: MiguelRodo/actions/prebuild-devcontainer@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           bump_type: 'patch' # Will increment v1.2.3 to v1.2.4
@@ -114,7 +114,7 @@ You can tell the action to automatically calculate the next version based on exi
 
 ```yaml
       - name: Run Dev Container Prebuild
-        uses: MiguelRodo/actions/prebuild-devcontainer@v2
+        uses: MiguelRodo/actions/prebuild-devcontainer@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           version: 'v2.0.0'
@@ -125,7 +125,7 @@ You can tell the action to automatically calculate the next version based on exi
 
 ```yaml
       - name: Run Dev Container Prebuild
-        uses: MiguelRodo/actions/prebuild-devcontainer@v2
+        uses: MiguelRodo/actions/prebuild-devcontainer@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           image_name: 'ghcr.io/myorg/my-devcontainer'
@@ -136,7 +136,7 @@ You can tell the action to automatically calculate the next version based on exi
 
 ```yaml
       - name: Run Dev Container Prebuild
-        uses: MiguelRodo/actions/prebuild-devcontainer@v2
+        uses: MiguelRodo/actions/prebuild-devcontainer@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           devcontainer_path: 'src/.devcontainer'
@@ -149,7 +149,7 @@ When using a custom `image_name`, the `registry` input is only used for login—
 
 ```yaml
       - name: Run Dev Container Prebuild
-        uses: MiguelRodo/actions/prebuild-devcontainer@v2
+        uses: MiguelRodo/actions/prebuild-devcontainer@v3
         with:
           github_token: ${{ secrets.REGISTRY_TOKEN }}
           registry: 'registry.example.com'
