@@ -3,6 +3,7 @@
 ACTION_FILE="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && pwd)/apt-repo-prune/action.yml"
 SELECT_SCRIPT="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)/apt-prune-select-versions.sh"
 PLAN_SCRIPT="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)/apt-prune-plan.sh"
+METADATA_SCRIPT="$(cd "$(dirname "$BATS_TEST_FILENAME")/.." && pwd)/apt-prune-regenerate-metadata.sh"
 
 setup() {
   TEST_ROOT="$(mktemp -d)"
@@ -210,13 +211,16 @@ make_deb() {
   [ "$status" -eq 0 ]
 }
 
-@test "apt-repo-prune uses passphrase-file option only when GPG_PASSPHRASE_FILE is set" {
+@test "metadata helper uses passphrase-file option only when a passphrase file is set" {
   run awk '
-    /if \[ -n "\$GPG_PASSPHRASE_FILE" \]/ { in_block=1; next }
+    /if \[ -n "\$passphrase_file" \]/ { in_block=1; next }
     in_block && /^[[:space:]]*fi([[:space:]]|;|$)/ { in_block=0; next }
     in_block && /--passphrase-file/ { found=1; exit 0 }
     END { exit found ? 0 : 1 }
-  ' "$ACTION_FILE"
+  ' "$METADATA_SCRIPT"
+  [ "$status" -eq 0 ]
+
+  run grep -F '"$SIGNING_KEY_FINGERPRINT" "$GPG_PASSPHRASE_FILE"' "$ACTION_FILE"
   [ "$status" -eq 0 ]
 }
 
