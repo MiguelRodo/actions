@@ -8,7 +8,7 @@
 #
 # Trigger options:
 #   - Push a semver tag (e.g. `git tag v1.2.3 && git push origin v1.2.3`).
-#   - Run manually via the Actions UI and supply either `version` or `bump_type`.
+#   - Run manually via the Actions UI and enter an exact version or choose a bump component.
 #
 # Copy this file into your repository's .github/workflows/ directory.
 
@@ -21,17 +21,32 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Exact version to set (e.g. 1.2.3). Cannot be used with bump_type.'
+        description: 'Exact release version in X.Y.Z form (e.g. 1.2.3). Leave blank to bump a component.'
         required: false
+        type: string
       bump_type:
-        description: 'Component to bump: major | minor | patch. Cannot be used with version.'
+        description: 'Component to bump. Choose none when entering an exact version.'
         required: false
+        type: choice
+        default: none
+        options:
+          - none
+          - patch
+          - minor
+          - major
+      version_force:
+        description: 'Allow a non-sequential version, such as a downgrade or skipped increment.'
+        required: false
+        type: boolean
+        default: false
       python_version:
-        description: 'Override: exact version for the Python package.'
+        description: 'Optional exact Python version in X.Y.Z form; overrides the release version.'
         required: false
+        type: string
       r_version:
-        description: 'Override: exact version for the R package.'
+        description: 'Optional exact R version in X.Y.Z form; overrides the release version.'
         required: false
+        type: string
 
 jobs:
   version-release:
@@ -51,7 +66,8 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           version: ${{ inputs.version }}
-          bump_type: ${{ inputs.bump_type }}
+          bump_type: ${{ inputs.bump_type != 'none' && inputs.bump_type || '' }}
+          version_force: ${{ inputs.version_force }}
           python_version: ${{ inputs.python_version }}
           r_version: ${{ inputs.r_version }}
 

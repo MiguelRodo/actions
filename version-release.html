@@ -295,31 +295,31 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="even">
 <td><code>version</code></td>
-<td>Exact version to apply to all packages (e.g.&nbsp;1.2.3). Overridden per-package by python_version or r_version. Cannot be set together with bump_type.</td>
+<td>Exact release version in X.Y.Z form (e.g.&nbsp;1.2.3). Leave blank to use bump_type. Overridden per package by python_version or r_version.</td>
 <td style="text-align: center;">No</td>
 <td><code>""</code></td>
 </tr>
 <tr class="odd">
 <td><code>bump_type</code></td>
-<td>Version component to bump (major | minor | patch). The new version is derived by bumping the most recent semver git tag. Cannot be set together with version.</td>
+<td>Version component to bump: patch, minor, or major. Leave blank when version is set.</td>
 <td style="text-align: center;">No</td>
 <td><code>""</code></td>
 </tr>
 <tr class="even">
 <td><code>python_version</code></td>
-<td>Override: exact version to set for the Python package (e.g.&nbsp;1.2.3).</td>
+<td>Optional exact Python version in X.Y.Z form; overrides version.</td>
 <td style="text-align: center;">No</td>
 <td><code>""</code></td>
 </tr>
 <tr class="odd">
 <td><code>r_version</code></td>
-<td>Override: exact version to set for the R package (e.g.&nbsp;1.2.3).</td>
+<td>Optional exact R version in X.Y.Z form; overrides version.</td>
 <td style="text-align: center;">No</td>
 <td><code>""</code></td>
 </tr>
 <tr class="even">
 <td><code>version_force</code></td>
-<td>When true (the default is false), skip strict version progression checks (e.g., allowing downgrades or large version jumps).</td>
+<td>Set true to allow non-sequential versions (e.g.&nbsp;downgrades or skipped increments).</td>
 <td style="text-align: center;">No</td>
 <td><code>false</code></td>
 </tr>
