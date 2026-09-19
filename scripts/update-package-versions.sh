@@ -36,7 +36,10 @@ if [[ -f pyproject.toml ]]; then
   }
 
   NEW_PY_VERSION="$(resolve_package_version "$PYTHON_VERSION" "$CURRENT_PY")"
-  sed -i "s/^version = \"[^\"]*\"/version = \"${NEW_PY_VERSION}\"/" pyproject.toml
+  sed -i \
+    -e "s/^version = \"[^\"]*\"/version = \"${NEW_PY_VERSION}\"/" \
+    -e "s/^version = '[^']*'/version = '${NEW_PY_VERSION}'/" \
+    pyproject.toml
   echo "Python version → ${NEW_PY_VERSION}"
 else
   echo "No pyproject.toml found; skipping Python version update."
