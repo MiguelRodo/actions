@@ -44,11 +44,8 @@ permissions:
 | `github_token` | GitHub token used to push to the gh-pages branch. | Yes | — |
 | `path` | Path to the Quarto project to publish. | No | `.` |
 | `setup_r` | Whether to install R and set up R dependencies before rendering. | No | `false` |
-| `renv_restore` | Deprecated compatibility input. Ignored; setup-r-dependencies restores renv.lock automatically when setup_r is true. | No | `true` |
 | `setup_python` | Whether to install Python and set up Python dependencies before rendering. | No | `false` |
 <!-- action-inputs:end -->
-
-`renv_restore` is retained only for compatibility with the current major release and has no effect.
 
 ## ⚙️ How It Works
 

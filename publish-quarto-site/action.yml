@@ -18,10 +18,6 @@ inputs:
     description: "Whether to install R and set up R dependencies before rendering."
     required: false
     default: "false"
-  renv_restore:
-    description: "Deprecated compatibility input. Ignored; setup-r-dependencies restores renv.lock automatically when setup_r is true."
-    required: false
-    default: "true"
   setup_python:
     description: "Whether to install Python and set up Python dependencies before rendering."
     required: false
