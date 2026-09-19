@@ -68,31 +68,6 @@ update_renv_cache() {
   trap - RETURN
 }
 
-write_builder_workflow() {
-  local workflow_file="$1"
-
-  mkdir -p "$(dirname "$workflow_file")"
-  cat > "$workflow_file" <<'YAML'
-name: Pre-build Dev Container
-on:
-  push:
-    branches:
-      - "**"
-  workflow_dispatch:
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      packages: write
-    steps:
-      - uses: actions/checkout@v6
-      - uses: MiguelRodo/actions/prebuild-devcontainer@v2
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-YAML
-}
-
 write_config_devcontainer() {
   local devcontainer_json="$1"
   local image_url="$2"
@@ -104,7 +79,7 @@ write_config_devcontainer() {
 append_repos_list() {
   local repos_file="$1"
   local repos_input="$2"
-  local repos_json
+  local repos_json entry
 
   repos_json="$("$SCRIPT_DIR/parse-delimited-json.sh" "$repos_input")"
   if ! jq -e 'all(.[]; (explode | all(.[]; . >= 32 and . != 127)))' <<<"$repos_json" >/dev/null; then
@@ -112,7 +87,10 @@ append_repos_list() {
   fi
 
   mkdir -p "$(dirname "$repos_file")"
-  jq -r '.[]' <<<"$repos_json" >> "$repos_file"
+  touch "$repos_file"
+  while IFS= read -r entry; do
+    grep -Fxq -- "$entry" "$repos_file" || printf '%s\n' "$entry" >> "$repos_file"
+  done < <(jq -r '.[]' <<<"$repos_json")
 }
 
 main() {
@@ -129,10 +107,6 @@ main() {
     update-renv-cache)
       [[ "$#" -eq 3 ]] || die "usage: $0 update-renv-cache FILE PACKAGES REPOSITORIES"
       update_renv_cache "$@"
-      ;;
-    write-builder-workflow)
-      [[ "$#" -eq 1 ]] || die "usage: $0 write-builder-workflow FILE"
-      write_builder_workflow "$1"
       ;;
     write-config-devcontainer)
       [[ "$#" -eq 2 ]] || die "usage: $0 write-config-devcontainer FILE IMAGE"
