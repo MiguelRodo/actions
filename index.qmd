@@ -11,7 +11,6 @@ Reusable composite GitHub Actions for common CI/CD tasks.
 <!-- Generated from */action.yml by scripts/generate-action-docs.py. Do not edit this block manually. -->
 | Action | Description |
 | --- | --- |
-| [Add Issues to Project](add-issues-to-project.qmd) | Adds issues from a specified repository to a specified GitHub Project. |
 | [Prune APT Repository](apt-repo-prune.qmd) | Removes superseded .deb package versions from a GitHub-hosted apt repository and rewrites Git history so that the pruned binaries are fully eliminated. After history rewrite the apt metadata (Packages, Release, optional InRelease / Release.gpg) is regenerated and the result is force-pushed. |
 | [Go Version and Release](go-version-release.qmd) | Determines a Go project release version, validates semver progression, creates and pushes a git tag, then runs GoReleaser and can publish generated .deb artifacts to apt. |
 | [Pre-build Dev Container](prebuild-devcontainer.qmd) | Builds a devcontainer, pushes it to a container registry tagged with a git tag and SemVer aliases, and optionally updates the prebuild JSON. |

@@ -12,8 +12,6 @@ website:
         text: Home
       - href: prebuild-devcontainer.qmd
         text: Pre-build Dev Container
-      - href: add-issues-to-project.qmd
-        text: Add Issues to Project
       - href: setup-project-infrastructure.qmd
         text: Setup Project Infrastructure
       - href: version-release.qmd
