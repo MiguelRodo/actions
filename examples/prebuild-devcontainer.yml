@@ -14,9 +14,12 @@ on:
       - '*-v*'
   workflow_dispatch:
     inputs:
-      tag:
-        description: 'Tag to build (e.g. v1.2.3 or main-v1.2.3)'
-        required: true
+      version:
+        description: 'Exact version (e.g. v1.2.3). Leave blank if using bump_type.'
+        required: false
+      bump_type:
+        description: 'Version component to bump: major | minor | patch. Leave blank if using version.'
+        required: false
 
 jobs:
   build:
@@ -31,14 +34,18 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Pre-build Dev Container
         id: prebuild
         uses: MiguelRodo/actions/prebuild-devcontainer@v2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ github.event.inputs.tag }}
+          version: ${{ inputs.version }}
+          bump_type: ${{ inputs.bump_type }}
           # Optional overrides:
+          # target_branch: "main"
           # no_cache: "false"
           # create_prebuild_json: "true"
           # devcontainer_path: ".devcontainer"

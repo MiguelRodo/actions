@@ -10,61 +10,7 @@ A composite GitHub Action that:
 
 ## Quick Start
 
-Copy the following to `.github/workflows/version-release.yml` in your repository:
-
-```yaml
-name: Version and Release
-
-on:
-  push:
-    tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
-  workflow_dispatch:
-    inputs:
-      version:
-        description: >
-          Exact version to apply to all packages (e.g. 1.2.3).
-          Cannot be set together with bump_type.
-        required: false
-      bump_type:
-        description: >
-          Version component to bump (major | minor | patch).
-          Cannot be set together with version.
-        required: false
-      python_version:
-        description: 'Override: exact version to set for the Python package (e.g. 1.2.3).'
-        required: false
-      r_version:
-        description: 'Override: exact version to set for the R package (e.g. 1.2.3).'
-        required: false
-      version_force:
-        description: >
-          Set to false to skip the guard that prevents downgrading or jumping
-          more than one version increment at a time. Defaults to true.
-        required: false
-
-jobs:
-  version-release:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Version and Release
-        uses: MiguelRodo/actions/version-release@v2
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          version: ${{ inputs.version }}
-          bump_type: ${{ inputs.bump_type }}
-          python_version: ${{ inputs.python_version }}
-          r_version: ${{ inputs.r_version }}
-          version_force: ${{ inputs.version_force }}
-```
+Copy [`examples/version-release.yml`](../examples/version-release.yml) into `.github/workflows/version-release.yml` and adjust the optional version inputs as needed.
 
 ## Permissions
 

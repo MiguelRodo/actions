@@ -32,7 +32,7 @@ Use a specific `vX.Y.Z` tag when you want an exact release, or pin a full commit
 
 Each action's README contains its usage, permissions and operational guidance. The published documentation site is available at <https://miguelrodo.github.io/actions/>.
 
-Input/output reference tables and this catalogue are generated from the corresponding `action.yml` metadata. Regenerate them after changing an action interface:
+Input/output reference tables and this catalogue are generated from the corresponding `action.yml` metadata. Each top-level action `.qmd` page is generated from that action's README. Regenerate documentation after changing an action interface or README:
 
 ```bash
 python3 scripts/generate-action-docs.py --write
@@ -44,11 +44,11 @@ CI verifies that generated documentation is current with:
 python3 scripts/generate-action-docs.py --check
 ```
 
-Only the bounded `action-inputs`, `action-outputs` and `action-catalogue` blocks are generated. Narrative guidance and examples outside those blocks remain hand-written.
+Do not hand-edit generated action `.qmd` pages or content inside the bounded `action-inputs`, `action-outputs` and `action-catalogue` blocks. Keep full copy-paste workflow examples in `examples/` and link to them from action READMEs.
 
 ## Releases
 
-Repository releases are managed by `.github/workflows/release.yml`. Specific release tags use `vX.Y.Z`; floating `vX` and `vX.Y` tags follow the latest compatible release.
+Repository releases are managed by `.github/workflows/publish-release.yml`. Specific release tags use `vX.Y.Z`; floating `vX` and `vX.Y` tags follow the latest compatible release.
 
 ## Contributing
 

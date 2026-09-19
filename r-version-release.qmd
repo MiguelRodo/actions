@@ -1,7 +1,9 @@
 ---
 title: "R Version and Release"
-description: "Bumps the version in an R DESCRIPTION file, builds the R package as a tarball, creates a versioned git tag with floating major/minor aliases, and publishes a GitHub Release containing the `.tar.gz` package artifact."
 ---
+
+<!-- generated-from-action-readme -->
+<!-- This page is generated from r-version-release/README.md. -->
 
 Bumps the version in an R `DESCRIPTION` file, builds the R package as a tarball, creates a versioned git tag with floating major/minor aliases, and publishes a GitHub Release containing the `.tar.gz` package artifact.
 
