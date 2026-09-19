@@ -56,13 +56,11 @@ runs:
         RAW_VERSION: ${{ inputs.version }}
         RAW_BUMP: ${{ inputs.bump_type }}
       run: |
-        # Massage version (trim whitespace, lowercase)
         VERSION_INPUT=$("$GITHUB_ACTION_PATH/../scripts/normalize-action-input.sh" "$RAW_VERSION")
         if [ "$RAW_VERSION" != "$VERSION_INPUT" ] && [ -n "$RAW_VERSION" ]; then
           echo "Note: Massaged version input from '$RAW_VERSION' to '$VERSION_INPUT'"
         fi
 
-        # Massage bump_type (trim whitespace, lowercase)
         BUMP_INPUT=$("$GITHUB_ACTION_PATH/../scripts/normalize-action-input.sh" "$RAW_BUMP")
         if [ "$RAW_BUMP" != "$BUMP_INPUT" ] && [ -n "$RAW_BUMP" ]; then
           echo "Note: Massaged bump_type input from '$RAW_BUMP' to '$BUMP_INPUT'"
@@ -142,7 +140,6 @@ runs:
         fi
 
         PREV_VERSION="${PREV_TAG#v}"
-
         "$GITHUB_ACTION_PATH/../scripts/check-version-progression.sh" "$NEW_VERSION" "$PREV_VERSION"
 
     - name: Update R version
@@ -166,35 +163,6 @@ runs:
           git push
         fi
 
-    - name: Create or verify base tag
-      shell: bash
-      env:
-        TAG: ${{ steps.get_version.outputs.tag }}
-      run: |
-        if git show-ref --tags --verify --quiet "refs/tags/$TAG"; then
-          echo "Tag $TAG already exists."
-        else
-          echo "Creating tag $TAG"
-          git tag -a "$TAG" -m "Release $TAG"
-          git push origin "$TAG"
-        fi
-
-    - name: Update floating major, minor and latest tags
-      shell: bash
-      env:
-        TAG: ${{ steps.get_version.outputs.tag }}
-      run: |
-        MAJOR=$(echo "$TAG" | cut -d'.' -f1)
-        MINOR=$(echo "$TAG" | cut -d'.' -f1,2)
-
-        echo "Updating floating tags to $TAG..."
-        git tag -fa "$MINOR" -m "Update $MINOR to point to $TAG"
-        git tag -fa "$MAJOR" -m "Update $MAJOR to point to $TAG"
-        git tag -fa "latest" -m "Update latest tag"
-        git push origin "$MINOR" --force
-        git push origin "$MAJOR" --force
-        git push origin "latest" --force
-
     - name: Set up R
       uses: r-lib/actions/setup-r@465b7d8e732ca3921382b1674c59bada9cbf3399 # v2
       with:
@@ -209,9 +177,14 @@ runs:
       shell: bash
       run: |
         R CMD build .
-        # Find the generated tarball
         TARBALL=$(ls *.tar.gz | head -n 1)
         echo "tarball=$TARBALL" >> "$GITHUB_ENV"
+
+    - name: Create or verify base tag
+      shell: bash
+      env:
+        TAG: ${{ steps.get_version.outputs.tag }}
+      run: bash "$GITHUB_ACTION_PATH/../scripts/ensure-release-tag.sh" "$TAG"
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
@@ -221,3 +194,9 @@ runs:
         make_latest: true
         files: ${{ env.tarball }}
         token: ${{ inputs.github_token }}
+
+    - name: Update floating major, minor and latest tags
+      shell: bash
+      env:
+        TAG: ${{ steps.get_version.outputs.tag }}
+      run: bash "$GITHUB_ACTION_PATH/../scripts/update-floating-release-tags.sh" "$TAG"
