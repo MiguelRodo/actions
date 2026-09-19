@@ -46,7 +46,7 @@ Inline `run:` blocks are linted by **actionlint** (which delegates to **shellche
 
 Repository-owned workflows under `.github/workflows/` may receive privileged tokens, publish artifacts or enforce CI. Their third-party actions are therefore pinned to full immutable commit SHAs, with the corresponding release version retained as an inline comment. Dependabot updates these SHA pins monthly and groups routine GitHub Actions updates into one low-noise PR; updates still require the normal protected-branch CI before merge.
 
-Published composite actions and copy-paste consumer examples may instead use readable major tags such as `@v2`. Those surfaces prioritize consumer compatibility and automatic patch uptake, while this repository's own privileged execution path uses stricter immutable pins.
+Published composite actions and copy-paste consumer examples may instead use readable major tags such as `@v3`. Those surfaces prioritize consumer compatibility and automatic patch uptake, while this repository's own privileged execution path uses stricter immutable pins.
 
 `actionlint` is installed by `scripts/install-actionlint.sh` from a fixed release archive whose SHA-256 digest is pinned to the checksum published with that upstream release. It is updated manually when needed rather than through a separate recurring version-check workflow.
 
@@ -78,15 +78,15 @@ The one-time `.github/workflows/disable-legacy-release.yml` migration disables t
 
 - **Specific tags** (`vX.Y.Z`) are annotated tags and have an associated GitHub Release entry with auto-generated notes.
 - **Floating tags** (`vX`, `vX.Y`) are lightweight tags that are force-updated on every release to point to the latest matching commit. They do **not** have their own GitHub Release entries — this is intentional. The GitHub Releases page only shows entries for specific `vX.Y.Z` tags.
-- Consumers of these actions should pin to a floating tag (e.g. `@v2` or `@v2.17`) or a specific tag (e.g. `@v2.17.0`), not to a Release object.
+- Consumers of these actions should pin to a floating tag (e.g. `@v3` or `@v3.17`) or a specific tag (e.g. `@v3.17.0`), not to a Release object.
 
 To verify what commit a floating tag resolves to:
 
 ```bash
 # Show the commit a tag points to
-git ls-remote --tags https://github.com/MiguelRodo/actions "refs/tags/v2"
+git ls-remote --tags https://github.com/MiguelRodo/actions "refs/tags/v3"
 # or, in a local clone:
-git rev-list -n 1 refs/tags/v2
+git rev-list -n 1 refs/tags/v3
 ```
 
 ## Code of conduct
