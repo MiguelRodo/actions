@@ -21,7 +21,9 @@ setup() {
   [ "$status" -eq 0 ]
   [ "$output" = "1.2.3" ]
 
-  GITHUB_REF_TYPE=tag GITHUB_REF_NAME="V2.3.4" run bash "$RESOLVE" "" "" "0.0.0" true
+  export GITHUB_REF_TYPE=tag
+  export GITHUB_REF_NAME="V2.3.4"
+  run bash "$RESOLVE" "" "" "0.0.0" true
   [ "$status" -eq 0 ]
   [ "$output" = "2.3.4" ]
 }
