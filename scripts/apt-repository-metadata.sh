@@ -63,7 +63,7 @@ apt_repository_regenerate_metadata() {
   local empty_policy="${4:-error}"
 
   (
-    cd "$repo_dir"
+    cd "$repo_dir" || exit 1
 
     declare -A arch_seen=()
     local deb_file
