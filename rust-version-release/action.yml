@@ -96,15 +96,13 @@ runs:
       env:
         NEW_VERSION: ${{ steps.get_version.outputs.version }}
       run: |
-        if [ -f "Cargo.toml" ]; then
-          bash "$GITHUB_ACTION_PATH/../scripts/update-cargo-version.sh" "$NEW_VERSION" Cargo.toml
-          if git diff --quiet Cargo.toml; then
-            echo "No Cargo.toml version change to commit."
-          else
-            git add Cargo.toml
-            git commit -m "chore: bump version to ${NEW_VERSION}"
-            git push
-          fi
+        bash "$GITHUB_ACTION_PATH/../scripts/update-cargo-version.sh" "$NEW_VERSION" Cargo.toml
+        if git diff --quiet Cargo.toml; then
+          echo "No Cargo.toml version change to commit."
+        else
+          git add Cargo.toml
+          git commit -m "chore: bump version to ${NEW_VERSION}"
+          git push
         fi
 
     - name: Setup Rust
