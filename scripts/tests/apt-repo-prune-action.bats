@@ -76,7 +76,7 @@ make_deb() {
 
 @test "action delegates privileged prune orchestration to the script" {
   # shellcheck disable=SC2016
-  grep -Fq 'run: "$GITHUB_ACTION_PATH/../scripts/apt-repo-prune.sh"' "$ACTION_FILE"
+  grep -Fq 'run: bash "$GITHUB_ACTION_PATH/../scripts/apt-repo-prune.sh"' "$ACTION_FILE"
   ! grep -Fq 'git filter-repo' "$ACTION_FILE"
   ! grep -Fq 'push --force' "$ACTION_FILE"
   ! grep -Fq 'dpkg-scanpackages --multiversion' "$ACTION_FILE"
