@@ -60,7 +60,7 @@ runs:
           echo "Error: No DESCRIPTION file found in the root directory. This action must be run in an R package repository." >&2
           exit 1
         fi
-        CURRENT="$(grep -E '^Version:' DESCRIPTION | awk '{print $2}' | tr -d '[:space:]')"
+        CURRENT="$(grep -E '^Version:' DESCRIPTION | awk '{print $2}' | tr -d '[:space:]' || true)"
         VERSION="$(bash "$GITHUB_ACTION_PATH/../scripts/resolve-release-version.sh" "$RAW_VERSION" "$RAW_BUMP" "$CURRENT" false)"
         echo "version=$VERSION" >> "$GITHUB_OUTPUT"
         echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
