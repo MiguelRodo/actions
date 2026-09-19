@@ -13,4 +13,15 @@ cargo_toml="${2:-Cargo.toml}"
   exit 1
 }
 
-sed -i "s/^version = \".*\"/version = \"${version}\"/" "$cargo_toml"
+package_version_line="$(awk '
+  /^[[:space:]]*\[package\][[:space:]]*(#.*)?$/ { in_package = 1; next }
+  /^[[:space:]]*\[/ { in_package = 0 }
+  in_package && /^[[:space:]]*version[[:space:]]*=/ { print NR; exit }
+' "$cargo_toml")"
+
+[[ -n "$package_version_line" ]] || {
+  echo "Error: no version field found in the [package] section of $cargo_toml." >&2
+  exit 1
+}
+
+sed -i "${package_version_line}s/^[[:space:]]*version[[:space:]]*=.*$/version = \"${version}\"/" "$cargo_toml"
