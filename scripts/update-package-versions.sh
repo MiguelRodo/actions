@@ -29,17 +29,21 @@ resolve_package_version() {
 }
 
 if [[ -f pyproject.toml ]]; then
-  CURRENT_PY="$(sed -n "s/^version = [\"']\([^\"']*\)[\"']/\1/p" pyproject.toml | tr -d '[:space:]')"
+  CURRENT_PY="$(
+    sed -n "/^\[project\][[:space:]]*$/,/^\[/ {
+      s/^[[:space:]]*version[[:space:]]*=[[:space:]]*[\"']\([^\"']*\)[\"'].*/\1/p
+    }" pyproject.toml | head -n 1 | tr -d '[:space:]'
+  )"
   [[ -n "$CURRENT_PY" ]] || {
     echo "Error: could not read version from pyproject.toml" >&2
     exit 1
   }
 
   NEW_PY_VERSION="$(resolve_package_version "$PYTHON_VERSION" "$CURRENT_PY")"
-  sed -i \
-    -e "s/^version = \"[^\"]*\"/version = \"${NEW_PY_VERSION}\"/" \
-    -e "s/^version = '[^']*'/version = '${NEW_PY_VERSION}'/" \
-    pyproject.toml
+  sed -i "/^\[project\][[:space:]]*$/,/^\[/ {
+    s/^\([[:space:]]*version[[:space:]]*=[[:space:]]*\)\"[^\"]*\"/\1\"${NEW_PY_VERSION}\"/
+    s/^\([[:space:]]*version[[:space:]]*=[[:space:]]*\)'[^']*'/\1'${NEW_PY_VERSION}'/
+  }" pyproject.toml
   echo "Python version → ${NEW_PY_VERSION}"
 else
   echo "No pyproject.toml found; skipping Python version update."
