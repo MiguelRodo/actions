@@ -1,27 +1,22 @@
 #!/bin/bash
 # Resolve prebuild-devcontainer's image tag and cache source from one registry read.
-# Usage: prebuild-devcontainer-version.sh IMAGE_NAME VERSION TAG BUMP_TYPE VERSION_FORCE GITHUB_REF
+# Usage: prebuild-devcontainer-version.sh IMAGE_NAME VERSION BUMP_TYPE VERSION_FORCE GITHUB_REF
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-IMAGE_NAME="${1:?Usage: prebuild-devcontainer-version.sh IMAGE_NAME VERSION TAG BUMP_TYPE VERSION_FORCE GITHUB_REF}"
+IMAGE_NAME="${1:?Usage: prebuild-devcontainer-version.sh IMAGE_NAME VERSION BUMP_TYPE VERSION_FORCE GITHUB_REF}"
 RAW_VERSION="${2-}"
-RAW_TAG="${3-}"
-RAW_BUMP="${4-}"
-VERSION_FORCE="${5:-false}"
-GITHUB_REF="${6-}"
+RAW_BUMP="${3-}"
+VERSION_FORCE="${4:-false}"
+GITHUB_REF="${5-}"
 
-VERSION_INPUT=$("$SCRIPT_DIR/normalize-action-input.sh" "${RAW_VERSION:-$RAW_TAG}")
+VERSION_INPUT=$("$SCRIPT_DIR/normalize-action-input.sh" "$RAW_VERSION")
 BUMP_INPUT=$("$SCRIPT_DIR/normalize-action-input.sh" "$RAW_BUMP")
 
 if [ -n "$VERSION_INPUT" ] && [ -n "$BUMP_INPUT" ]; then
-  echo "Error: cannot set both 'version' (or 'tag') and 'bump_type'." >&2
+  echo "Error: cannot set both 'version' and 'bump_type'." >&2
   exit 1
-fi
-
-if [ -z "$RAW_VERSION" ] && [ -n "$RAW_TAG" ]; then
-  echo "::warning::Input 'tag' is deprecated; use 'version'." >&2
 fi
 
 ALL_TAGS=""
