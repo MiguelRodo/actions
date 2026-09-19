@@ -14,8 +14,8 @@ scripts. There is no compiled application: everything is YAML and bash.
 - `scripts/tests/*.bats` — BATS tests, including tests that assert on the
   contents of `action.yml` files (e.g. pinned action versions and defaults).
 - `examples/` — copy-paste-ready caller workflows.
-- `*.qmd` and `_quarto.yml` — the published documentation site; action pages
-  retain hand-written site guidance while their input/output references are generated.
+- `*.qmd` and `_quarto.yml` — the published documentation site; each action
+  page is generated from its action README.
 
 ## Validation (run these before finishing)
 
@@ -42,8 +42,8 @@ preinstalled by `.github/workflows/copilot-setup-steps.yml`.
 - After changing an action's `name`, `description`, inputs or outputs, run
   `python3 scripts/generate-action-docs.py --write`. Do not hand-edit content
   inside `action-inputs`, `action-outputs` or `action-catalogue` marker blocks.
-- Update hand-written README/QMD guidance and examples when behaviour changes;
-  generated reference tables are not a substitute for conceptual documentation.
+- Update hand-written README guidance and canonical examples when behaviour changes;
+  do not hand-edit the matching generated action QMD page.
 
 ## Do not
 

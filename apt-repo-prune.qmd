@@ -1,10 +1,13 @@
 ---
-title: "APT Repository Prune"
+title: "Prune APT Repository"
 ---
+
+<!-- generated-from-action-readme -->
+<!-- This page is generated from apt-repo-prune/README.md. -->
 
 Composite action for pruning superseded `.deb` package versions from a GitHub-hosted apt repository.  The action rewrites the full Git history of the target repository so that removed binaries are eliminated entirely—not just from the tip—then regenerates the apt metadata and force-pushes the result.
 
-The action is designed for repositories that are managed by the [go-version-release](../go-version-release) action in this repository; it validates the expected `pool/main/` and `dists/stable/` structure before proceeding.
+The action is designed for repositories that are managed by the [go-version-release](go-version-release.qmd) action in this repository; it validates the expected `pool/main/` and `dists/stable/` structure before proceeding.
 
 > [!IMPORTANT]
 > Because history is rewritten every run requires a **force-push**.  Ensure the default branch does **not** have force-push protection enabled (or that the token used has bypass permission).

@@ -2,6 +2,9 @@
 title: "Rust Version and Release"
 ---
 
+<!-- generated-from-action-readme -->
+<!-- This page is generated from rust-version-release/README.md. -->
+
 Standalone composite action for pure Rust releases. It resolves a semantic version, optionally validates strict progression from the latest semver tag, updates `Cargo.toml`, creates/pushes the release tag, updates floating major/minor tags, builds `.deb` packages natively with `cargo-deb`, publishes a GitHub Release, and can also publish generated `.deb` artifacts to a separate GitHub repository as a structured apt repository.
 
 ## Usage
@@ -58,6 +61,7 @@ jobs:
           bump_type: ${{ inputs.bump_type }}
           version_force: ${{ inputs.version_force }}
           rust_version: ${{ inputs.rust_version }}
+```
 
 > [!IMPORTANT]
 > Use `fetch-depth: 0` on checkout so the action can inspect existing tags.

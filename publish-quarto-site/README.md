@@ -4,32 +4,7 @@ A composite GitHub Action that publishes a Quarto site to the `gh-pages` branch 
 
 ## 📋 TL;DR
 
-Copy the following to `.github/workflows/publish-quarto-site.yml`:
-
-```yaml
-name: Publish Quarto Site
-
-on:
-  push:
-    branches: [main]
-
-permissions:
-  contents: write
-  pages: write
-
-jobs:
-  build-and-publish:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Publish Quarto Site
-        uses: MiguelRodo/actions/publish-quarto-site@v2
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-```
+Copy [`examples/publish-quarto-site.yml`](../examples/publish-quarto-site.yml) into `.github/workflows/publish-quarto-site.yml` and adjust the optional inputs as needed.
 
 ---
 

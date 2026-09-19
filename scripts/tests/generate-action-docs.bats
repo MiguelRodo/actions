@@ -32,6 +32,8 @@ YAML
 
 Narrative before the generated reference.
 
+See [full example](../examples/demo.yml) and [other action](../other-action).
+
 ## Inputs
 
 | Input | Description | Required |
@@ -96,7 +98,7 @@ teardown() {
   rm -rf "$TMP_ROOT"
 }
 
-@test "write generates bounded references and catalogues from action.yml" {
+@test "write generates README references, README-backed QMDs and catalogues" {
   run python3 "$REPO_ROOT/scripts/generate-action-docs.py" --root "$TMP_ROOT" --write
   [ "$status" -eq 0 ]
 
@@ -108,15 +110,31 @@ teardown() {
   grep -Fq 'Narrative before the generated reference.' "$TMP_ROOT/demo/README.md"
   grep -Fq 'Narrative after the generated reference.' "$TMP_ROOT/demo/README.md"
 
-  grep -Fq 'Quarto-specific narrative.' "$TMP_ROOT/demo.qmd"
-  grep -Fq 'Keep this section.' "$TMP_ROOT/demo.qmd"
+  grep -Fq '<!-- generated-from-action-readme -->' "$TMP_ROOT/demo.qmd"
+  grep -Fq 'title: "Demo Action"' "$TMP_ROOT/demo.qmd"
+  grep -Fq 'Narrative before the generated reference.' "$TMP_ROOT/demo.qmd"
+  grep -Fq 'Narrative after the generated reference.' "$TMP_ROOT/demo.qmd"
+  grep -Fq '[full example](examples/demo.yml)' "$TMP_ROOT/demo.qmd"
+  grep -Fq '[other action](other-action.qmd)' "$TMP_ROOT/demo.qmd"
+  ! grep -Fq 'Quarto-specific narrative.' "$TMP_ROOT/demo.qmd"
+  ! grep -Fq 'Keep this section.' "$TMP_ROOT/demo.qmd"
   grep -Fq '<!-- action-catalogue:start -->' "$TMP_ROOT/README.md"
   grep -Fq '[Demo Action](./demo/README.md)' "$TMP_ROOT/README.md"
+  grep -Fq '.github/workflows/publish-release.yml' "$TMP_ROOT/README.md"
   grep -Fq '[Demo Action](demo.qmd)' "$TMP_ROOT/index.qmd"
   grep -Fq 'Keep this section.' "$TMP_ROOT/index.qmd"
 
   run python3 "$REPO_ROOT/scripts/generate-action-docs.py" --root "$TMP_ROOT" --check
   [ "$status" -eq 0 ]
+}
+
+@test "check rejects hand-edited generated qmd" {
+  python3 "$REPO_ROOT/scripts/generate-action-docs.py" --root "$TMP_ROOT" --write >/dev/null
+  printf '\nmanual drift\n' >> "$TMP_ROOT/demo.qmd"
+
+  run python3 "$REPO_ROOT/scripts/generate-action-docs.py" --root "$TMP_ROOT" --check
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"demo.qmd"* ]]
 }
 
 @test "check reports docs stale after action metadata changes" {

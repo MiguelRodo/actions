@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Generate action reference documentation from composite action metadata.
 
-The public input/output contract lives in each ``<action>/action.yml``.  This
-script keeps bounded reference sections in the action README and matching
-Quarto page in sync, and generates the repository-level action catalogues.
+The public input/output contract lives in each ``<action>/action.yml``. This
+script keeps bounded reference sections in each action README, generates the
+matching Quarto page from that README, and generates repository-level action
+catalogues.
 
 Use ``--write`` to update files and ``--check`` in CI to fail when generated
 content is stale.  The parser intentionally handles only the small, regular
@@ -302,7 +303,7 @@ Use a specific `vX.Y.Z` tag when you want an exact release, or pin a full commit
 
 Each action's README contains its usage, permissions and operational guidance. The published documentation site is available at <https://miguelrodo.github.io/actions/>.
 
-Input/output reference tables and this catalogue are generated from the corresponding `action.yml` metadata. Regenerate them after changing an action interface:
+Input/output reference tables and this catalogue are generated from the corresponding `action.yml` metadata. Each top-level action `.qmd` page is generated from that action's README. Regenerate documentation after changing an action interface or README:
 
 ```bash
 python3 scripts/generate-action-docs.py --write
@@ -314,11 +315,11 @@ CI verifies that generated documentation is current with:
 python3 scripts/generate-action-docs.py --check
 ```
 
-Only the bounded `action-inputs`, `action-outputs` and `action-catalogue` blocks are generated. Narrative guidance and examples outside those blocks remain hand-written.
+Do not hand-edit generated action `.qmd` pages or content inside the bounded `action-inputs`, `action-outputs` and `action-catalogue` blocks. Keep full copy-paste workflow examples in `examples/` and link to them from action READMEs.
 
 ## Releases
 
-Repository releases are managed by `.github/workflows/release.yml`. Specific release tags use `vX.Y.Z`; floating `vX` and `vX.Y` tags follow the latest compatible release.
+Repository releases are managed by `.github/workflows/publish-release.yml`. Specific release tags use `vX.Y.Z`; floating `vX` and `vX.Y` tags follow the latest compatible release.
 
 ## Contributing
 
@@ -350,6 +351,12 @@ def yaml_quote(value: str) -> str:
 
 def qmd_from_readme(action: Action, readme: str) -> str:
     body = re.sub(r"^#\s+[^\n]+\n+", "", readme, count=1)
+    body = body.replace("](../examples/", "](examples/")
+    body = re.sub(
+        r"]\(\.\./([A-Za-z0-9-]+)(#[^)]+)?\)",
+        lambda match: f"]({match.group(1)}.qmd{match.group(2) or ''})",
+        body,
+    )
     return (
         f"---\ntitle: {yaml_quote(action.name)}\n---\n\n"
         f"{GENERATED_QMD_MARKER}\n"
@@ -373,15 +380,7 @@ def expected_files(root: Path) -> dict[Path, str]:
         changes[readme_path] = readme
 
         qmd_path = root / f"{action.slug}.qmd"
-        if qmd_path.exists():
-            current_qmd = qmd_path.read_text(encoding="utf-8")
-            if GENERATED_QMD_MARKER in current_qmd:
-                qmd = qmd_from_readme(action, readme)
-            else:
-                qmd = update_action_doc(current_qmd, action)
-        else:
-            qmd = qmd_from_readme(action, readme)
-        changes[qmd_path] = qmd
+        changes[qmd_path] = qmd_from_readme(action, readme)
 
     root_readme = root / "README.md"
     if root_readme.exists():

@@ -37,10 +37,10 @@ Inline `run:` blocks are linted by **actionlint** (which delegates to **shellche
   python3 scripts/generate-action-docs.py --write
   ```
 
-- Do not hand-edit content inside `action-inputs`, `action-outputs` or `action-catalogue` marker blocks. CI runs `python3 scripts/generate-action-docs.py --check` and fails when those sections are stale.
-- Keep narrative guidance and examples outside generated blocks up to date when behaviour changes.
+- Do not hand-edit content inside `action-inputs`, `action-outputs` or `action-catalogue` marker blocks, or the matching top-level action `.qmd` page. Each action QMD is generated from its README. CI runs `python3 scripts/generate-action-docs.py --check` and fails when generated documentation is stale.
+- Keep narrative guidance in the action README up to date when behaviour changes.
 - The root `README.md` is intentionally a concise catalogue rather than a second copy of each action's documentation.
-- Complete, copy-paste-ready workflow files live in the `examples/` directory.
+- Complete, copy-paste-ready workflow files live in the `examples/` directory. Keep one canonical full workflow there and link to it from the action README instead of duplicating it.
 
 ### Workflow dependency security
 
