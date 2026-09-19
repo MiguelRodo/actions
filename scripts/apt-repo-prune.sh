@@ -33,7 +33,6 @@ cleanup() {
 trap cleanup EXIT
 
 apt_repository_require_tools
-apt_repository_setup_signing
 
 export GIT_TOKEN_FOR_ASKPASS="$PUSH_TOKEN"
 setup_git_askpass
@@ -65,6 +64,10 @@ if [[ -z "$PATHS_TO_REMOVE_FILE" || ! -s "$PATHS_TO_REMOVE_FILE" ]]; then
   echo "Error: prune planner did not return a non-empty removal list." >&2
   exit 1
 fi
+
+# Validate/import the signing key before rewriting history so a signing problem
+# cannot leave us with a rewritten repository that cannot be published safely.
+apt_repository_setup_signing
 
 (
   cd "$APT_REPO_DIR"
