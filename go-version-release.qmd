@@ -179,7 +179,7 @@ When `apt_repo` is set, the action:
 3. Publishes `.deb` files under `pool/main/<bucket>/`
 4. Regenerates architecture-specific `Packages` / `Packages.gz` indexes in `dists/stable/main/binary-<arch>/`
 5. Regenerates `dists/stable/Release` with all detected architectures
-6. When `apt_signing_key` is provided, signs the `Release` file to produce `dists/stable/InRelease` (clearsigned) and `Release.gpg` (detached ASCII-armoured signature)
+6. When `apt_signing_key` is provided, signs the `Release` file to produce `dists/stable/InRelease` (clearsigned) and `Release.gpg` (detached ASCII-armored signature)
 7. Commits and pushes the updated apt repository contents
 
 The same `.deb` files remain attached to the GitHub Release as downloadable assets.
