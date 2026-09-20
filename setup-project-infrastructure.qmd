@@ -23,7 +23,7 @@ jobs:
   bootstrap:
     runs-on: ubuntu-latest
     steps:
-      - uses: MiguelRodo/actions/setup-project-infrastructure@v2
+      - uses: MiguelRodo/actions/setup-project-infrastructure@v3
         with:
           working_repo: "owner/target-compendium@main"
           template_repo: "owner/template-repo@main"

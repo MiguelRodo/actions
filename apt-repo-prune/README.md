@@ -39,7 +39,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: MiguelRodo/actions/apt-repo-prune@v2
+      - uses: MiguelRodo/actions/apt-repo-prune@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           retention: ${{ inputs.retention || 'latest-per-major' }}
@@ -73,7 +73,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: MiguelRodo/actions/apt-repo-prune@v2
+      - uses: MiguelRodo/actions/apt-repo-prune@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           retention: ${{ inputs.retention || 'latest-per-major' }}
