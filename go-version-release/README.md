@@ -58,7 +58,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: MiguelRodo/actions/go-version-release@v2
+      - uses: MiguelRodo/actions/go-version-release@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           apt_repo_token: ${{ secrets.APT_REPO_TOKEN }}
