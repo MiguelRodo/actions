@@ -294,7 +294,7 @@ Reusable composite GitHub Actions for common CI/CD, release, repository and deve
 Reference an action directly from a workflow:
 
 ```yaml
-uses: MiguelRodo/actions/<action-folder-name>@v2
+uses: MiguelRodo/actions/<action-folder-name>@v3
 ```
 
 Use a specific `vX.Y.Z` tag when you want an exact release, or pin a full commit SHA for the strongest supply-chain reproducibility.
