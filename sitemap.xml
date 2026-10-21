@@ -2,46 +2,46 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://MiguelRodo.github.io/actions/go-version-release.html</loc>
-    <lastmod>2026-10-20T19:36:37.565Z</lastmod>
-  </url>
-  <url>
-    <loc>https://MiguelRodo.github.io/actions/SECURITY.html</loc>
-    <lastmod>2026-10-20T19:36:37.564Z</lastmod>
-  </url>
-  <url>
-    <loc>https://MiguelRodo.github.io/actions/version-release.html</loc>
-    <lastmod>2026-10-20T19:36:37.568Z</lastmod>
-  </url>
-  <url>
-    <loc>https://MiguelRodo.github.io/actions/setup-project-infrastructure.html</loc>
-    <lastmod>2026-10-20T19:36:37.567Z</lastmod>
-  </url>
-  <url>
-    <loc>https://MiguelRodo.github.io/actions/index.html</loc>
-    <lastmod>2026-10-20T19:36:37.565Z</lastmod>
-  </url>
-  <url>
-    <loc>https://MiguelRodo.github.io/actions/rust-version-release.html</loc>
-    <lastmod>2026-10-20T19:36:37.565Z</lastmod>
-  </url>
-  <url>
-    <loc>https://MiguelRodo.github.io/actions/r-version-release.html</loc>
-    <lastmod>2026-10-20T19:36:37.565Z</lastmod>
+    <lastmod>2026-10-21T08:27:36.567Z</lastmod>
   </url>
   <url>
     <loc>https://MiguelRodo.github.io/actions/CONTRIBUTING.html</loc>
-    <lastmod>2026-10-20T19:36:37.564Z</lastmod>
+    <lastmod>2026-10-21T08:27:36.566Z</lastmod>
+  </url>
+  <url>
+    <loc>https://MiguelRodo.github.io/actions/SECURITY.html</loc>
+    <lastmod>2026-10-21T08:27:36.566Z</lastmod>
+  </url>
+  <url>
+    <loc>https://MiguelRodo.github.io/actions/r-version-release.html</loc>
+    <lastmod>2026-10-21T08:27:36.568Z</lastmod>
+  </url>
+  <url>
+    <loc>https://MiguelRodo.github.io/actions/setup-project-infrastructure.html</loc>
+    <lastmod>2026-10-21T08:27:36.571Z</lastmod>
   </url>
   <url>
     <loc>https://MiguelRodo.github.io/actions/apt-repo-prune.html</loc>
-    <lastmod>2026-10-20T19:36:37.564Z</lastmod>
+    <lastmod>2026-10-21T08:27:36.566Z</lastmod>
   </url>
   <url>
-    <loc>https://MiguelRodo.github.io/actions/prebuild-devcontainer.html</loc>
-    <lastmod>2026-10-20T19:36:37.565Z</lastmod>
+    <loc>https://MiguelRodo.github.io/actions/rust-version-release.html</loc>
+    <lastmod>2026-10-21T08:27:36.568Z</lastmod>
+  </url>
+  <url>
+    <loc>https://MiguelRodo.github.io/actions/version-release.html</loc>
+    <lastmod>2026-10-21T08:27:36.572Z</lastmod>
   </url>
   <url>
     <loc>https://MiguelRodo.github.io/actions/publish-quarto-site.html</loc>
-    <lastmod>2026-10-20T19:36:37.565Z</lastmod>
+    <lastmod>2026-10-21T08:27:36.568Z</lastmod>
+  </url>
+  <url>
+    <loc>https://MiguelRodo.github.io/actions/prebuild-devcontainer.html</loc>
+    <lastmod>2026-10-21T08:27:36.568Z</lastmod>
+  </url>
+  <url>
+    <loc>https://MiguelRodo.github.io/actions/index.html</loc>
+    <lastmod>2026-10-21T08:27:36.568Z</lastmod>
   </url>
 </urlset>

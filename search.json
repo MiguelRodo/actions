@@ -70,6 +70,34 @@
     "text": "Why use this action vs goreleaser/goreleaser-action?\nThis action adds release workflow capabilities around GoReleaser:\n\nVersion management: resolves explicit or bumped semver versions and can enforce strict progression.\nFloating tags: automatically updates vX and vX.Y aliases alongside vX.Y.Z.\nAPT repository management: publishes .deb artifacts to a full apt repository layout and can sign metadata (Release, InRelease, Release.gpg) with GPG.\n\nUse GoReleaser config (.goreleaser.yml) for native publishers such as GitHub Releases, Homebrew, and Scoop."
   },
   {
+    "objectID": "CONTRIBUTING.html",
+    "href": "CONTRIBUTING.html",
+    "title": "Contributing",
+    "section": "",
+    "text": "Thank you for considering a contribution to this repository! All improvements — bug fixes, documentation, new features, and tests — are welcome.\n\n\n\nFork the repository and create a feature branch from main.\nMake your changes following the guidelines below.\nOpen a pull request against main with a clear description of what changed and why.\n\n\n\n\n\n\nEach action lives in its own subdirectory (e.g. prebuild-devcontainer/). The entry point is always action.yml.\n\nKeep all logic inside action.yml. Avoid adding separate shell scripts unless the complexity makes inline scripts unreadable.\nUse $GITHUB_OUTPUT (not ::set-output) for outputs and $GITHUB_ENV for inter-step environment variables.\nEvery new input must have a description and a required field. Provide a default for optional inputs.\nEvery new output must be declared in the outputs: block of action.yml.\n\n\n\n\nInline run: blocks are linted by actionlint (which delegates to shellcheck). Before submitting:\n\nEnsure your scripts pass shellcheck --shell=bash.\nPrefer [[ ... ]] over [ ... ] for conditionals in bash.\nQuote all variable expansions (e.g. \"$VAR\") unless word-splitting is intentional.\n\n\n\n\n\nEach action has its own README.md containing hand-written usage, permissions and operational guidance.\naction.yml is the canonical source for an action’s machine-readable name, description, inputs and outputs.\nAfter changing that metadata, regenerate the reference tables and action catalogues with:\npython3 scripts/generate-action-docs.py --write\nDo not hand-edit content inside action-inputs, action-outputs or action-catalogue marker blocks, or the matching top-level action .qmd page. Each action QMD is generated from its README. CI runs python3 scripts/generate-action-docs.py --check and fails when generated documentation is stale.\nKeep narrative guidance in the action README up to date when behaviour changes.\nThe root README.md is intentionally a concise catalogue rather than a second copy of each action’s documentation.\nComplete, copy-paste-ready workflow files live in the examples/ directory. Keep one canonical full workflow there and link to it from the action README instead of duplicating it.\n\n\n\n\nRepository-owned workflows under .github/workflows/ may receive privileged tokens, publish artifacts or enforce CI. Their third-party actions are therefore pinned to full immutable commit SHAs, with the corresponding release version retained as an inline comment. Dependabot updates these SHA pins monthly and groups routine GitHub Actions updates into one low-noise PR; updates still require the normal protected-branch CI before merge.\nPublished composite actions and copy-paste consumer examples may instead use readable major tags such as @v3. Those surfaces prioritize consumer compatibility and automatic patch uptake, while this repository’s own privileged execution path uses stricter immutable pins.\nactionlint is installed by scripts/install-actionlint.sh from a fixed release archive whose SHA-256 digest is pinned to the checksum published with that upstream release. It is updated manually when needed rather than through a separate recurring version-check workflow.\n\n\n\nReleases are managed by .github/workflows/publish-release.yml. Release requests use a repository_dispatch event so GitHub always loads the privileged workflow from the default branch, never from the commit being tagged.\nRequest a release with a token that can dispatch repository events:\ngh api --method POST repos/MiguelRodo/actions/dispatches --input - &lt;&lt;'JSON'\n{\"event_type\":\"release\",\"client_payload\":{\"version\":\"vX.Y.Z\"}}\nJSON\n\n\nThe workflow refuses to release a commit that is not on main:\n\nOnly repository_dispatch with event type release triggers publishing. Direct tag pushes do not trigger the trusted workflow.\nThe checked-out release commit is the default-branch SHA associated with the dispatch event and must be reachable from origin/main (scripts/check-release-ancestry.sh).\nAll required checks must have succeeded for that exact commit (scripts/check-required-ci.sh) before any tag is moved: actionlint/shellcheck, BATS, and the prebuild-devcontainer integration test.\nAn existing version tag is reusable only when it resolves to the validated release commit (scripts/check-release-tag.sh).\nFloating vX / vX.Y tags are updated last, only after ancestry, CI status and release creation have all passed, and are pinned to the validated commit.\n\nThe one-time .github/workflows/disable-legacy-release.yml migration disables the historical .github/workflows/release.yml workflow identity after this change reaches main. This prevents a tag pointing at an older commit from executing that commit’s obsolete tag-push workflow.\n\n\n\n\nSpecific tags (vX.Y.Z) are annotated tags and have an associated GitHub Release entry with auto-generated notes.\nFloating tags (vX, vX.Y) are lightweight tags that are force-updated on every release to point to the latest matching commit. They do not have their own GitHub Release entries — this is intentional. The GitHub Releases page only shows entries for specific vX.Y.Z tags.\nConsumers of these actions should pin to a floating tag (e.g. @v3 or @v3.17) or a specific tag (e.g. @v3.17.0), not to a Release object.\n\nTo verify what commit a floating tag resolves to:\n# Show the commit a tag points to\ngit ls-remote --tags https://github.com/MiguelRodo/actions \"refs/tags/v3\"\n# or, in a local clone:\ngit rev-list -n 1 refs/tags/v3\n\n\n\n\n\nPlease be respectful and constructive in all interactions. This project follows the Contributor Covenant code of conduct."
+  },
+  {
+    "objectID": "CONTRIBUTING.html#getting-started",
+    "href": "CONTRIBUTING.html#getting-started",
+    "title": "Contributing",
+    "section": "",
+    "text": "Fork the repository and create a feature branch from main.\nMake your changes following the guidelines below.\nOpen a pull request against main with a clear description of what changed and why."
+  },
+  {
+    "objectID": "CONTRIBUTING.html#development-guidelines",
+    "href": "CONTRIBUTING.html#development-guidelines",
+    "title": "Contributing",
+    "section": "",
+    "text": "Each action lives in its own subdirectory (e.g. prebuild-devcontainer/). The entry point is always action.yml.\n\nKeep all logic inside action.yml. Avoid adding separate shell scripts unless the complexity makes inline scripts unreadable.\nUse $GITHUB_OUTPUT (not ::set-output) for outputs and $GITHUB_ENV for inter-step environment variables.\nEvery new input must have a description and a required field. Provide a default for optional inputs.\nEvery new output must be declared in the outputs: block of action.yml.\n\n\n\n\nInline run: blocks are linted by actionlint (which delegates to shellcheck). Before submitting:\n\nEnsure your scripts pass shellcheck --shell=bash.\nPrefer [[ ... ]] over [ ... ] for conditionals in bash.\nQuote all variable expansions (e.g. \"$VAR\") unless word-splitting is intentional.\n\n\n\n\n\nEach action has its own README.md containing hand-written usage, permissions and operational guidance.\naction.yml is the canonical source for an action’s machine-readable name, description, inputs and outputs.\nAfter changing that metadata, regenerate the reference tables and action catalogues with:\npython3 scripts/generate-action-docs.py --write\nDo not hand-edit content inside action-inputs, action-outputs or action-catalogue marker blocks, or the matching top-level action .qmd page. Each action QMD is generated from its README. CI runs python3 scripts/generate-action-docs.py --check and fails when generated documentation is stale.\nKeep narrative guidance in the action README up to date when behaviour changes.\nThe root README.md is intentionally a concise catalogue rather than a second copy of each action’s documentation.\nComplete, copy-paste-ready workflow files live in the examples/ directory. Keep one canonical full workflow there and link to it from the action README instead of duplicating it.\n\n\n\n\nRepository-owned workflows under .github/workflows/ may receive privileged tokens, publish artifacts or enforce CI. Their third-party actions are therefore pinned to full immutable commit SHAs, with the corresponding release version retained as an inline comment. Dependabot updates these SHA pins monthly and groups routine GitHub Actions updates into one low-noise PR; updates still require the normal protected-branch CI before merge.\nPublished composite actions and copy-paste consumer examples may instead use readable major tags such as @v3. Those surfaces prioritize consumer compatibility and automatic patch uptake, while this repository’s own privileged execution path uses stricter immutable pins.\nactionlint is installed by scripts/install-actionlint.sh from a fixed release archive whose SHA-256 digest is pinned to the checksum published with that upstream release. It is updated manually when needed rather than through a separate recurring version-check workflow.\n\n\n\nReleases are managed by .github/workflows/publish-release.yml. Release requests use a repository_dispatch event so GitHub always loads the privileged workflow from the default branch, never from the commit being tagged.\nRequest a release with a token that can dispatch repository events:\ngh api --method POST repos/MiguelRodo/actions/dispatches --input - &lt;&lt;'JSON'\n{\"event_type\":\"release\",\"client_payload\":{\"version\":\"vX.Y.Z\"}}\nJSON\n\n\nThe workflow refuses to release a commit that is not on main:\n\nOnly repository_dispatch with event type release triggers publishing. Direct tag pushes do not trigger the trusted workflow.\nThe checked-out release commit is the default-branch SHA associated with the dispatch event and must be reachable from origin/main (scripts/check-release-ancestry.sh).\nAll required checks must have succeeded for that exact commit (scripts/check-required-ci.sh) before any tag is moved: actionlint/shellcheck, BATS, and the prebuild-devcontainer integration test.\nAn existing version tag is reusable only when it resolves to the validated release commit (scripts/check-release-tag.sh).\nFloating vX / vX.Y tags are updated last, only after ancestry, CI status and release creation have all passed, and are pinned to the validated commit.\n\nThe one-time .github/workflows/disable-legacy-release.yml migration disables the historical .github/workflows/release.yml workflow identity after this change reaches main. This prevents a tag pointing at an older commit from executing that commit’s obsolete tag-push workflow.\n\n\n\n\nSpecific tags (vX.Y.Z) are annotated tags and have an associated GitHub Release entry with auto-generated notes.\nFloating tags (vX, vX.Y) are lightweight tags that are force-updated on every release to point to the latest matching commit. They do not have their own GitHub Release entries — this is intentional. The GitHub Releases page only shows entries for specific vX.Y.Z tags.\nConsumers of these actions should pin to a floating tag (e.g. @v3 or @v3.17) or a specific tag (e.g. @v3.17.0), not to a Release object.\n\nTo verify what commit a floating tag resolves to:\n# Show the commit a tag points to\ngit ls-remote --tags https://github.com/MiguelRodo/actions \"refs/tags/v3\"\n# or, in a local clone:\ngit rev-list -n 1 refs/tags/v3"
+  },
+  {
+    "objectID": "CONTRIBUTING.html#code-of-conduct",
+    "href": "CONTRIBUTING.html#code-of-conduct",
+    "title": "Contributing",
+    "section": "",
+    "text": "Please be respectful and constructive in all interactions. This project follows the Contributor Covenant code of conduct."
+  },
+  {
     "objectID": "SECURITY.html",
     "href": "SECURITY.html",
     "title": "Security Policy",
@@ -98,46 +126,32 @@
     "text": "Each action documents the minimum token scopes it requires. Never grant broader scopes than necessary:\n\nprebuild-devcontainer — contents: write, packages: write\nversion-release — contents: write\npublish-quarto-site — contents: write, pages: write\n\n\n\n\nFloating tags (e.g. @v3) are convenient but can be updated at any time. For environments with strict supply-chain requirements, pin to a specific commit SHA:\nuses: MiguelRodo/actions/prebuild-devcontainer@&lt;full-commit-sha&gt;\nFind the SHA for any release on the Releases page or by running:\ngit ls-remote https://github.com/MiguelRodo/actions refs/tags/v3"
   },
   {
-    "objectID": "version-release.html",
-    "href": "version-release.html",
-    "title": "Version and Release",
+    "objectID": "r-version-release.html",
+    "href": "r-version-release.html",
+    "title": "R Version and Release",
     "section": "",
-    "text": "A composite GitHub Action that:"
+    "text": "Bumps the version in an R DESCRIPTION file, builds the R package as a tarball, creates a versioned git tag with floating major/minor aliases, and publishes a GitHub Release containing the .tar.gz package artifact.\nThis makes it convenient for users to install that specific version (e.g. using remotes::install_github() or similar)."
   },
   {
-    "objectID": "version-release.html#quick-start",
-    "href": "version-release.html#quick-start",
-    "title": "Version and Release",
-    "section": "Quick Start",
-    "text": "Quick Start\nCopy examples/version-release.yml into .github/workflows/version-release.yml and adjust the optional version inputs as needed."
+    "objectID": "r-version-release.html#usage",
+    "href": "r-version-release.html#usage",
+    "title": "R Version and Release",
+    "section": "Usage",
+    "text": "Usage\nFor a manual run, either enter an exact version or choose a component to bump.\nname: R Version and Release\n\non:\n  push:\n    tags:\n      - 'v[0-9]+.[0-9]+.[0-9]+'\n  workflow_dispatch:\n    inputs:\n      version:\n        description: 'Exact release version in X.Y.Z form (e.g. 1.2.3). Leave blank to bump a component.'\n        required: false\n        type: string\n      bump_type:\n        description: 'Component to bump. Choose none when entering an exact version.'\n        required: false\n        type: choice\n        default: none\n        options:\n          - none\n          - patch\n          - minor\n          - major\n      version_force:\n        description: 'Allow a non-sequential version, such as a downgrade or skipped increment.'\n        required: false\n        type: boolean\n        default: false\n\njobs:\n  release:\n    runs-on: ubuntu-latest\n    permissions:\n      contents: write\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          fetch-depth: 0\n      - uses: MiguelRodo/actions/r-version-release@v3\n        with:\n          github_token: ${{ secrets.GITHUB_TOKEN }}\n          version: ${{ inputs.version }}\n          bump_type: ${{ inputs.bump_type != 'none' && inputs.bump_type || '' }}\n          version_force: ${{ inputs.version_force }}"
   },
   {
-    "objectID": "version-release.html#permissions",
-    "href": "version-release.html#permissions",
-    "title": "Version and Release",
-    "section": "Permissions",
-    "text": "Permissions\nThe calling workflow needs the following permission:\n\n\n\n\n\n\n\nPermission\nWhy it is needed\n\n\n\n\ncontents: write\nPush version-bump commits, create/update tags, and publish the GitHub Release.\n\n\n\npermissions:\n  contents: write\n\nVersion pinning: For stricter supply-chain security, pin to a specific commit SHA instead of a floating tag:\nuses: MiguelRodo/actions/version-release@&lt;full-commit-sha&gt;"
-  },
-  {
-    "objectID": "version-release.html#inputs",
-    "href": "version-release.html#inputs",
-    "title": "Version and Release",
+    "objectID": "r-version-release.html#inputs",
+    "href": "r-version-release.html#inputs",
+    "title": "R Version and Release",
     "section": "Inputs",
-    "text": "Inputs\n\n\n\n\n\n\n\n\n\nInput\nDescription\nRequired\nDefault\n\n\n\n\ngithub_token\nGitHub token for pushing tags and creating releases.\nYes\n—\n\n\nversion\nExact release version in X.Y.Z form (e.g. 1.2.3). Leave blank to use bump_type. Overridden per package by python_version or r_version.\nNo\n\"\"\n\n\nbump_type\nVersion component to bump: patch, minor, or major. Leave blank when version is set.\nNo\n\"\"\n\n\npython_version\nOptional exact Python version in X.Y.Z form; overrides version.\nNo\n\"\"\n\n\nr_version\nOptional exact R version in X.Y.Z form; overrides version.\nNo\n\"\"\n\n\nversion_force\nSet true to allow non-sequential versions (e.g. downgrades or skipped increments).\nNo\nfalse"
+    "text": "Inputs\n\n\n\n\n\n\n\n\n\nInput\nDescription\nRequired\nDefault\n\n\n\n\ngithub_token\nGitHub token for pushing tags and publishing releases.\nYes\n—\n\n\nversion\nExact release version in X.Y.Z form (e.g. 1.2.3). Leave blank to use bump_type.\nNo\n\"\"\n\n\nbump_type\nVersion component to bump: patch, minor, or major. Leave blank when version is set.\nNo\n\"\"\n\n\nversion_force\nSet true to allow non-sequential versions (e.g. downgrades or skipped increments).\nNo\nfalse"
   },
   {
-    "objectID": "version-release.html#outputs",
-    "href": "version-release.html#outputs",
-    "title": "Version and Release",
+    "objectID": "r-version-release.html#outputs",
+    "href": "r-version-release.html#outputs",
+    "title": "R Version and Release",
     "section": "Outputs",
     "text": "Outputs\n\n\n\nOutput\nDescription\n\n\n\n\nversion\nReleased version without a leading v (e.g. 1.2.3).\n\n\ntag\nGit tag that was created (e.g. v1.2.3)."
-  },
-  {
-    "objectID": "version-release.html#how-it-works",
-    "href": "version-release.html#how-it-works",
-    "title": "Version and Release",
-    "section": "How it works",
-    "text": "How it works\n\nTrigger: tag push (v*)\nThe version is taken directly from the pushed tag (e.g. v1.2.3 → 1.2.3). The version and bump_type inputs are ignored.\n\n\nTrigger: workflow_dispatch\nExactly one of the following must be supplied:\n\nversion — use an explicit version for all packages (e.g. 1.2.3).\nbump_type — derive the new version by bumping the most recent semver git tag.\n\nThe python_version and r_version inputs always override the global version for their respective packages.\n\n\nPython package (pyproject.toml)\nIf pyproject.toml is present in the repository root, the action reads the current version = \"X.Y.Z\" field and updates it to the resolved Python version. If the file is absent the step is silently skipped.\n\n\nR package (DESCRIPTION)\nIf DESCRIPTION is present in the repository root, the action reads the current Version: X.Y.Z field and updates it to the resolved R version. If the file is absent the step is silently skipped.\n\n\nVersion precedence (per package)\n\n\n\nPriority\nSource\n\n\n\n\n1 (highest)\npython_version / r_version input\n\n\n2\nGlobal version input\n\n\n3\nBump the current file version using bump_type\n\n\n4\nUse the tag pushed (tag-push trigger)"
   },
   {
     "objectID": "setup-project-infrastructure.html",
@@ -168,39 +182,39 @@
     "text": "Outputs\n\nWorking, builder, config, and template repositories are cloned or have requested branches created by repos.\nThe full template .devcontainer/, including dotfiles, is copied into the builder.\nrepos.list, Codespaces permissions, and entire-project.code-workspace are managed by repos.\nA separate builder receives .github/workflows/prebuild-devcontainer.yml via setupmjr repo action prebuild-devcontainer.\nA separate config repository is pointed at the builder GHCR image.\nJob summary details are written to the GitHub Actions UI."
   },
   {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "Custom GitHub Actions",
+    "objectID": "apt-repo-prune.html",
+    "href": "apt-repo-prune.html",
+    "title": "Prune APT Repository",
     "section": "",
-    "text": "Reusable composite GitHub Actions for common CI/CD tasks."
+    "text": "Composite action for pruning superseded .deb package versions from a GitHub-hosted apt repository. The action rewrites the full Git history of the target repository so that removed binaries are eliminated entirely—not just from the tip—then regenerates the apt metadata and force-pushes the result.\nThe action is designed for repositories that are managed by the go-version-release action in this repository; it validates the expected pool/main/ and dists/stable/ structure before proceeding."
   },
   {
-    "objectID": "index.html#available-actions",
-    "href": "index.html#available-actions",
-    "title": "Custom GitHub Actions",
-    "section": "Available Actions",
-    "text": "Available Actions\n\n\n\n\n\nAction\nDescription\n\n\n\n\nPrune APT Repository\nRemoves superseded .deb package versions from a GitHub-hosted apt repository and rewrites Git history so that the pruned binaries are fully eliminated. After history rewrite the apt metadata (Packages, Release, optional InRelease / Release.gpg) is regenerated and the result is force-pushed.\n\n\nGo Version and Release\nDetermines a Go project release version, validates semver progression, creates and pushes a git tag, then runs GoReleaser and can publish generated .deb artifacts to apt.\n\n\nPre-build Dev Container\nBuilds a devcontainer, pushes it to a container registry tagged with a git tag and SemVer aliases, and optionally updates the prebuild JSON.\n\n\nPublish Quarto Site\nPublishes a Quarto site to the gh-pages branch, creating the branch if it does not already exist.\n\n\nR Version and Release\nBumps the version in DESCRIPTION, builds the R package, pushes floating tags, and publishes a GitHub Release with the tarball.\n\n\nRust Version and Release\nDetermines a Rust project release version, validates semver progression, creates and pushes a git tag, then builds .deb with cargo-deb and can publish generated .deb artifacts to apt.\n\n\nSetup Project Infrastructure\nBootstraps new multi-repo workspaces by linking working repo, devcontainers, caches, and tracking.\n\n\nVersion and Release\nBumps versions for Python (pyproject.toml) and R (DESCRIPTION) packages when present, creates a versioned git tag, updates floating major/minor tags, and publishes a GitHub Release."
-  },
-  {
-    "objectID": "index.html#usage",
-    "href": "index.html#usage",
-    "title": "Custom GitHub Actions",
+    "objectID": "apt-repo-prune.html#usage",
+    "href": "apt-repo-prune.html#usage",
+    "title": "Prune APT Repository",
     "section": "Usage",
-    "text": "Usage\nReference any action directly in a workflow — no cloning required:\nuses: MiguelRodo/actions/&lt;action-folder-name&gt;@v3"
+    "text": "Usage\n\nWith an encrypted GPG signing key\nname: Prune APT Repository\n\non:\n  workflow_dispatch:\n    inputs:\n      retention:\n        description: 'Versions to retain for each package and architecture.'\n        required: false\n        type: choice\n        default: latest-per-major\n        options:\n          - latest-per-major\n          - latest-per-minor\n          - latest\n  schedule:\n    - cron: '0 3 * * 0'   # weekly on Sunday at 03:00 UTC\n\njobs:\n  prune:\n    runs-on: ubuntu-latest\n    permissions:\n      contents: write\n    steps:\n      - uses: MiguelRodo/actions/apt-repo-prune@v3\n        with:\n          token: ${{ secrets.GITHUB_TOKEN }}\n          retention: ${{ inputs.retention || 'latest-per-major' }}\n          apt_signing_key: ${{ secrets.APT_SIGNING_KEY }}\n          apt_signing_key_passphrase: ${{ secrets.APT_SIGNING_KEY_PASSPHRASE }}\n\n\nWith an unencrypted GPG signing key (no passphrase)\nname: Prune APT Repository\n\non:\n  workflow_dispatch:\n    inputs:\n      retention:\n        description: 'Versions to retain for each package and architecture.'\n        required: false\n        type: choice\n        default: latest-per-major\n        options:\n          - latest-per-major\n          - latest-per-minor\n          - latest\n  schedule:\n    - cron: '0 3 * * 0'   # weekly on Sunday at 03:00 UTC\n\njobs:\n  prune:\n    runs-on: ubuntu-latest\n    permissions:\n      contents: write\n    steps:\n      - uses: MiguelRodo/actions/apt-repo-prune@v3\n        with:\n          token: ${{ secrets.GITHUB_TOKEN }}\n          retention: ${{ inputs.retention || 'latest-per-major' }}\n          apt_signing_key: ${{ secrets.APT_SIGNING_KEY }}\n          # apt_signing_key_passphrase is omitted — unencrypted keys do not need it"
   },
   {
-    "objectID": "index.html#migrating-from-v2-to-v3",
-    "href": "index.html#migrating-from-v2-to-v3",
-    "title": "Custom GitHub Actions",
-    "section": "Migrating from v2 to v3",
-    "text": "Migrating from v2 to v3\n\nprebuild-devcontainer: replace the removed tag input with version.\npublish-quarto-site: remove the no-op renv_restore input; setup-r-dependencies restores renv.lock automatically when setup_r is enabled."
+    "objectID": "apt-repo-prune.html#inputs",
+    "href": "apt-repo-prune.html#inputs",
+    "title": "Prune APT Repository",
+    "section": "Inputs",
+    "text": "Inputs\n\n\n\n\n\n\n\n\n\nInput\nDescription\nRequired\nDefault\n\n\n\n\ntoken\nGitHub token with contents: write permission on the current repository.\nYes\n—\n\n\nretention\nVersion retention policy (case-insensitive). ‘latest’ – keep only the newest version per (package, arch) pair. ‘latest-per-minor’ – keep the highest patch release for each major.minor series. ‘latest-per-major’ (default) – keep the highest minor.patch release for each major series.\nNo\nlatest-per-major\n\n\napt_signing_key\nOptional ASCII-armored GPG private key for signing the regenerated apt metadata. When omitted only the unsigned Release file is written and any stale InRelease / Release.gpg files are removed.\nNo\n\"\"\n\n\napt_signing_key_passphrase\nOptional passphrase for apt_signing_key.\nNo\n\"\""
   },
   {
-    "objectID": "index.html#releasing",
-    "href": "index.html#releasing",
-    "title": "Custom GitHub Actions",
-    "section": "Releasing",
-    "text": "Releasing\nThis repository manages its own versions with an automated workflow. Push a vX.Y.Z tag or run Actions → Publish Release and Bump Floating Tags manually to create a release and update floating major/minor tags."
+    "objectID": "apt-repo-prune.html#how-it-works",
+    "href": "apt-repo-prune.html#how-it-works",
+    "title": "Prune APT Repository",
+    "section": "How it works",
+    "text": "How it works\n\nClone – The current repository is cloned with its full history using the provided token for authentication.\nValidate structure – The action checks that pool/main/ and dists/stable/ exist (the layout produced by go-version-release).\nSelect files to remove – scripts/apt-prune-select-versions.sh reads every .deb file via dpkg-deb, groups versions by (package, arch), and outputs the relative paths of files that fall outside the retention window.\nRewrite history – git filter-repo removes the selected files from every commit, including the root commit when it contains target files (which will change the root commit SHA).\nRegenerate metadata – Packages, Packages.gz, and Release are rebuilt from the remaining .deb files. When apt_signing_key is supplied, InRelease (clearsigned) and Release.gpg (detached signature) are also regenerated.\nForce-push – The rewritten history is pushed to the repository’s default branch with --force."
+  },
+  {
+    "objectID": "apt-repo-prune.html#notes",
+    "href": "apt-repo-prune.html#notes",
+    "title": "Prune APT Repository",
+    "section": "Notes",
+    "text": "Notes\n\nThe action requires dpkg-deb, dpkg-scanpackages, and apt-ftparchive to be available on the runner. These are pre-installed on ubuntu-latest.\ngit-filter-repo is installed automatically via pip if it is not already present.\nOnly .deb files with plain X.Y.Z semver versions are considered; files with non-semver versions are left untouched.\nEach package architecture is evaluated independently, so you can have amd64 at version 2.1.0 while arm64 is still at 2.0.0 and both will be treated separately."
   },
   {
     "objectID": "rust-version-release.html",
@@ -280,95 +294,88 @@
     "text": "Why use this action vs standard cargo tools?\nThis action adds comprehensive release workflow capabilities:\n\nVersion management: resolves explicit or bumped semver versions and can enforce strict progression.\nCargo updates: automatically bumps and commits Cargo.toml.\nFloating tags: automatically updates vX and vX.Y aliases alongside vX.Y.Z.\nAPT repository management: publishes .deb artifacts to a full apt repository layout and can sign metadata (Release, InRelease, Release.gpg) with GPG."
   },
   {
-    "objectID": "r-version-release.html",
-    "href": "r-version-release.html",
-    "title": "R Version and Release",
+    "objectID": "version-release.html",
+    "href": "version-release.html",
+    "title": "Version and Release",
     "section": "",
-    "text": "Bumps the version in an R DESCRIPTION file, builds the R package as a tarball, creates a versioned git tag with floating major/minor aliases, and publishes a GitHub Release containing the .tar.gz package artifact.\nThis makes it convenient for users to install that specific version (e.g. using remotes::install_github() or similar)."
+    "text": "A composite GitHub Action that:"
   },
   {
-    "objectID": "r-version-release.html#usage",
-    "href": "r-version-release.html#usage",
-    "title": "R Version and Release",
-    "section": "Usage",
-    "text": "Usage\nFor a manual run, either enter an exact version or choose a component to bump.\nname: R Version and Release\n\non:\n  push:\n    tags:\n      - 'v[0-9]+.[0-9]+.[0-9]+'\n  workflow_dispatch:\n    inputs:\n      version:\n        description: 'Exact release version in X.Y.Z form (e.g. 1.2.3). Leave blank to bump a component.'\n        required: false\n        type: string\n      bump_type:\n        description: 'Component to bump. Choose none when entering an exact version.'\n        required: false\n        type: choice\n        default: none\n        options:\n          - none\n          - patch\n          - minor\n          - major\n      version_force:\n        description: 'Allow a non-sequential version, such as a downgrade or skipped increment.'\n        required: false\n        type: boolean\n        default: false\n\njobs:\n  release:\n    runs-on: ubuntu-latest\n    permissions:\n      contents: write\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          fetch-depth: 0\n      - uses: MiguelRodo/actions/r-version-release@v3\n        with:\n          github_token: ${{ secrets.GITHUB_TOKEN }}\n          version: ${{ inputs.version }}\n          bump_type: ${{ inputs.bump_type != 'none' && inputs.bump_type || '' }}\n          version_force: ${{ inputs.version_force }}"
+    "objectID": "version-release.html#quick-start",
+    "href": "version-release.html#quick-start",
+    "title": "Version and Release",
+    "section": "Quick Start",
+    "text": "Quick Start\nCopy examples/version-release.yml into .github/workflows/version-release.yml and adjust the optional version inputs as needed."
   },
   {
-    "objectID": "r-version-release.html#inputs",
-    "href": "r-version-release.html#inputs",
-    "title": "R Version and Release",
+    "objectID": "version-release.html#permissions",
+    "href": "version-release.html#permissions",
+    "title": "Version and Release",
+    "section": "Permissions",
+    "text": "Permissions\nThe calling workflow needs the following permission:\n\n\n\n\n\n\n\nPermission\nWhy it is needed\n\n\n\n\ncontents: write\nPush version-bump commits, create/update tags, and publish the GitHub Release.\n\n\n\npermissions:\n  contents: write\n\nVersion pinning: For stricter supply-chain security, pin to a specific commit SHA instead of a floating tag:\nuses: MiguelRodo/actions/version-release@&lt;full-commit-sha&gt;"
+  },
+  {
+    "objectID": "version-release.html#inputs",
+    "href": "version-release.html#inputs",
+    "title": "Version and Release",
     "section": "Inputs",
-    "text": "Inputs\n\n\n\n\n\n\n\n\n\nInput\nDescription\nRequired\nDefault\n\n\n\n\ngithub_token\nGitHub token for pushing tags and publishing releases.\nYes\n—\n\n\nversion\nExact release version in X.Y.Z form (e.g. 1.2.3). Leave blank to use bump_type.\nNo\n\"\"\n\n\nbump_type\nVersion component to bump: patch, minor, or major. Leave blank when version is set.\nNo\n\"\"\n\n\nversion_force\nSet true to allow non-sequential versions (e.g. downgrades or skipped increments).\nNo\nfalse"
+    "text": "Inputs\n\n\n\n\n\n\n\n\n\nInput\nDescription\nRequired\nDefault\n\n\n\n\ngithub_token\nGitHub token for pushing tags and creating releases.\nYes\n—\n\n\nversion\nExact release version in X.Y.Z form (e.g. 1.2.3). Leave blank to use bump_type. Overridden per package by python_version or r_version.\nNo\n\"\"\n\n\nbump_type\nVersion component to bump: patch, minor, or major. Leave blank when version is set.\nNo\n\"\"\n\n\npython_version\nOptional exact Python version in X.Y.Z form; overrides version.\nNo\n\"\"\n\n\nr_version\nOptional exact R version in X.Y.Z form; overrides version.\nNo\n\"\"\n\n\nversion_force\nSet true to allow non-sequential versions (e.g. downgrades or skipped increments).\nNo\nfalse"
   },
   {
-    "objectID": "r-version-release.html#outputs",
-    "href": "r-version-release.html#outputs",
-    "title": "R Version and Release",
+    "objectID": "version-release.html#outputs",
+    "href": "version-release.html#outputs",
+    "title": "Version and Release",
     "section": "Outputs",
     "text": "Outputs\n\n\n\nOutput\nDescription\n\n\n\n\nversion\nReleased version without a leading v (e.g. 1.2.3).\n\n\ntag\nGit tag that was created (e.g. v1.2.3)."
   },
   {
-    "objectID": "CONTRIBUTING.html",
-    "href": "CONTRIBUTING.html",
-    "title": "Contributing",
-    "section": "",
-    "text": "Thank you for considering a contribution to this repository! All improvements — bug fixes, documentation, new features, and tests — are welcome.\n\n\n\nFork the repository and create a feature branch from main.\nMake your changes following the guidelines below.\nOpen a pull request against main with a clear description of what changed and why.\n\n\n\n\n\n\nEach action lives in its own subdirectory (e.g. prebuild-devcontainer/). The entry point is always action.yml.\n\nKeep all logic inside action.yml. Avoid adding separate shell scripts unless the complexity makes inline scripts unreadable.\nUse $GITHUB_OUTPUT (not ::set-output) for outputs and $GITHUB_ENV for inter-step environment variables.\nEvery new input must have a description and a required field. Provide a default for optional inputs.\nEvery new output must be declared in the outputs: block of action.yml.\n\n\n\n\nInline run: blocks are linted by actionlint (which delegates to shellcheck). Before submitting:\n\nEnsure your scripts pass shellcheck --shell=bash.\nPrefer [[ ... ]] over [ ... ] for conditionals in bash.\nQuote all variable expansions (e.g. \"$VAR\") unless word-splitting is intentional.\n\n\n\n\n\nEach action has its own README.md containing hand-written usage, permissions and operational guidance.\naction.yml is the canonical source for an action’s machine-readable name, description, inputs and outputs.\nAfter changing that metadata, regenerate the reference tables and action catalogues with:\npython3 scripts/generate-action-docs.py --write\nDo not hand-edit content inside action-inputs, action-outputs or action-catalogue marker blocks, or the matching top-level action .qmd page. Each action QMD is generated from its README. CI runs python3 scripts/generate-action-docs.py --check and fails when generated documentation is stale.\nKeep narrative guidance in the action README up to date when behaviour changes.\nThe root README.md is intentionally a concise catalogue rather than a second copy of each action’s documentation.\nComplete, copy-paste-ready workflow files live in the examples/ directory. Keep one canonical full workflow there and link to it from the action README instead of duplicating it.\n\n\n\n\nRepository-owned workflows under .github/workflows/ may receive privileged tokens, publish artifacts or enforce CI. Their third-party actions are therefore pinned to full immutable commit SHAs, with the corresponding release version retained as an inline comment. Dependabot updates these SHA pins monthly and groups routine GitHub Actions updates into one low-noise PR; updates still require the normal protected-branch CI before merge.\nPublished composite actions and copy-paste consumer examples may instead use readable major tags such as @v3. Those surfaces prioritize consumer compatibility and automatic patch uptake, while this repository’s own privileged execution path uses stricter immutable pins.\nactionlint is installed by scripts/install-actionlint.sh from a fixed release archive whose SHA-256 digest is pinned to the checksum published with that upstream release. It is updated manually when needed rather than through a separate recurring version-check workflow.\n\n\n\nReleases are managed by .github/workflows/publish-release.yml. Release requests use a repository_dispatch event so GitHub always loads the privileged workflow from the default branch, never from the commit being tagged.\nRequest a release with a token that can dispatch repository events:\ngh api --method POST repos/MiguelRodo/actions/dispatches --input - &lt;&lt;'JSON'\n{\"event_type\":\"release\",\"client_payload\":{\"version\":\"vX.Y.Z\"}}\nJSON\n\n\nThe workflow refuses to release a commit that is not on main:\n\nOnly repository_dispatch with event type release triggers publishing. Direct tag pushes do not trigger the trusted workflow.\nThe checked-out release commit is the default-branch SHA associated with the dispatch event and must be reachable from origin/main (scripts/check-release-ancestry.sh).\nAll required checks must have succeeded for that exact commit (scripts/check-required-ci.sh) before any tag is moved: actionlint/shellcheck, BATS, and the prebuild-devcontainer integration test.\nAn existing version tag is reusable only when it resolves to the validated release commit (scripts/check-release-tag.sh).\nFloating vX / vX.Y tags are updated last, only after ancestry, CI status and release creation have all passed, and are pinned to the validated commit.\n\nThe one-time .github/workflows/disable-legacy-release.yml migration disables the historical .github/workflows/release.yml workflow identity after this change reaches main. This prevents a tag pointing at an older commit from executing that commit’s obsolete tag-push workflow.\n\n\n\n\nSpecific tags (vX.Y.Z) are annotated tags and have an associated GitHub Release entry with auto-generated notes.\nFloating tags (vX, vX.Y) are lightweight tags that are force-updated on every release to point to the latest matching commit. They do not have their own GitHub Release entries — this is intentional. The GitHub Releases page only shows entries for specific vX.Y.Z tags.\nConsumers of these actions should pin to a floating tag (e.g. @v3 or @v3.17) or a specific tag (e.g. @v3.17.0), not to a Release object.\n\nTo verify what commit a floating tag resolves to:\n# Show the commit a tag points to\ngit ls-remote --tags https://github.com/MiguelRodo/actions \"refs/tags/v3\"\n# or, in a local clone:\ngit rev-list -n 1 refs/tags/v3\n\n\n\n\n\nPlease be respectful and constructive in all interactions. This project follows the Contributor Covenant code of conduct."
-  },
-  {
-    "objectID": "CONTRIBUTING.html#getting-started",
-    "href": "CONTRIBUTING.html#getting-started",
-    "title": "Contributing",
-    "section": "",
-    "text": "Fork the repository and create a feature branch from main.\nMake your changes following the guidelines below.\nOpen a pull request against main with a clear description of what changed and why."
-  },
-  {
-    "objectID": "CONTRIBUTING.html#development-guidelines",
-    "href": "CONTRIBUTING.html#development-guidelines",
-    "title": "Contributing",
-    "section": "",
-    "text": "Each action lives in its own subdirectory (e.g. prebuild-devcontainer/). The entry point is always action.yml.\n\nKeep all logic inside action.yml. Avoid adding separate shell scripts unless the complexity makes inline scripts unreadable.\nUse $GITHUB_OUTPUT (not ::set-output) for outputs and $GITHUB_ENV for inter-step environment variables.\nEvery new input must have a description and a required field. Provide a default for optional inputs.\nEvery new output must be declared in the outputs: block of action.yml.\n\n\n\n\nInline run: blocks are linted by actionlint (which delegates to shellcheck). Before submitting:\n\nEnsure your scripts pass shellcheck --shell=bash.\nPrefer [[ ... ]] over [ ... ] for conditionals in bash.\nQuote all variable expansions (e.g. \"$VAR\") unless word-splitting is intentional.\n\n\n\n\n\nEach action has its own README.md containing hand-written usage, permissions and operational guidance.\naction.yml is the canonical source for an action’s machine-readable name, description, inputs and outputs.\nAfter changing that metadata, regenerate the reference tables and action catalogues with:\npython3 scripts/generate-action-docs.py --write\nDo not hand-edit content inside action-inputs, action-outputs or action-catalogue marker blocks, or the matching top-level action .qmd page. Each action QMD is generated from its README. CI runs python3 scripts/generate-action-docs.py --check and fails when generated documentation is stale.\nKeep narrative guidance in the action README up to date when behaviour changes.\nThe root README.md is intentionally a concise catalogue rather than a second copy of each action’s documentation.\nComplete, copy-paste-ready workflow files live in the examples/ directory. Keep one canonical full workflow there and link to it from the action README instead of duplicating it.\n\n\n\n\nRepository-owned workflows under .github/workflows/ may receive privileged tokens, publish artifacts or enforce CI. Their third-party actions are therefore pinned to full immutable commit SHAs, with the corresponding release version retained as an inline comment. Dependabot updates these SHA pins monthly and groups routine GitHub Actions updates into one low-noise PR; updates still require the normal protected-branch CI before merge.\nPublished composite actions and copy-paste consumer examples may instead use readable major tags such as @v3. Those surfaces prioritize consumer compatibility and automatic patch uptake, while this repository’s own privileged execution path uses stricter immutable pins.\nactionlint is installed by scripts/install-actionlint.sh from a fixed release archive whose SHA-256 digest is pinned to the checksum published with that upstream release. It is updated manually when needed rather than through a separate recurring version-check workflow.\n\n\n\nReleases are managed by .github/workflows/publish-release.yml. Release requests use a repository_dispatch event so GitHub always loads the privileged workflow from the default branch, never from the commit being tagged.\nRequest a release with a token that can dispatch repository events:\ngh api --method POST repos/MiguelRodo/actions/dispatches --input - &lt;&lt;'JSON'\n{\"event_type\":\"release\",\"client_payload\":{\"version\":\"vX.Y.Z\"}}\nJSON\n\n\nThe workflow refuses to release a commit that is not on main:\n\nOnly repository_dispatch with event type release triggers publishing. Direct tag pushes do not trigger the trusted workflow.\nThe checked-out release commit is the default-branch SHA associated with the dispatch event and must be reachable from origin/main (scripts/check-release-ancestry.sh).\nAll required checks must have succeeded for that exact commit (scripts/check-required-ci.sh) before any tag is moved: actionlint/shellcheck, BATS, and the prebuild-devcontainer integration test.\nAn existing version tag is reusable only when it resolves to the validated release commit (scripts/check-release-tag.sh).\nFloating vX / vX.Y tags are updated last, only after ancestry, CI status and release creation have all passed, and are pinned to the validated commit.\n\nThe one-time .github/workflows/disable-legacy-release.yml migration disables the historical .github/workflows/release.yml workflow identity after this change reaches main. This prevents a tag pointing at an older commit from executing that commit’s obsolete tag-push workflow.\n\n\n\n\nSpecific tags (vX.Y.Z) are annotated tags and have an associated GitHub Release entry with auto-generated notes.\nFloating tags (vX, vX.Y) are lightweight tags that are force-updated on every release to point to the latest matching commit. They do not have their own GitHub Release entries — this is intentional. The GitHub Releases page only shows entries for specific vX.Y.Z tags.\nConsumers of these actions should pin to a floating tag (e.g. @v3 or @v3.17) or a specific tag (e.g. @v3.17.0), not to a Release object.\n\nTo verify what commit a floating tag resolves to:\n# Show the commit a tag points to\ngit ls-remote --tags https://github.com/MiguelRodo/actions \"refs/tags/v3\"\n# or, in a local clone:\ngit rev-list -n 1 refs/tags/v3"
-  },
-  {
-    "objectID": "CONTRIBUTING.html#code-of-conduct",
-    "href": "CONTRIBUTING.html#code-of-conduct",
-    "title": "Contributing",
-    "section": "",
-    "text": "Please be respectful and constructive in all interactions. This project follows the Contributor Covenant code of conduct."
-  },
-  {
-    "objectID": "apt-repo-prune.html",
-    "href": "apt-repo-prune.html",
-    "title": "Prune APT Repository",
-    "section": "",
-    "text": "Composite action for pruning superseded .deb package versions from a GitHub-hosted apt repository. The action rewrites the full Git history of the target repository so that removed binaries are eliminated entirely—not just from the tip—then regenerates the apt metadata and force-pushes the result.\nThe action is designed for repositories that are managed by the go-version-release action in this repository; it validates the expected pool/main/ and dists/stable/ structure before proceeding."
-  },
-  {
-    "objectID": "apt-repo-prune.html#usage",
-    "href": "apt-repo-prune.html#usage",
-    "title": "Prune APT Repository",
-    "section": "Usage",
-    "text": "Usage\n\nWith an encrypted GPG signing key\nname: Prune APT Repository\n\non:\n  workflow_dispatch:\n    inputs:\n      retention:\n        description: 'Versions to retain for each package and architecture.'\n        required: false\n        type: choice\n        default: latest-per-major\n        options:\n          - latest-per-major\n          - latest-per-minor\n          - latest\n  schedule:\n    - cron: '0 3 * * 0'   # weekly on Sunday at 03:00 UTC\n\njobs:\n  prune:\n    runs-on: ubuntu-latest\n    permissions:\n      contents: write\n    steps:\n      - uses: MiguelRodo/actions/apt-repo-prune@v3\n        with:\n          token: ${{ secrets.GITHUB_TOKEN }}\n          retention: ${{ inputs.retention || 'latest-per-major' }}\n          apt_signing_key: ${{ secrets.APT_SIGNING_KEY }}\n          apt_signing_key_passphrase: ${{ secrets.APT_SIGNING_KEY_PASSPHRASE }}\n\n\nWith an unencrypted GPG signing key (no passphrase)\nname: Prune APT Repository\n\non:\n  workflow_dispatch:\n    inputs:\n      retention:\n        description: 'Versions to retain for each package and architecture.'\n        required: false\n        type: choice\n        default: latest-per-major\n        options:\n          - latest-per-major\n          - latest-per-minor\n          - latest\n  schedule:\n    - cron: '0 3 * * 0'   # weekly on Sunday at 03:00 UTC\n\njobs:\n  prune:\n    runs-on: ubuntu-latest\n    permissions:\n      contents: write\n    steps:\n      - uses: MiguelRodo/actions/apt-repo-prune@v3\n        with:\n          token: ${{ secrets.GITHUB_TOKEN }}\n          retention: ${{ inputs.retention || 'latest-per-major' }}\n          apt_signing_key: ${{ secrets.APT_SIGNING_KEY }}\n          # apt_signing_key_passphrase is omitted — unencrypted keys do not need it"
-  },
-  {
-    "objectID": "apt-repo-prune.html#inputs",
-    "href": "apt-repo-prune.html#inputs",
-    "title": "Prune APT Repository",
-    "section": "Inputs",
-    "text": "Inputs\n\n\n\n\n\n\n\n\n\nInput\nDescription\nRequired\nDefault\n\n\n\n\ntoken\nGitHub token with contents: write permission on the current repository.\nYes\n—\n\n\nretention\nVersion retention policy (case-insensitive). ‘latest’ – keep only the newest version per (package, arch) pair. ‘latest-per-minor’ – keep the highest patch release for each major.minor series. ‘latest-per-major’ (default) – keep the highest minor.patch release for each major series.\nNo\nlatest-per-major\n\n\napt_signing_key\nOptional ASCII-armored GPG private key for signing the regenerated apt metadata. When omitted only the unsigned Release file is written and any stale InRelease / Release.gpg files are removed.\nNo\n\"\"\n\n\napt_signing_key_passphrase\nOptional passphrase for apt_signing_key.\nNo\n\"\""
-  },
-  {
-    "objectID": "apt-repo-prune.html#how-it-works",
-    "href": "apt-repo-prune.html#how-it-works",
-    "title": "Prune APT Repository",
+    "objectID": "version-release.html#how-it-works",
+    "href": "version-release.html#how-it-works",
+    "title": "Version and Release",
     "section": "How it works",
-    "text": "How it works\n\nClone – The current repository is cloned with its full history using the provided token for authentication.\nValidate structure – The action checks that pool/main/ and dists/stable/ exist (the layout produced by go-version-release).\nSelect files to remove – scripts/apt-prune-select-versions.sh reads every .deb file via dpkg-deb, groups versions by (package, arch), and outputs the relative paths of files that fall outside the retention window.\nRewrite history – git filter-repo removes the selected files from every commit, including the root commit when it contains target files (which will change the root commit SHA).\nRegenerate metadata – Packages, Packages.gz, and Release are rebuilt from the remaining .deb files. When apt_signing_key is supplied, InRelease (clearsigned) and Release.gpg (detached signature) are also regenerated.\nForce-push – The rewritten history is pushed to the repository’s default branch with --force."
+    "text": "How it works\n\nTrigger: tag push (v*)\nThe version is taken directly from the pushed tag (e.g. v1.2.3 → 1.2.3). The version and bump_type inputs are ignored.\n\n\nTrigger: workflow_dispatch\nExactly one of the following must be supplied:\n\nversion — use an explicit version for all packages (e.g. 1.2.3).\nbump_type — derive the new version by bumping the most recent semver git tag.\n\nThe python_version and r_version inputs always override the global version for their respective packages.\n\n\nPython package (pyproject.toml)\nIf pyproject.toml is present in the repository root, the action reads the current version = \"X.Y.Z\" field and updates it to the resolved Python version. If the file is absent the step is silently skipped.\n\n\nR package (DESCRIPTION)\nIf DESCRIPTION is present in the repository root, the action reads the current Version: X.Y.Z field and updates it to the resolved R version. If the file is absent the step is silently skipped.\n\n\nVersion precedence (per package)\n\n\n\nPriority\nSource\n\n\n\n\n1 (highest)\npython_version / r_version input\n\n\n2\nGlobal version input\n\n\n3\nBump the current file version using bump_type\n\n\n4\nUse the tag pushed (tag-push trigger)"
   },
   {
-    "objectID": "apt-repo-prune.html#notes",
-    "href": "apt-repo-prune.html#notes",
-    "title": "Prune APT Repository",
-    "section": "Notes",
-    "text": "Notes\n\nThe action requires dpkg-deb, dpkg-scanpackages, and apt-ftparchive to be available on the runner. These are pre-installed on ubuntu-latest.\ngit-filter-repo is installed automatically via pip if it is not already present.\nOnly .deb files with plain X.Y.Z semver versions are considered; files with non-semver versions are left untouched.\nEach package architecture is evaluated independently, so you can have amd64 at version 2.1.0 while arm64 is still at 2.0.0 and both will be treated separately."
+    "objectID": "publish-quarto-site.html",
+    "href": "publish-quarto-site.html",
+    "title": "Publish Quarto Site",
+    "section": "",
+    "text": "A composite GitHub Action that publishes a Quarto site to the gh-pages branch of your repository. It only bootstraps a missing gh-pages branch; rendering and publishing stay delegated to Quarto."
+  },
+  {
+    "objectID": "publish-quarto-site.html#tldr",
+    "href": "publish-quarto-site.html#tldr",
+    "title": "Publish Quarto Site",
+    "section": "📋 TL;DR",
+    "text": "📋 TL;DR\nCopy examples/publish-quarto-site.yml into .github/workflows/publish-quarto-site.yml and adjust the optional inputs as needed."
+  },
+  {
+    "objectID": "publish-quarto-site.html#permissions",
+    "href": "publish-quarto-site.html#permissions",
+    "title": "Publish Quarto Site",
+    "section": "🔐 Permissions",
+    "text": "🔐 Permissions\nThe calling workflow needs the following permissions:\n\n\n\n\n\n\n\nPermission\nWhy it is needed\n\n\n\n\ncontents: write\nPush rendered output to the gh-pages branch.\n\n\npages: write\nRequired when deploying through GitHub Pages environments.\n\n\n\npermissions:\n  contents: write\n  pages: write\n\nVersion pinning: For stricter supply-chain security, pin to a specific commit SHA instead of a floating tag:\nuses: MiguelRodo/actions/publish-quarto-site@&lt;full-commit-sha&gt;"
+  },
+  {
+    "objectID": "publish-quarto-site.html#inputs",
+    "href": "publish-quarto-site.html#inputs",
+    "title": "Publish Quarto Site",
+    "section": "🔧 Inputs",
+    "text": "🔧 Inputs\n\n\n\n\n\n\n\n\n\nInput\nDescription\nRequired\nDefault\n\n\n\n\ngithub_token\nGitHub token used to push to the gh-pages branch.\nYes\n—\n\n\npath\nPath to the Quarto project to publish.\nNo\n.\n\n\nsetup_r\nWhether to install R and set up R dependencies before rendering.\nNo\nfalse\n\n\nsetup_python\nWhether to install Python and set up Python dependencies before rendering.\nNo\nfalse"
+  },
+  {
+    "objectID": "publish-quarto-site.html#how-it-works",
+    "href": "publish-quarto-site.html#how-it-works",
+    "title": "Publish Quarto Site",
+    "section": "⚙️ How It Works",
+    "text": "⚙️ How It Works\n\nCreates a minimal empty gh-pages branch only when the remote does not already have one. Quarto’s non-interactive GitHub Actions path requires that branch to exist.\nOptionally installs R and R dependencies when setup_r is enabled.\nOptionally installs Python and project dependencies when setup_python is enabled.\nInstalls Quarto via quarto-dev/quarto-actions/setup@v2.\nPublishes via quarto-dev/quarto-actions/publish@v2."
+  },
+  {
+    "objectID": "publish-quarto-site.html#troubleshooting",
+    "href": "publish-quarto-site.html#troubleshooting",
+    "title": "Publish Quarto Site",
+    "section": "🐞 Troubleshooting",
+    "text": "🐞 Troubleshooting\n\nPermission denied pushing to gh-pages: Ensure the calling workflow has permissions: contents: write (and pages: write if using GitHub Pages deployments).\nQuarto render errors: The action delegates rendering entirely to quarto-dev/quarto-actions/publish. Consult the quarto-actions documentation for render-related issues."
   },
   {
     "objectID": "prebuild-devcontainer.html",
@@ -441,45 +448,38 @@
     "text": "Smart Metadata Injection (build-info)\nThis Action features native integration with the ghcr.io/MiguelRodo/DevContainerFeatures/build-info devcontainer feature.\nWhen inject_build_info is true (the default), the Action safely parses your .devcontainer/devcontainer.json. If it detects that you have included the build-info feature, it temporarily injects the dynamically calculated imageVersion into the configuration directly prior to the build.\nThis provides the command /usr/local/bin/container-info inside the container, which outputs the build details in this format:\n--------------------------------------------------\n🚀 DevContainer Release Information\n--------------------------------------------------\nVersion: v1.2.3\nBuilt On: 2026-06-12T14:36:22Z\n--------------------------------------------------\nNote that the devcontainer.json file is reverted to its state when the imageVersion option was not injected, immediately after the build."
   },
   {
-    "objectID": "publish-quarto-site.html",
-    "href": "publish-quarto-site.html",
-    "title": "Publish Quarto Site",
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Custom GitHub Actions",
     "section": "",
-    "text": "A composite GitHub Action that publishes a Quarto site to the gh-pages branch of your repository. It only bootstraps a missing gh-pages branch; rendering and publishing stay delegated to Quarto."
+    "text": "Reusable composite GitHub Actions for common CI/CD tasks."
   },
   {
-    "objectID": "publish-quarto-site.html#tldr",
-    "href": "publish-quarto-site.html#tldr",
-    "title": "Publish Quarto Site",
-    "section": "📋 TL;DR",
-    "text": "📋 TL;DR\nCopy examples/publish-quarto-site.yml into .github/workflows/publish-quarto-site.yml and adjust the optional inputs as needed."
+    "objectID": "index.html#available-actions",
+    "href": "index.html#available-actions",
+    "title": "Custom GitHub Actions",
+    "section": "Available Actions",
+    "text": "Available Actions\n\n\n\n\n\nAction\nDescription\n\n\n\n\nPrune APT Repository\nRemoves superseded .deb package versions from a GitHub-hosted apt repository and rewrites Git history so that the pruned binaries are fully eliminated. After history rewrite the apt metadata (Packages, Release, optional InRelease / Release.gpg) is regenerated and the result is force-pushed.\n\n\nGo Version and Release\nDetermines a Go project release version, validates semver progression, creates and pushes a git tag, then runs GoReleaser and can publish generated .deb artifacts to apt.\n\n\nPre-build Dev Container\nBuilds a devcontainer, pushes it to a container registry tagged with a git tag and SemVer aliases, and optionally updates the prebuild JSON.\n\n\nPublish Quarto Site\nPublishes a Quarto site to the gh-pages branch, creating the branch if it does not already exist.\n\n\nR Version and Release\nBumps the version in DESCRIPTION, builds the R package, pushes floating tags, and publishes a GitHub Release with the tarball.\n\n\nRust Version and Release\nDetermines a Rust project release version, validates semver progression, creates and pushes a git tag, then builds .deb with cargo-deb and can publish generated .deb artifacts to apt.\n\n\nSetup Project Infrastructure\nBootstraps new multi-repo workspaces by linking working repo, devcontainers, caches, and tracking.\n\n\nVersion and Release\nBumps versions for Python (pyproject.toml) and R (DESCRIPTION) packages when present, creates a versioned git tag, updates floating major/minor tags, and publishes a GitHub Release."
   },
   {
-    "objectID": "publish-quarto-site.html#permissions",
-    "href": "publish-quarto-site.html#permissions",
-    "title": "Publish Quarto Site",
-    "section": "🔐 Permissions",
-    "text": "🔐 Permissions\nThe calling workflow needs the following permissions:\n\n\n\n\n\n\n\nPermission\nWhy it is needed\n\n\n\n\ncontents: write\nPush rendered output to the gh-pages branch.\n\n\npages: write\nRequired when deploying through GitHub Pages environments.\n\n\n\npermissions:\n  contents: write\n  pages: write\n\nVersion pinning: For stricter supply-chain security, pin to a specific commit SHA instead of a floating tag:\nuses: MiguelRodo/actions/publish-quarto-site@&lt;full-commit-sha&gt;"
+    "objectID": "index.html#usage",
+    "href": "index.html#usage",
+    "title": "Custom GitHub Actions",
+    "section": "Usage",
+    "text": "Usage\nReference any action directly in a workflow — no cloning required:\nuses: MiguelRodo/actions/&lt;action-folder-name&gt;@v3"
   },
   {
-    "objectID": "publish-quarto-site.html#inputs",
-    "href": "publish-quarto-site.html#inputs",
-    "title": "Publish Quarto Site",
-    "section": "🔧 Inputs",
-    "text": "🔧 Inputs\n\n\n\n\n\n\n\n\n\nInput\nDescription\nRequired\nDefault\n\n\n\n\ngithub_token\nGitHub token used to push to the gh-pages branch.\nYes\n—\n\n\npath\nPath to the Quarto project to publish.\nNo\n.\n\n\nsetup_r\nWhether to install R and set up R dependencies before rendering.\nNo\nfalse\n\n\nsetup_python\nWhether to install Python and set up Python dependencies before rendering.\nNo\nfalse"
+    "objectID": "index.html#migrating-from-v2-to-v3",
+    "href": "index.html#migrating-from-v2-to-v3",
+    "title": "Custom GitHub Actions",
+    "section": "Migrating from v2 to v3",
+    "text": "Migrating from v2 to v3\n\nprebuild-devcontainer: replace the removed tag input with version.\npublish-quarto-site: remove the no-op renv_restore input; setup-r-dependencies restores renv.lock automatically when setup_r is enabled."
   },
   {
-    "objectID": "publish-quarto-site.html#how-it-works",
-    "href": "publish-quarto-site.html#how-it-works",
-    "title": "Publish Quarto Site",
-    "section": "⚙️ How It Works",
-    "text": "⚙️ How It Works\n\nCreates a minimal empty gh-pages branch only when the remote does not already have one. Quarto’s non-interactive GitHub Actions path requires that branch to exist.\nOptionally installs R and R dependencies when setup_r is enabled.\nOptionally installs Python and project dependencies when setup_python is enabled.\nInstalls Quarto via quarto-dev/quarto-actions/setup@v2.\nPublishes via quarto-dev/quarto-actions/publish@v2."
-  },
-  {
-    "objectID": "publish-quarto-site.html#troubleshooting",
-    "href": "publish-quarto-site.html#troubleshooting",
-    "title": "Publish Quarto Site",
-    "section": "🐞 Troubleshooting",
-    "text": "🐞 Troubleshooting\n\nPermission denied pushing to gh-pages: Ensure the calling workflow has permissions: contents: write (and pages: write if using GitHub Pages deployments).\nQuarto render errors: The action delegates rendering entirely to quarto-dev/quarto-actions/publish. Consult the quarto-actions documentation for render-related issues."
+    "objectID": "index.html#releasing",
+    "href": "index.html#releasing",
+    "title": "Custom GitHub Actions",
+    "section": "Releasing",
+    "text": "Releasing\nThis repository manages its own versions with an automated workflow. Push a vX.Y.Z tag or run Actions → Publish Release and Bump Floating Tags manually to create a release and update floating major/minor tags."
   }
 ]
